@@ -1,0 +1,1676 @@
+commit 1d4aece20c31d40038c89a2a88e36e29d0dff2ec (HEAD, origin/master, origin/HEAD, master)
+Author: Gao Wang <gaow@uchicago.edu>
+Date:   Sat Apr 9 11:10:14 2016 -0500
+
+    Properly handle mlink warnings. Version number boosted to 1.0.0
+
+commit 019ab638fd456d1ce3c8b75f748ca5faf13154bc
+Author: Gao Wang <gaow@uchicago.edu>
+Date:   Fri Apr 8 21:25:51 2016 -0500
+
+    Update installation script and author affiliation
+
+commit cd8707b466216e6e97e1bdec5afb752ef1b77779
+Author: Hang Dai <hang.dai@bcm.edu>
+Date:   Tue Aug 18 18:30:41 2015 -0500
+
+    add gray figures
+
+commit 8d2f0610854b48855ca3555e895cf575da124a66
+Author: Gao Wang <gaow@uchicago.edu>
+Date:   Wed Jun 10 15:08:18 2015 -0500
+
+    fix: ramdisk command
+
+commit 40b29529bd378cdb2de7db66004d6a1b78c12c2c
+Merge: 02498ed c8536e9
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed May 13 20:39:35 2015 -0500
+
+    Merge branch 'master' of tigerwang.org:SEQLinkage
+
+commit 02498eddfd2d8d20471a2c76ea67ee4e27a76fab
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed May 13 20:39:26 2015 -0500
+
+    major: add manuscript proof
+
+commit c403d364441829ed7e749f017056bccf26547d2e
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Feb 11 15:29:22 2015 -0600
+
+    Changes in script to adapt for git behavior
+
+commit c8536e918dc2683f62c37766a252755514a4f8c0
+Author: Linhai Zhao <percylinhai@gmail.com>
+Date:   Sat Feb 7 23:01:37 2015 -0600
+
+    revision on makefile
+
+commit a3bec5d2d4d896d67c32e7fbff1d02917c3d84be
+Author: Linhai Zhao <percylinhai@gmail.com>
+Date:   Sat Feb 7 22:44:29 2015 -0600
+
+    commands using simulated vcf data w/o missing calls
+
+commit 124d3574547ea410fce5e30a8b3eebdc2e046181
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Fri Feb 6 12:25:13 2015 -0600
+
+    Add test script for Missing data case; data file pending
+
+commit 9750882a1b03bbf0d561d628caf6e5741a29c5a7
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Tue Feb 3 17:31:17 2015 -0600
+
+    Format manuscript as requested by the editor
+
+commit fa769b962453b62224a8fd756962b5f26eee66a7
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Mon Feb 2 16:58:13 2015 -0600
+
+    Upload manuscript for revision 2
+
+commit 175bfed7c4ea58ac3d417a311bee788594e35ae6
+Author: Min Qiao <min@lupinus>
+Date:   Tue Jan 27 22:03:09 2015 -0600
+
+    Finalize revision 2 on my end
+
+commit 6ce5d134980163df3e03b17254810aeb5d0d52d9
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Tue Jan 27 11:12:07 2015 -0600
+
+    Upload updated Figure S1A using 2 million replicates
+
+commit 12447c4ada1ff0d96345389ad68cc066a2004967
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Tue Jan 27 10:26:03 2015 -0600
+
+    add 2 million reps for type I error estimation
+
+commit 3014f369ea57cb17d87340220a84bdafa4158b7a
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Mon Jan 26 13:35:04 2015 -0600
+
+    fix: cleanup files of each rep and the seqlink output dir
+
+commit cf9ba9b0c6b31a6030c66a6e10d6598e46bec140
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Mon Jan 26 13:03:53 2015 -0600
+
+    add NoCache class so seqlink can run without archiving everything into ./cache/
+
+commit 876938eb6e390c4d619c20a46e46c2cb03adfbc4
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Mon Jan 26 12:09:13 2015 -0600
+
+    add env.outdir, distinguished from env.output
+
+commit 758bd8c29d684af95a6d5b73c032e5a6a1be8f17
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Mon Jan 26 11:59:26 2015 -0600
+
+    fix Args.isalnum(), only checking the basename of the --output string
+
+commit 61a554839ff7f1b2172528a7de6c65f987875869
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Mon Jan 26 11:06:10 2015 -0600
+
+    Ensure each element in an input path is alphanumeric, not the entire path
+
+commit e203ddbf84d79c4f7f0581ec4f6080ab748b6bf4
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 23 12:07:32 2015 -0600
+
+    new lods files
+
+commit 8c84084e5219f6ba350131a2dc787f5b56c654e2
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 23 12:06:43 2015 -0600
+
+    n1a8 final figure-s1
+
+commit 7239cfd1da6ed18954befd1c6d795f6419eb8e6b
+Merge: 7c4ba06 4ba868e
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 23 11:04:16 2015 -0600
+
+    Merge branch 'master' of tigerwang.org:SEQLinkage
+
+commit 7c4ba06d526a55d441469fd6ec0fd0c4224550d4
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 23 11:04:11 2015 -0600
+
+    edit length
+
+commit 4ba868eb5b630226eea1eb0f65aefefedff72b2a
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Thu Jan 22 11:33:35 2015 -0600
+
+    Edit manuscript
+
+commit 8862088b37de717be084e73db67bf54f06b36700
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 21:09:51 2015 -0600
+
+    merlin phased ld parentmissing random seed
+
+commit d1599a78d07a27fd2e35149f6593eb86b93a9ba7
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 21 16:26:04 2015 -0600
+
+    polish qq plot script
+
+commit 7073ef1bb45c3d125e833785fc3271a7ddd5a7bb
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 15:39:31 2015 -0600
+
+    makefile edit
+
+commit 138d81eab9982051c45232ff4d5f136c6248e811
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 15:35:37 2015 -0600
+
+    prephased random seed ld parent missing bin 0.0 and 0.8
+
+commit 133e8614f9adfd973ca511021466228e2dc829a8
+Merge: 26a9d57 891a097
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 21 14:28:02 2015 -0600
+
+    Merge branch 'master' of tigerwang.org:SEQLinkage
+
+commit 26a9d57ad099d5ebceb8197058ee34c752214d62
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 21 14:27:53 2015 -0600
+
+    hide help message for --prephased option
+
+commit 891a09792a85377743834a085f359638f841cf08
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 13:32:52 2015 -0600
+
+    rm compiled files
+
+commit 23597795425df2d54387b93ad536f49aa973acc6
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 13:31:43 2015 -0600
+
+    bug fix for scipy-0.14
+
+commit 8bd7e783c00bc17fe0adb0dfb8329692bd45dac3
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 21 11:45:27 2015 -0600
+
+    implement makefile for type I error plots
+
+commit 77c811a55b25bb36a67574e5d0f28ce61afb7391
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Wed Jan 21 10:51:31 2015 -0600
+
+    dominant
+
+commit 6595e53ee1a43d69ccba8fa36092c4fced88a8a7
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 21 10:26:12 2015 -0600
+
+    implelemt prephased option
+
+commit fa265592f55bd9f5f77c729acdba4b5f2a1edfa5
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Tue Jan 20 10:53:40 2015 -0600
+
+    bin 0
+
+commit 484e7975a72fd1b53ec619ad9c82875ae6c9160c
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Mon Jan 19 23:13:09 2015 -0600
+
+    bin 0.8/1.0
+
+commit ab4d2ddc650809c7c94438e5ea71a9af24821e9c
+Author: Min Qiao <min@lupinus>
+Date:   Sun Jan 18 16:50:21 2015 -0600
+
+    test interface change
+
+commit 3c35129b368ac2298abb75a8b15712dacffa267b
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Sun Jan 18 09:23:22 2015 -0600
+
+    type I update
+
+commit 7bcc6e8291b13726e924055f96b13c2d3c50cc7e
+Merge: fd2cd2c 9667d30
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 16 11:27:41 2015 -0600
+
+    Merge branch 'master' of tigerwang.org:SEQLinkage
+
+commit fd2cd2c99c52407fac6ab066ff032fb70d974f8b
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Fri Jan 16 11:27:10 2015 -0600
+
+    null vs. rec
+
+commit 9667d30c50d208812c59040a7b29123818c6812d
+Author: Min Qiao <min@lupinus>
+Date:   Fri Jan 16 08:37:04 2015 -0600
+
+    add QQplots
+
+commit 9160d6cd0ffb9f2e7ed0b8a39d8d71ae17386f19
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Thu Jan 15 21:40:09 2015 -0600
+
+    lods updated
+
+commit 1eb977ff48d44b071897fd6701d1d357ffee0d30
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Thu Jan 15 21:30:46 2015 -0600
+
+    sort tsv
+
+commit 33a45095262018a102f6d189d645d7375ac9588b
+Author: Di Zhang <zhangdi.devel@gmail.com>
+Date:   Thu Jan 15 14:58:23 2015 -0600
+
+    sort tsv
+
+commit c24dcc87ec36760c3187261d25f92235da189bee
+Merge: 92d5050 2992002
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 14 15:54:12 2015 -0600
+
+    Merge branch 'master' of tigerwang.org:SEQLinkage
+
+commit 92d50508b6e28d15457f053f574002b2cef29f1c
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 14 15:53:57 2015 -0600
+
+    Add revision 2 draft
+
+commit 29920024aec4f3cf992dfe74e442295e11619051
+Author: Biao Li <libiaospe@gmail.com>
+Date:   Wed Jan 14 14:32:27 2015 -0600
+
+    modify recombination rate calculation from centimorgan
+
+commit 25748c23de25bcb2eab9bfc19aa3fbdb9946a81f
+Author: Gao Wang Office <gaow@bcm.edu>
+Date:   Wed Jan 14 12:35:13 2015 -0600
+
+    add updated simulation data with map distances
+
+commit 69ff2450d71f604a04d5c5a791f92848b5015658
+Author: Biao Li <libiaospe@gmail.com>
+Date:   Wed Jan 14 12:32:01 2015 -0600
+
+    modify recombination scheme in LinkagePowerCalc.py script
+
+commit 5a56d27c953c21ee08a51dbbbeaec4e4d4431ae7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Sun Nov 16 18:48:06 2014 +0000
+
+    add references papers
+
+commit 8aa6698de193ac71d9353f1d22ea8e08cd8113d9
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Nov 7 16:27:59 2014 +0000
+
+    upload final ms
+
+commit 152dde7d21eebda351ef3eb73b964008d8cd2e11
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Nov 5 00:32:52 2014 +0000
+
+    revision 1 update, submitted to Suzanne
+
+commit fec6bb0af12a2046879ac6fcd8d1390b91ceb4b8
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Nov 4 19:54:26 2014 +0000
+
+    remove DDDDD
+
+commit 19557af30969dbd84abc6e5da9a49bf8e4dbb2df
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Nov 4 19:52:21 2014 +0000
+
+    update
+
+commit 28a9eb49d72936d41d29e11c3315836fd1f48bc5
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Nov 4 19:51:25 2014 +0000
+
+    update
+
+commit 0bb654ad3d9681017495ad0c8964e29816ca8a5b
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Nov 4 19:19:22 2014 +0000
+
+    bug fixed for lod collector
+
+commit 2b265d5b82b10bc79160e3c6dd9d45d1307c2b73
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Nov 4 04:41:51 2014 +0000
+
+    RunGeneHunter.py ready
+
+commit f42fe98babd3d81a3cac5e9c2cb0c3a03f056181
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Nov 3 22:07:59 2014 +0000
+
+    add RunGeneHunter.py, but with bugs
+
+commit 54d2f9f31d6c019fae588868e7ccfd0ddd80262b
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Oct 30 20:27:57 2014 +0000
+
+    revision update
+
+commit 34284c605ac7b44cbd57d1e2c5b0e9a4b6b3a5db
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Oct 30 16:59:11 2014 +0000
+
+    update
+
+commit bc7b8ecdeaea9a89a0ca33f3d915833536c6cf0c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Oct 29 22:33:10 2014 +0000
+
+    update revision and respond for ejhg
+
+commit 5fa2137aff3a7f5f61d051e1d57a1119a45ef4e3
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Oct 29 20:24:37 2014 +0000
+
+    update
+
+commit 67840df4f45d2a53786af442859d15bdea83762c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Oct 28 22:17:21 2014 +0000
+
+    updates to CHP frequency calculation
+
+commit 5708dc2439672b9c44e1121fbed4e53a0677a289
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Oct 28 19:26:40 2014 +0000
+
+    fix getColumn bug
+
+commit ad94b8c3257c721cfc40b24a4be557605296b037
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Oct 28 18:08:02 2014 +0000
+
+    add fakeLD feature to simulation program
+
+commit c39757a8fa8a387cc14e866dad2b936a8c0ede3a
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Oct 24 17:39:45 2014 +0000
+
+    update
+
+commit 66aa2cddfe43b1acf50ad876916e88d00df4a4ae
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Oct 23 23:22:03 2014 +0000
+
+    update R1 respond
+
+commit c0793167b83cbefe82e4734cf67179d9478bba47
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Oct 23 22:24:33 2014 +0000
+
+    update LinkagePowerCal.py
+
+commit 10766385a35cc2e08f1e274e7f3713aed77f6c5d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Oct 13 20:03:43 2014 +0000
+
+    finalize poster
+
+commit 2278339bc78d0d4e5ff8181faa8954053d8037ea
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Oct 10 17:04:29 2014 +0000
+
+    Add SEQLinkage poster
+
+commit 6ca6d0a1d97f393d9b489ee7ba219c5100fe8841
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Oct 3 21:07:17 2014 +0000
+
+    change mkpath implementation
+
+commit dbb28453bb12d67529550582cfe068f54d9754ce
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Oct 3 19:41:20 2014 +0000
+
+    safely delete empty dirs
+
+commit 45ba576251bc3224e787c64f598d509749d3912e
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Oct 1 19:07:09 2014 +0000
+
+    add material for seqlinkage presentation
+
+commit acc4f71f71d32567b96c1af81fda9f1fcefdcb91
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Aug 20 22:09:31 2014 +0000
+
+    update ms
+
+commit d0ec50fdf30bcf5a859ba82b0b346a448608c328
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Aug 11 22:28:52 2014 +0000
+
+    format EJHG short report
+
+commit 5e65e7da702aaf45945363379730294afdca3d1b
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jul 8 22:53:46 2014 +0000
+
+    update wiki
+
+commit f7e2d3098fa88209d6a0e79e5eb47c2b122b089f
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Sun May 18 23:35:21 2014 +0000
+
+    update supplemental
+
+commit ec9bb68395e049d0e7e84dc2e9c2570f68a8faf4
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 23:15:09 2014 +0000
+
+    update docs
+
+commit cccf5aae4cb6154b36dbcb1a1819164669003bca
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 22:46:54 2014 +0000
+
+    linkage programs added
+
+commit 2e2bdbfea0e9a5597158ea05b46eaa15e203306f
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 22:25:31 2014 +0000
+
+    lower case for file names
+
+commit 1911af9a3cba72245e975ebf351643cb3ab90ff4
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 21:41:17 2014 +0000
+
+    disallow imp, use __import__ to check instead
+
+commit f8aa7947c1f0573663da94b9fa44716dc75bb7fe
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 20:20:54 2014 +0000
+
+    format counter bug fixed
+
+commit 30cd0894eb3c6458c5cc7dd597bf56441a9eae94
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 8 14:43:11 2014 +0000
+
+    update wiki
+
+commit 8535c32038d02da50275d14613d3b9ba241cc6b8
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 22:51:18 2014 +0000
+
+    minor bug fixes
+
+commit 6b004d5aeb18762bd8c90b2ba6b6a3c81af218b6
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 22:09:32 2014 +0000
+
+    add mega2 and merlin examples
+
+commit c4fa96d399c39987a58bac46da56fd15fff8cbb4
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 21:35:10 2014 +0000
+
+    fix release script
+
+commit d280e76e401a355983475d98ff77d38b4a7260e5
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 20:37:58 2014 +0000
+
+    finish Runner alpha
+
+commit c32cef6a43d691acae429f66759705b8c4df3030
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 20:26:17 2014 +0000
+
+    finish up rutgers map documentation
+
+commit e9e2dc67a92d3bc47cc29daae8235cff6e88b6b6
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 20:03:49 2014 +0000
+
+    add the script making blueprint
+
+commit fd430dc5bd4046b34ee7d91646be6bf8998bac65
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 19:58:32 2014 +0000
+
+    add blueprint
+
+commit fc2ceee56e1074a581effdf0c1192ea92116c0b8
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 19:32:19 2014 +0000
+
+    merlin format added
+
+commit 29fa74bd652314c99d4218844e3536a8b67a10f6
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 18:51:30 2014 +0000
+
+    bug fixed
+
+commit f743bd3713213b0b506f187feed8ece0fc9e2c33
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 18:50:02 2014 +0000
+
+    bug fixed
+
+commit b9a6921a1b896363be4cecbb70845268168a6ef0
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 18:33:09 2014 +0000
+
+    mega2 added
+
+commit 8d22bc0fb7eefa2000fed1713e67f06ca0b15052
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed May 7 16:20:28 2014 +0000
+
+    update manuscript
+
+commit 9051091ba94fc79ae76ffa91513b24ee41101a7d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon May 5 22:38:44 2014 +0000
+
+    add power db
+
+commit 75983541308481989dabd6af2a2d9f88ac0fc6f7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon May 5 22:37:39 2014 +0000
+
+    upload power figs
+
+commit c43be95e69bc9657eb4a2b078ad83ac5e077cf30
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri May 2 02:38:29 2014 +0000
+
+    upload data
+
+commit 582af6b6375e4db820464bd780078b44c9a67eed
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 1 19:04:53 2014 +0000
+
+    add demo data
+
+commit 44b1816d092e864d8cc3f9476ecd7d49dfc7fa79
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 1 14:05:55 2014 +0000
+
+    add plot update
+
+commit ad5e4bbe628cab4f7d94d13ed54473a8e7f46033
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu May 1 14:01:42 2014 +0000
+
+    upload power notes
+
+commit 95ed5354491283f29e6dc81c035232fa422d5ba2
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 28 23:09:01 2014 +0000
+
+    update website
+
+commit 8dd70576b6ba15484fd7a4b56bebf0e859441e22
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Sat Apr 26 03:24:19 2014 +0000
+
+    simulation script is now indep of seqlink
+
+commit 13898f70e490c6d7084ddaa7d2ff5a824285690d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 22 04:47:07 2014 +0000
+
+    update ms
+
+commit a8125c22e511f0f0a44fbaf29d7c77c4d644111e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 21 19:22:25 2014 +0000
+
+    SubmitJobs.pbs updated
+
+commit d68e0e12d5ff1dfd2d87c8548d9cb9a503fdfd4d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 21 18:18:16 2014 +0000
+
+    update simulation results
+
+commit abad4655fb10bf091510b831ed496a994480daf2
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 18 19:36:27 2014 +0000
+
+    bug fix to hlod score collection in simulatio nscript ... have to thus rerun the simulation
+
+commit 9cb2ebc552a377d8b7736d3fb647d1fdf9c3bf80
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 16 20:57:16 2014 +0000
+
+    update docs
+
+commit 25d4669638eb1d1c4ca1e2296aadbaaa880bfcbb
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 16 03:40:54 2014 +0000
+
+    update wiki
+
+commit 8d8aa9ab3f2acddaacfd525d708e88a339eaf7a7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 15 22:51:20 2014 +0000
+
+    update wiki
+
+commit d52e6c45d55f935c4cbb2dbab6b0a1f18a500ff6
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 15 22:34:49 2014 +0000
+
+    minor fixes
+
+commit 5b87f7f006a32f46b0849366820682aa5bdac4d2
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 15 18:02:36 2014 +0000
+
+    polish html output style
+
+commit 4b403a93399665ead1a2088598c0b2a23f3e8132
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 15 15:58:42 2014 +0000
+
+    more clean up of code
+
+commit 8a9d882e5074b3880c5e9efdae13ba22ea4f7e56
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 15 04:34:50 2014 +0000
+
+    clean up codes
+
+commit 4432a653e6031bac4067ba3ef3c2d8f7e85cd695
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 11 21:56:08 2014 +0000
+
+    progress percent added for linkage pipeline
+
+commit 060d1563a0f702cb78fd299395c489bfb9ef9649
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 11 15:11:46 2014 +0000
+
+    handle freq
+
+commit 6bb4f702978d6f04f5ed088ec3861d2ab3b8146a
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 11 15:00:43 2014 +0000
+
+    allow non zero return code from fastlink
+
+commit 02da0ae215a02108b1d533f19bc3cac5d9f55dc7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 22:56:50 2014 +0000
+
+    add script to build binary release
+
+commit d33d18e6ac11346396b85450abfd3f4345b388c4
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 21:27:56 2014 +0000
+
+    update doc
+
+commit a996a53d4a38dd94ceed0da20cfe84d9f142eccb
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 18:56:49 2014 +0000
+
+    update doc
+
+commit 8716cf14ac9576235b06a2141db22d66cc76f481
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 16:38:14 2014 +0000
+
+    minor fix
+
+commit a37fc8f1fe2eb92655864da41a922d5904dab2ff
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 02:54:54 2014 +0000
+
+    accept genemap.txt change
+
+commit 3bb5410db90fee16780dc9d14e1550fa6675d9c6
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 00:30:00 2014 +0000
+
+    add genemap_cleaned.txt
+
+commit 73f9d56c821a71793f0ed1d25af7c0b124941dab
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 10 00:29:02 2014 +0000
+
+    cM_genemap_cleaned.txt is new genetic position file for genes
+
+commit 5dbf5f4b12f58bdd2c77c470d499b01ea2b48571
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 22:20:48 2014 +0000
+
+    freq handling bug fixed
+
+commit 47ee92902a71df5bdeaea2a9c09b35cf7f6c36a1
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 22:17:48 2014 +0000
+
+    freq handle bug fixed
+
+commit 383e8172af31f1ea8ab71743ea707116492f0ba8
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 21:54:36 2014 +0000
+
+    freq handle bug fixed
+
+commit 720ea9c1a8a3248a0c6154e03fec5187ee6f3628
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 21:35:00 2014 +0000
+
+    Runner bugs fixed
+
+commit 048f4456ab7c5ee7ca35466a87bd9c2487423125
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 21:31:32 2014 +0000
+
+    genemap.txt updated
+
+commit 0e095e9398a3defb4365aa230c3dd333252c6571
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 15:56:53 2014 +0000
+
+    add --quiet argument
+
+commit 90a392d06cf82c12db9ecc0b24cbb4327aad241d
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 9 03:48:45 2014 +0000
+
+    update documentation
+
+commit 69c9f0c4e401cb2f2b920062f4a1aab2b1ccf950
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 8 23:33:12 2014 +0000
+
+    update wiki and interface
+
+commit b27174dfe61f1a053d3d09c11a34607096f71355
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 8 16:33:35 2014 +0000
+
+    Simlation in cluster
+
+commit c019d9976f91a4c55c290c84b2f8996c88b0bf60
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 7 20:37:11 2014 +0000
+
+    fix critical bug in simulation script
+
+commit f4ffeba62dd0e119a9e6bfe71bbab795dd6e7da8
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 7 18:29:43 2014 +0000
+
+    fix stupid bu
+
+commit 59f313740ca7be70580da05f2f9b123b0e0a0f17
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Apr 7 17:04:05 2014 +0000
+
+    more fix to simulation script
+
+commit c6f7f2765f316833aefc54d58094b04f2e157b3d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 21:39:43 2014 +0000
+
+    update manuscript and documentation
+
+commit b54c573fdb74a8d29afa660278f5c79c2381ba7d
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 20:37:10 2014 +0000
+
+    add symbolic link script
+
+commit 5a19a3edcffe438ed4f82e96b72c2bebefcc6d4a
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 19:29:02 2014 +0000
+
+    modified blueprint
+
+commit fe8a31bc8703f93275b2e8008fd396dec17d9f32
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 19:12:44 2014 +0000
+
+    update simulation data
+
+commit c6bdab426a7ec4e060e7438251cb30cb6966111a
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 19:10:23 2014 +0000
+
+    sorted data
+
+commit e86f1f90f6a9811b39da3464f44bbe0669d1d75e
+Author: kb <kb@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 17:24:17 2014 +0000
+
+    data daihang
+
+commit f21cc3373809c47e72bd5ea489f909463959734b
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 16:47:54 2014 +0000
+
+    minor fix to temp dir
+
+commit 4cea8aa700d7e151631c86fac7595eddd21f4e5e
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 14:18:51 2014 +0000
+
+    minor fix
+
+commit f135019b9895fcdec80a47a79f000d3cf9a326e1
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Apr 4 04:43:02 2014 +0000
+
+    fix simulation script: concept was wrong for allelic het and compound recessive\!
+
+commit 07b90c5d89fdcdc04ea208bb58aa7176018a8171
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 3 22:15:08 2014 +0000
+
+    add power plot script and results
+
+commit 502b594b80ba298c3750740cf86387ad21976073
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 3 18:37:06 2014 +0000
+
+    initial simulation result data
+
+commit 5f62e5f95becc2ee7cc973f8abe4e3cf9d0e89d7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 3 03:09:59 2014 +0000
+
+    update MS and simulation
+
+commit 7852cac9b1117470360937c0ab95766e0d377089
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Apr 3 03:09:02 2014 +0000
+
+    disable plot if --output-entry is zero
+
+commit acb67b942ce37287d63974f7ff2d0c18afe9add2
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 22:23:30 2014 +0000
+
+    update simulation scrhip
+
+commit 6c2eeb4dbe6cdb4e927348afde5a4c0f2e683c96
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 22:23:13 2014 +0000
+
+    minor bug fix
+
+commit 86a8daa5b8523de41d2a76d62faabbed35d5932b
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 20:59:39 2014 +0000
+
+    Empty dir bug fixed
+
+commit e22dd2e77cb595ab1bea6ceb1db19c7a8fc38530
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 20:25:39 2014 +0000
+
+    tempdir option
+
+commit b7676ee4b7f2c85ca461cbba65b88dcb2a26eca6
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 19:43:36 2014 +0000
+
+    fix env.error exit behavior
+
+commit aa88b9fcc0e662e5bac02c22914b20d6d37da656
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 19:30:34 2014 +0000
+
+    rm linkmap lodscore
+
+commit 33e455afa76e466a4493756900007eaa29a473ee
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 19:28:19 2014 +0000
+
+    bug fixes
+
+commit 404cd38dfb806a0684d3a95d7f871da1a2409515
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 18:21:21 2014 +0000
+
+    indentation bug
+
+commit 324c56294da5c5f22c1ef0aac3040b86108d941f
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Apr 2 04:13:40 2014 +0000
+
+    reimplement tmp dir mechanism ot allow for multiple instances of the program
+
+commit e6d5301f73bdecb02b106a430473b81bf8227533
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 23:23:54 2014 +0000
+
+    add additional parameter single_markers
+
+commit f89016ffc5b05f4ea8f925c6ee38a65ff6f8ed5e
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 23:15:05 2014 +0000
+
+    implemented cache
+
+commit 208bf4ff5c37b74509cfd7eeb19b1d47d911435b
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 21:30:10 2014 +0000
+
+    tmp_cache
+
+commit da70e41ba722b03c0e1ea391ccbe99c5c2f9cff3
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 21:16:27 2014 +0000
+
+    env output
+
+commit 5be0027a1bd289753be29fc222f60d419f870d0b
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 19:42:49 2014 +0000
+
+    handle bp
+
+commit 3e2ecdd5d1202102e3bcc68ce1e2f9b1e4a3bb03
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 19:22:40 2014 +0000
+
+    minor fixes, still not working
+
+commit 24a16ef9ec803811f13ff9b9c8af1a51c13b1e6e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 19:13:58 2014 +0000
+
+    suibian
+
+commit ed887323b2713c89ff29096ed44fbe2e5a561617
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 18:57:09 2014 +0000
+
+    implement SVN coding
+
+commit 11478179e8216bdd51037e7d3a637278f49a7acc
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 18:20:49 2014 +0000
+
+    fix tmp_log
+
+commit 1f5edb9414dec5df7dd847a26559ac3858d5c55e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 16:38:32 2014 +0000
+
+    rm tmp_log from checkParams
+
+commit b90112bb5e69f2dd2d186493e730b9e4e11258af
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 16:32:36 2014 +0000
+
+    change tmp_log filename
+
+commit 204ce7252eee0ce144df61566e0b9a870efc2691
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 15:02:26 2014 +0000
+
+    improve runcommand function
+
+commit 2063b9f0cb5f52dfe260062337c571749f43b7e9
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 03:57:50 2014 +0000
+
+    implement cache for parameters and for sections
+
+commit f779e44af59a0671e33f58d728a9d0db5141944c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Apr 1 01:08:00 2014 +0000
+
+    delete old resources
+
+commit 84b4f77d70287f6e9710136c44de2735abbd5b2a
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 23:43:25 2014 +0000
+
+    update interface
+
+commit d20e556929d88ee48cc52a2d9694407a5c4465b3
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 23:15:04 2014 +0000
+
+    fix interface, change project/software name requestd by Suzanne
+
+commit de983d94d7d86549ace05ea052097b3f9f9c64b2
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 20:30:54 2014 +0000
+
+    report and bug fixed
+
+commit 0fe1ab7521c7e552f5f138a3223d5cbf9be76614
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 20:26:24 2014 +0000
+
+    update setup.py
+
+commit 70f313ee5e94cdeb827cfe6bb8be45ad32527a42
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 19:38:40 2014 +0000
+
+    implement MAF cutoff switch
+
+commit 4e3641bf9b647e7d3ede1b4775ff9b55ccda0085
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 31 04:58:42 2014 +0000
+
+    implement collapsing by LD
+
+commit bdd86bb8300fe094a068a63b24be18eeedc61fa5
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Mar 28 22:29:14 2014 +0000
+
+    a minor touch
+
+commit e7df26a6b85313690a8dc7cbe7b6b773e5d69a43
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 25 17:24:49 2014 +0000
+
+    bug fixed
+
+commit c0d45eed42759f771365ded39fed81b5d2bb2fb4
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 25 17:21:50 2014 +0000
+
+    lods table html added
+
+commit 946342ecddad73d180889a3cbaa99affad2e8e92
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 25 15:05:48 2014 +0000
+
+    add theta range option
+
+commit 298b22d488387e0f4a73c1d1a8b4483d8fdbf20d
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 24 20:35:13 2014 +0000
+
+    update simulator.py
+
+commit a742c619975267a84271b76c2bf933fa22c533f2
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 24 16:32:35 2014 +0000
+
+    use by project stracture
+
+commit 103bf5377446c5fc3b321e0372aa14b37761fcca
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 24 14:49:08 2014 +0000
+
+    Save point
+
+commit 23c3ed7d22d8f3d290f5e8998ad6f732b04e9843
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Mar 21 17:26:26 2014 +0000
+
+    minor fixes to simulator.py
+
+commit cbfa367e89362230ee9e996886c69b564f0192cc
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Mar 21 17:13:37 2014 +0000
+
+    finish up simulator.py
+
+commit ed6201eff45fb52bb795664e974c7fd6d3d19638
+Author: bill <bill@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 20 23:42:34 2014 +0000
+
+    update simulator
+
+commit 3ecc440dd3a94e70a64545a8848ac5a57890f002
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 20 21:27:46 2014 +0000
+
+    update simulator.py
+
+commit 02bb2d0d09af3002722776f8fbec19748b4fddfa
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 20 21:27:27 2014 +0000
+
+    update simulator.py
+
+commit cfe6f0880f883077264672d49589d32910cd1e87
+Author: bill <bill@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 20 03:45:43 2014 +0000
+
+    keep implementing simulator.py
+
+commit f9ccf3fb1bc04c21bae9f52d6025b1c26c487f26
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 19 21:01:24 2014 +0000
+
+    further polish to manuscript; now waiting for simulation studies
+
+commit 83479f4c1ce664d52f6f1586b63f4bc37e8e6b31
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 19 19:24:07 2014 +0000
+
+    upload data for FigS1
+
+commit c2d00bbec0f3e3bbc0bbeb13f33a044f55ce85d2
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 19 16:50:43 2014 +0000
+
+    update supplemental
+
+commit a1d8f94e8b96624391f5dd302c61e389ae04d661
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 18 23:36:23 2014 +0000
+
+    figure S1 complete
+
+commit e683db42008596634f37df3f9d551309fae09ec7
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 18 22:01:55 2014 +0000
+
+    update simulator.py
+
+commit cb57e41018d3cee5e5293236d8c28544af603886
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 18 15:25:44 2014 +0000
+
+    hlod added
+
+commit 9c32517492b6e18d05eedb8b45eadc714b6c0175
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 18 03:52:37 2014 +0000
+
+    upload Fig S1, partially complete
+
+commit 62cafcc3f6990820e852dfe016c00709eaad1f73
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 17 23:20:41 2014 +0000
+
+    minor changes on ms
+
+commit 5c8a664167cd3367a99640649d84598aa090b520
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 17 20:46:51 2014 +0000
+
+    introduction complete
+
+commit 43bc815010c5deb046aca204650a85c65c6de16c
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 17 19:42:51 2014 +0000
+
+    update simulator.py
+
+commit ca6eb145fbd8306f413e943bbe4f9f6f14a3292c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Mar 14 22:49:04 2014 +0000
+
+    wrap up discussion
+
+commit b3bdc4c1953fa6303ba36c2d1fc64f9a385c8891
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 13 23:33:51 2014 +0000
+
+    ms update, method part roughly finished
+
+commit 37386db24658e0cef61fd7aa92baa4617ddc78f9
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 12 14:33:38 2014 +0000
+
+    update ms
+
+commit 57c16912d5d70160b4d68e9dd6ff8a6fbc581db2
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 6 20:38:00 2014 +0000
+
+commit a94cc7b5df22c2d187d0a095a8ce315f90f796fa
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 6 20:35:16 2014 +0000
+
+    update /simulation/simulator.py
+
+commit bc3c1bb85885af5814e4e028c0e71e2685b98431
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Mar 6 00:08:16 2014 +0000
+
+    fix frequency file indexing bug
+
+commit 4f80f0377e9a5e3321df64f9b5a722c878d408a4
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 5 22:53:56 2014 +0000
+
+    minor bug fixed: == 0, not == 0
+
+commit e075e7d7f2bbe716d3372baae21c8dd8ec6e891d
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 5 22:43:19 2014 +0000
+
+    update simulator.py
+
+commit e47809ac1249de3d3e0186ffb852834f7b6a96c2
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 5 21:55:40 2014 +0000
+
+    minor bug fixed: data[s] -> data[s][0]
+
+commit b2781747ccc3d7aa4ba02cc5e28151a6e722846d
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 5 21:54:11 2014 +0000
+
+    add progressbar-2.3.tar.gz file under /simulations folder
+
+commit 4f590c5b35637acc2e47578d83477a6d4dcf5d33
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Mar 5 17:39:09 2014 +0000
+
+    accomendate format change in cstatgen output
+
+commit 3741fd0504a2bf21594379291b8a4ccb2b8342af
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 20:35:56 2014 +0000
+
+    Runner functionality completed
+
+commit d0d1251cf2df1caeb7e91891ffbd8515790bdeac
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 20:34:40 2014 +0000
+
+    args.runner added
+
+commit b5b169ae87b5dc022aa49ec0f823ad54ee97bb4e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 20:34:27 2014 +0000
+
+    args.runner added
+
+commit a6360fb41bc5b6446855dd99912be034cb22441d
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 20:19:16 2014 +0000
+
+    throw error message instead of trying to fix tfam file
+
+commit 5c56023c491041edeeaf3c766460d8e2bea736cb
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 06:18:06 2014 +0000
+
+    implement MAF from VCF; fix sort family algorithm
+
+commit 9d2fd8a889a1dd511c591849047bb81ec8213429
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 00:46:21 2014 +0000
+
+    fix division by zero error
+
+commit a1af9d9bb6d4dc827e1758bd7d1f666989a23aa7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Mar 4 00:35:24 2014 +0000
+
+    calculation of super marker frequency based on variant's founder maf
+
+commit c325e6ee8ae0698b8d34de2e836fc4f092c53d81
+Author: biao <biao@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Mar 3 23:02:31 2014 +0000
+
+    update simulation folder
+
+commit ef6f42f132773de21cd778631471b4e3cfb587da
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 28 23:51:17 2014 +0000
+
+    fix bug for the temp haplotype container in MarkerMaker class
+
+commit d2ed296b1d4739ebcafef4a5ea5b9b8e1dbac12d
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 28 05:51:59 2014 +0000
+
+    minor fixes
+
+commit 8f4ad75c5f9f0e680eaafdc9070ab2a22be2fd06
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Feb 27 23:55:58 2014 +0000
+
+    separate haplotyping with recoding
+
+commit 7838e1e0b59162ca69b04addaff68aebbe2c0dad
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 26 22:55:25 2014 +0000
+
+    wrap up today's work. code is broken
+
+commit f03718e2e441ed267eda61c9a6c064a4aa2e7a7c
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Feb 25 18:22:58 2014 +0000
+
+    format_mlink is working now. can properly handle the order of family members
+
+commit d75b3c17ae52806a289a977be14c90a8f0946f98
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 24 21:21:46 2014 +0000
+
+    Runner.py added
+
+commit db57f1295196917fa93810683dffb2bcdc1ad614
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Feb 20 00:39:16 2014 +0000
+
+    add chrom prefix option; clean up code
+
+commit ad43563dae1cb2aa6a03598ab897935ba68a076e
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 19 23:47:38 2014 +0000
+
+    disable X11 backend
+
+commit ce201b27ca8a49223fb611a4e26a0df8ed8602ad
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 19 23:34:28 2014 +0000
+
+    trick merlin into computing families with samples having missing genotypes
+
+commit 52ded1cc8be7a9e690ac8efc6510c4e04ab7c901
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 19 22:51:30 2014 +0000
+
+    partly handle person without genotyping info
+
+commit e382870e07b33b2c23ddcdd5bb9fdbdb4f9b5565
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 19 21:03:27 2014 +0000
+
+    no comments
+
+commit 5abe6bd97185c9823cd83dd5763add45a89e7a71
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 19 21:02:27 2014 +0000
+
+    add heatmap
+
+commit 16a584a3e8c3cd85d517cd4319ece263cddb5c35
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Feb 18 05:51:48 2014 +0000
+
+    move cpp implementations to a standalone library cstatgen
+
+commit 9846002c31dfaafe58c46f212d2c9a2ac1db6286
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 17 19:41:10 2014 +0000
+
+    resource dir
+
+commit a50b17985a7126b02ed695f484af577b0ffe83a9
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 17 19:37:59 2014 +0000
+
+    minor bug fixed
+
+commit f66da99a654a1dbcdaf16369c5167f015464a86c
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 17 19:03:52 2014 +0000
+
+    minor bug in output fixed
+
+commit fb1ea521014bf23171603270f0fa751e1e7a8328
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 14 22:47:28 2014 +0000
+
+    added link args
+
+commit a22c6c7a6e523d38f04fc9971383f2ae2eb4e846
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 14 17:10:09 2014 +0000
+
+    move vcf extractor and parser from tabix+python to cpp
+
+commit e3d1265ccd9080c0cdd56223205e20ad57ad381d
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 14 05:39:47 2014 +0000
+
+    complete VCFstream. ready to drop tabix backbone
+
+commit 976808439a93bbb1a35e20a150ea5d1e35769ea7
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Feb 14 00:24:31 2014 +0000
+
+    implement VCF stream, pending tests
+
+commit a5194adf92aea5f3896539c30b57be74b03f9164
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Feb 13 20:28:13 2014 +0000
+
+    resources added
+
+commit e46a9d7d0622d65bd7036d7754f637dee029277b
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Feb 13 06:16:04 2014 +0000
+
+    add libstatgen; replace some library files that merlin uses to those from libstatgen, hoping no bugs occur ...
+
+commit 63bc58f606c6f368f956a34b84babd4866ff43fd
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Feb 6 15:28:07 2014 +0000
+
+    delete resource folder
+
+commit 4a40d04e203b48e35de70d072fbfd508309ff1bf
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Feb 5 17:58:12 2014 +0000
+
+    add power calculation script
+
+commit 26106d3fadf0ff5a727fddbde873bf964b69300e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 3 22:13:53 2014 +0000
+
+    deteled dups in genemap.txt; added runMlink.pl; added binaries
+
+commit ff60ab0dc969ffec5500f3bf4d821703a3091a40
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Feb 3 22:01:15 2014 +0000
+
+    deleted duplicates in genemap.txt, add runMlink.pl
+
+commit 726575c712a6e5a1b0501ca273040acd365b4639
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Sun Feb 2 03:40:03 2014 +0000
+
+    Properly code recombination events. Now each supermarker are divided to sub-units by recombination events if applicable
+
+commit 9b2a9a80818db6dee6688953b0c8c814ede32668
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 31 23:52:49 2014 +0000
+
+    more fixes to rem leak
+
+commit 307334675485752498c86b6bf0f1e7177d2e5298
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 31 05:55:12 2014 +0000
+
+    Finally, it works\!
+
+commit 346288a397dd519b0aa24b459bb49ed531bfdc01
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 31 04:58:58 2014 +0000
+
+    keep trying the mem issue ...
+
+commit 0c6646e49a824d45adb3c81c4cb89fa7c1a16cca
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Jan 30 23:11:24 2014 +0000
+
+    fixes on interface. still having merlin's ram leak issue
+
+commit f3349c52220913933efce4fb297f42a385ec9e7e
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Jan 30 06:59:49 2014 +0000
+
+    Properly handle within family recombination events
+
+commit 82a2ccb6de38307cffcb9fac9759db7923ca035c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 29 23:35:56 2014 +0000
+
+    commit before going home
+
+commit a772a036bf35cf4c79135003464ce4557ffddeed
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 29 22:45:12 2014 +0000
+
+    minor fixes; keep debugging
+
+commit b871629bf4af12a9b274745fc5cfc5b32d62919c
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 29 06:39:53 2014 +0000
+
+    add a comment
+
+commit 79b5d8450fc50d92f8f5e69b259d8b4e9735cef1
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 29 06:18:32 2014 +0000
+
+    various fixes; still leaving doubts on Core.cpp; and output results
+
+commit 49c7653ec007e0d03d8f57b3431c6be9218415ef
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jan 28 23:51:36 2014 +0000
+
+    roughly finished the new CHP implementation. initial tests passed
+
+commit 06b1b3b61bbe4fa7f219fc6f346acb850c4b43b4
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jan 28 21:07:49 2014 +0000
+
+    write it a package
+
+commit 359f7e2dc9750cf813de703b13f9ccb152b4a99b
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jan 28 15:05:28 2014 +0000
+
+    changes to file structure
+
+commit 22218293ec84006cfa625aee6480aa7c89bf3648
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jan 28 03:56:46 2014 +0000
+
+    CHP complete; ready to incorporate to python code
+
+commit d2f54515ec74585f4c85c54313fdd468769d14c9
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 23:04:57 2014 +0000
+
+    start to implement the collapsed hp method in c++
+
+commit ece39c730bf92f24b02af7d5fe92feedd3f1e094
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 22:20:09 2014 +0000
+
+    Mendelian error check done
+
+commit c415a9678f8b0ca540f613d667436ee35a4c9fa0
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 20:38:39 2014 +0000
+
+    update demo using chp class
+
+commit f50d5c5ec4eabbeab3eec7cd4ef7648b2690a504
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 18:18:11 2014 +0000
+
+    Merlin hack complete; now time to apply the hack
+
+commit c611b7ad31aca380614c147323f1d26a7c4a2039
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 05:54:34 2014 +0000
+
+    add a log file to track source code change in Merlin
+
+commit 0a7b2d3e03ae3592de69b99c5827d3f96059e272
+Author: min <min@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Mon Jan 27 05:50:05 2014 +0000
+
+    update Merlin demo: haplotyping now works and is independent of text input; nothing need to be changed in Merlin's codes; still need to figure out how to get rid of text output
+
+commit 257caf9166d15962186579cdf4e057ad8e30cf26
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Sat Jan 25 00:00:47 2014 +0000
+
+    add Merlin source code
+
+commit fd382c66a2e04657f310a3de3bbd9edefca7726e
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 24 21:24:25 2014 +0000
+
+    perl scripts updated
+
+commit bafb62185f6a360e0311359430a13df0b1a56a49
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 24 21:23:52 2014 +0000
+
+    test plot function
+
+commit 198ac147a1493b5f89327ba1452daaa5e856fcb0
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 24 18:49:28 2014 +0000
+
+    updated algorithm
+
+commit 1f13423a8ee2f2d84e4df0890998a93abea636ac
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 24 00:15:41 2014 +0000
+
+    update of today
+
+commit 33dde817cd6827e189f220e493e30f9be7ec0a35
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Thu Jan 23 22:40:56 2014 +0000
+
+    add ms for methods
+
+commit c0664823a60a48856ea118e8c3592d06f41a5d81
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 15 17:28:05 2014 +0000
+
+    change plink to transpose.pl
+
+commit ea5cd1af3a5316414aef55769da544d5d4f2ea1c
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 15 16:06:23 2014 +0000
+
+    update documentation
+
+commit cc8b6626e16654641b2fb3e0c21554f480fd43d7
+Author: zhangdi <zhangdi@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Wed Jan 15 00:07:44 2014 +0000
+
+    merge with Di's revisions
+
+commit b7b17892d2ff58d3752238839920345565b65df3
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Tue Jan 14 23:22:56 2014 +0000
+
+    finish chp method
+
+commit a0b1618db66a8d966dd4baf9fab795b874a74d73
+Author: gw <gw@493babdc-ab97-468b-a2ee-949ea25b5092>
+Date:   Fri Jan 10 23:57:07 2014 +0000
+
+    initial upload; code not working yet

@@ -1,0 +1,106 @@
+#!/usr/bin/python2.7
+# Copyright (c) 2013 - 2014, Gao Wang <gaow@uchicago.edu> and Di Zhang <di.zhang@bcm.edu>
+# GNU General Public License (http://www.gnu.org/licenses/gpl.html)
+
+from argparse import ArgumentParser, ArgumentTypeError, RawDescriptionHelpFormatter, SUPPRESS
+import platform
+from SEQLinkage import HOMEPAGE
+from SEQLinkage.Utils import env, getColumn
+from SEQLinkage.Core import main
+import os
+
+class Args:
+    def __init__(self):
+        self.parser = ArgumentParser(
+        description = '''\t{}, linkage analysis using sequence data\n\t[{}]'''.\
+        format(env.proj, env.version),
+        formatter_class = RawDescriptionHelpFormatter, 
+        prog = env.prog,
+        fromfile_prefix_chars = '@', add_help = False,
+        epilog = '''\tCopyright (c) 2013 - 2014 Gao Wang <gaow@uchicago.edu> and Di Zhang <di.zhang@bcm.edu>\n\tDistributed under GNU General Public License\n\tHome page: {}'''.format(HOMEPAGE))
+        self.getEncoderArguments(self.parser)
+        self.getIOArguments(self.parser)
+        self.getLinkageArguments(self.parser)
+        self.getRuntimeArguments(self.parser)
+        self.parser.set_defaults(func=main)
+
+    def isalnum(self, string):
+        if not os.path.basename(string).isalnum():
+            raise ArgumentTypeError("Illegal path name [%]: must be alphanumerical string." % string)
+        return string
+
+    def get(self):
+        return self.parser.parse_args()
+
+    def getEncoderArguments(self, parser):
+        vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
+        vargs.add_argument('--bin', metavar = "FLOAT", default = 0.8, type = float,
+                           help='''Defines theme to collapse variants. Set to 0 for "complete collapsing",
+        1 for "no collapsing", r2 value between 0 and 1 for "LD based collapsing" and other integer values for customized
+        collapsing bin sizes. Default to 0.8 (variants having r2 >= 0.8 will be collapsed).''')
+        vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
+                           help='''Blueprint file that defines regional marker
+        (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
+        vargs.add_argument('--single-markers', action='store_true', dest = "single_markers",
+                           help='''Use single variant markers. This switch will overwrite
+        "--bin" and "--blueprint" arguments.''')
+
+    def getIOArguments(self, parser):
+        vargs = parser.add_argument_group('Input / output options')
+        vargs.add_argument('--fam', metavar='FILE', required=True, dest = "tfam",
+                           help='''Input pedigree and phenotype information in FAM format.''')
+        vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
+        vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
+        vargs.add_argument('--freq', metavar='INFO', help='''Info field name for allele frequency in VCF file.''')
+        vargs.add_argument('-c', '--maf-cutoff', metavar='P', type=float, dest = "maf_cutoff",
+                           help='''MAF cutoff to define "common" variants to be excluded from analyses.''')
+        vargs.add_argument('--chrom-prefix', metavar='STRING', dest = 'chr_prefix',
+                           help='''Prefix to chromosome name in VCF file if applicable, e.g. "chr".''')
+        vargs.add_argument('-o', '--output', metavar='Name', type = self.isalnum,
+                           help='''Output name prefix.''')
+        vargs.add_argument('-f', '--format', metavar = 'FORMAT', nargs='+',
+                           choices = ["LINKAGE", "MERLIN", "MEGA2", "PLINK"], default=['LINKAGE'],
+                           help='''Output format. Default to LINKAGE.''')
+        
+    def getRuntimeArguments(self, parser):
+        vargs = parser.add_argument_group('Runtime arguments')
+        vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
+        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = 2,
+                           help='''Number of CPUs to use.''')
+        vargs.add_argument('--tempdir', metavar='PATH',
+                           help='''Temporary directory to use.''')
+        vargs.add_argument('--cache', action='store_false', dest = 'vanilla',
+                           help='''Load cache data for analysis instead of starting afresh.''')
+        vargs.add_argument('-q', '--quiet', action='store_true', help='Disable the display of runtime MESSAGE.')
+        vargs.add_argument('--debug', action='store_true', help=SUPPRESS)
+        vargs.add_argument('--no-save', action='store_true', dest='no_save', help=SUPPRESS)
+
+    def getLinkageArguments(self, parser):
+        vargs = parser.add_argument_group('LINKAGE options')
+        vargs.add_argument('-K', '--prevalence', metavar='FLOAT', type=float,
+                           help='Disease prevalence.')
+        vargs.add_argument('--moi', metavar='STRING', dest = "inherit_mode",
+                           # choices=['AD', 'AR', 'Xlinked', 'Y'],
+                           choices=['AD', 'AR'],
+                           help='Mode of inheritance, AD/AR: autosomal dominant/recessive.')
+        vargs.add_argument('-W', '--wt-pen', metavar='FLOAT', type=float, dest = "wild_pen",
+                           help='Penetrance for wild type.')
+        vargs.add_argument('-M', '--mut-pen', metavar='FLOAT', type=float, dest = "muta_pen",
+                           help='Penetrance for mutation.')
+        vargs.add_argument('--theta-max', metavar='FLOAT', type=float, dest = "theta_max", default = 0.5,
+                           help='Theta upper bound. Default to 0.5.')
+        vargs.add_argument('--theta-inc', metavar='FLOAT', type=float, dest = "theta_inc", default = 0.05,
+                           help='Theta increment. Default to 0.05.')
+        if ((platform.system() == 'Linux' or platform.system() == 'Darwin') and platform.architecture()[0] == '64bit'):
+            vargs.add_argument('--run-linkage', action='store_true', dest = "run_linkage",
+                           help='''Perform Linkage analysis using FASTLINK program.''')
+            vargs.add_argument('--output-entries', metavar='N', type=int, dest = "output_limit", default = 10,
+                           help='Write the highest N LOD/HLOD scores to output tables. Default to 10.')
+        
+if __name__ == '__main__':
+    try:
+        args = Args().get()
+        args.func(args)
+    except Exception as e:
+        raise
+        env.error("{}".format(e))
