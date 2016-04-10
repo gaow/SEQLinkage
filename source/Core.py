@@ -2,7 +2,6 @@
 # Copyright (c) 2013, Gao Wang <gaow@uchicago.edu>
 # GNU General Public License (http://www.gnu.org/licenses/gpl.html)
 from __future__ import print_function
-from SEQLinkage import HOMEPAGE
 from SEQLinkage.Utils import *
 from SEQLinkage.Runner import *
 from multiprocessing import Process, Queue
@@ -561,11 +560,12 @@ class EncoderWorker(Process):
 def main(args):
     '''the main encoder function'''
     checkParams(args)
-    downloadResources([('{}/uploads/genemap.txt'.format(HOMEPAGE), env.resource_dir),
-                       ('{}/uploads/{}/mlink'.format(HOMEPAGE, platform.system().lower()), env.resource_bin),
-                       ('{}/uploads/{}/unknown'.format(HOMEPAGE, platform.system().lower()), env.resource_bin),
-                       ('{}/uploads/{}/makeped'.format(HOMEPAGE, platform.system().lower()), env.resource_bin),
-                       ('{}/uploads/{}/pedcheck'.format(HOMEPAGE, platform.system().lower()), env.resource_bin)])
+    download_dir = 'http://bioinformatics.org/spower/download/.private'
+    downloadResources([('{}/genemap.txt'.format(download_dir), env.resource_dir),
+                       ('{}/{}/mlink'.format(download_dir, platform.system().lower()), env.resource_bin),
+                       ('{}/{}/unknown'.format(download_dir, platform.system().lower()), env.resource_bin),
+                       ('{}/{}/makeped'.format(download_dir, platform.system().lower()), env.resource_bin),
+                       ('{}/{}/pedcheck'.format(download_dir, platform.system().lower()), env.resource_bin)])
     if args.no_save:
         cache = NoCache()
     else:
