@@ -6,7 +6,7 @@
 
 NAME = "SEQLinkage"
 import sys, os
-from source import VERSION, HOMEPAGE
+from source import VERSION
 if not sys.version_info[0] == 2:
     sys.exit("Python 3 is not supported for {}.".format(NAME))
 
@@ -16,7 +16,7 @@ except ImportError:
     from source.Utils import downloadURL
     from distutils.dir_util import remove_tree
     import tempfile
-    cstatgen_url = "{}/uploads/cstatgen.tar.gz".format(HOMEPAGE)
+    cstatgen_url = "http://bioinformatics.org/spower/download/.private/cstatgen.tar.gz"
     download_dir = tempfile.gettempdir()
     pkg = os.path.join(download_dir, "cstatgen.tar.gz")
     pkg_dir = os.path.join(download_dir, "cstatgen")
