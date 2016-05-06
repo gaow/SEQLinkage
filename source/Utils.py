@@ -432,7 +432,6 @@ def connected_components(lists):
 
 def listit(t):
     return list(map(listit, t)) if isinstance(t, (list, tuple)) else t
-            
 
 ###
 # Supporting functions / classes for Core.py 
@@ -579,7 +578,7 @@ class Cache:
         '''Add files to cache'''
         if source_dir is None:
             source_dir = self.cache_dir
-        with ZipFile(self.cache_name, mode) as f:
+        with ZipFile(self.cache_name, mode, allowZip64 = True) as f:
             if source_dir != self.cache_dir:
                 zipdir(source_dir, f, arcroot = arcroot)
             else:
