@@ -607,6 +607,7 @@ def main(args):
         else:
             # load blueprint
             try:
+                env.log('Loading marker map from [{}] ...'.format(args.blueprint))
                 with open(args.blueprint, 'r') as f:
                     regions = [x.strip().split() for x in f.readlines()]
             except IOError:
