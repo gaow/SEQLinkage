@@ -23,10 +23,10 @@ def mkpath(directory):
 class Environment:
     def __init__(self):
         self.__width_cache = 1
-        # About the program 
+        # About the program
         self.proj = "SEQLinkage"
         self.prog = 'seqlink'
-        self.version = VERSION 
+        self.version = VERSION
         # Runtime support
         self.resource_dir = os.path.expanduser('~/.{}'.format(self.proj))
         self.resource_bin = os.path.join(self.resource_dir, 'bin')
@@ -36,7 +36,7 @@ class Environment:
         self.path = {'PATH':"{}:{}".format(self.resource_bin, os.environ["PATH"])}
         self.debug = False
         self.quiet = False
-        # File contents 
+        # File contents
         self.build = 'hg19'
         self.delimiter = " "
         self.ped_missing = ['0', '-9'] + ['none', 'null', 'na', 'nan', '.']
@@ -475,7 +475,7 @@ def indexVCF(vcf, verbose = True):
             env.log("Generating index file for [{}] ...".format(vcf))
         runCommand('tabix -p vcf -f {}'.format(vcf))
     return vcf
-    
+
 def extractSamplenames(vcf):
     samples = runCommand('tabix -H {}'.format(vcf))[0].strip().split('\n')[-1].split('\t')[9:]
     if not samples:
@@ -521,7 +521,7 @@ class NoCache:
         pass
     def clear(self, pres = [], exts = []):
         pass
-    
+
 class Cache:
     def __init__(self, cache_dir, cache_name, params):
         self.cache_dir = cache_dir
@@ -529,7 +529,7 @@ class Cache:
         self.cache_info = os.path.join(cache_dir, '.info.' + cache_name)
         self.param_info = os.path.join(cache_dir, '.conf.' + cache_name)
         mkpath(cache_dir)
-        self.id = '.' 
+        self.id = '.'
         self.params = params
         self.infofiles = [params['vcf'], params['tfam'], params['blueprint']] if params['blueprint'] else [params['vcf'], params['tfam']]
         self.infofiles.append(self.cache_name)
@@ -542,7 +542,7 @@ class Cache:
 
     def setID(self, ID):
         self.id = "." + str(ID)
-        
+
     def check(self):
         if not os.path.isfile(self.cache_info) or not os.path.isfile(self.param_info + self.id):
             return False
@@ -567,9 +567,11 @@ class Cache:
             target_dir = self.cache_dir
         with ZipFile(self.cache_name) as f:
             if names is None:
+                mkpath(target_dir)
                 f.extractall(target_dir)
             else:
                 for item in f.namelist():
+                    mkpath(target_dir)
                     if any([item.startswith(x) for x in names]):
                         f.extract(item, target_dir)
 

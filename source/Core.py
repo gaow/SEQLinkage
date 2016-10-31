@@ -710,4 +710,4 @@ def main(args):
         html(args.theta_inc, args.theta_max, args.output_limit)
     else:
         env.log('Saving data to [{}]'.format(os.path.abspath(env.output)))
-        cache.load(target_dir = env.output, names = [fmt.upper() for fmt in args.format])
+        cache.load(target_dir = env.output)
