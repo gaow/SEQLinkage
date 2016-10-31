@@ -603,7 +603,7 @@ class Cache:
             except:
                 pass
         #
-        for pre, ext in itertools.product(pres, exts): 
+        for pre, ext in itertools.product(pres, exts):
             for fl in glob.glob(os.path.join(self.cache_dir, pre) +  "*" + ext): 
                 try:
                     os.remove(fl)
@@ -659,7 +659,7 @@ class TFAMParser:
         self.samples[info[1]] = info
         self.families_sorted[info[0]] = []
         if info[0] not in self.families:
-            self.families[info[0]] = [info[1]] 
+            self.families[info[0]] = [info[1]]
         else:
             if info[1] not in self.families[info[0]]:
                 self.families[info[0]].append(info[1])
@@ -681,7 +681,7 @@ class TFAMParser:
             self.families_sorted[famid] = self.__kahn_sort(famid)
         assert sorted(self.families_sorted[famid]) == sorted(self.families[famid])
         return self.families_sorted[famid]
-            
+
     def __kahn_sort(self, famid):
         '''algorithm first described by Kahn (1962); implemented by Di Zhang'''
         sorted_names = []
@@ -718,8 +718,8 @@ class TFAMParser:
 
     def __update_graph(self, g, info):
         if info[2] != "0" and info[3] != "0":
-            g[info[0]][info[2]].append(info[1]) 
-            g[info[0]][info[3]].append(info[1]) 
+            g[info[0]][info[2]].append(info[1])
+            g[info[0]][info[3]].append(info[1])
 
     def __parse(self, tfam):
         '''Rules:
@@ -745,7 +745,7 @@ class TFAMParser:
                 if line[1] in samples:
                     env.error("skipped line {} (duplicate sample name '{}' found!)".format(idx, line[1]))
                     continue
-                # collect sample line 
+                # collect sample line
                 samples[line[1]] = [line[0], line[1], line[2], line[3], line[4], line[5]]
                 # collect family member
                 self.__add_or_app(fams, line[0], line[1])
@@ -776,7 +776,7 @@ class TFAMParser:
                     # missing father, mask as zero
                     # samples[person[0]][2] = "0"
         #
-        # Remove trivial families 
+        # Remove trivial families
         #
         for k in fams.keys():
             if Counter(observedFounders[k]) == Counter(fams[k]):

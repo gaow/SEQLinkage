@@ -296,6 +296,7 @@ def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = 
         mkpath('{}/heatmap'.format(env.outdir))
     lods_fh = open('{}/heatmap/{}.lods'.format(env.outdir, basename(workdir)), 'w')
     hlods_fh = open('{}/heatmap/{}.hlods'.format(env.outdir, basename(workdir)), 'w')
+    famlods_fh = open('{}/heatmap/{}.family-lods'.format(env.outdir, basename(workdir)), 'w')
     genes = filter(lambda g: g in genemap, map(basename, glob.glob(workdir + '/*')))
     for gene in sorted(genes, key=lambda g: genemap[g]):
         lods = {}
@@ -375,9 +376,11 @@ def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = 
                             elif fam not in lods[theta] or lod > lods[theta][fam]:
                                 lods[theta][fam] = lod
         for theta in sorted(lods.keys()):
+            lods_fh.write('{} {} {} {}\n'.format(gene, ' '.join(map(str, genemap[gene])), theta, sum(lods[theta].values())))
+            for fam in lods[theta]:
+                famlods_fh.write('{} {} {} {} {}\n'.format(fam, gene, ' '.join(map(str, genemap[gene])), theta, lods[theta][fam]))
             res = minimize_scalar(hlod_fun(lods[theta].values(), -1), bounds=(0,1), method='bounded', options={'xatol':1e-8})
             a = res.x
-            lods_fh.write('{} {} {} {}\n'.format(gene, ' '.join(map(str, genemap[gene])), theta, sum(lods[theta].values())))
             hlods_fh.write('{} {} {} {} {}\n'.format(gene, ' '.join(map(str, genemap[gene])), a, theta, hlod_fun(lods[theta].values())(a)))
         with env.run_counter.get_lock():
             env.run_counter.value += 1
@@ -385,6 +388,7 @@ def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = 
             env.log('Linkage analysis for {:,d} units completed {{{:.2%}}} ...'.format(env.run_counter.value, float(env.run_counter.value)/env.success_counter.value), flush=True)
     lods_fh.close()
     hlods_fh.close()
+    famlods_fh.close()
     if to_plot:
         heatmap('{}/heatmap/{}.lods'.format(env.outdir, basename(workdir)), theta_inc, theta_max)
         heatmap('{}/heatmap/{}.hlods'.format(env.outdir, basename(workdir)), theta_inc, theta_max)
@@ -519,12 +523,12 @@ def html(theta_inc, theta_max, limit):
     <div id="hlods_heatmap">{}</div></p>
     </body>
     </html>"""
-    env.log('Generating Reports in html format ...', flush = True)
+    env.log('Generating Report in HTML format ...', flush = True)
     with open('{}/{}_Report.html'.format(env.outdir, env.output), 'w') as f:
         #t = Template(index)
         #c = Context({ "lods": lods_tbl })
         f.write(head + body.format(html_table('Lod', theta_inc, theta_max, limit), html_table('Hlod', theta_inc, theta_max, limit), html_img('lod'), html_img('hlod')))
-    env.log('Reports in html format generated\n', flush = True)
+    env.log('Report for [{}] is generated in HTML format\n'.format(env.output), flush = True)
 
 def html_img(ltype):
     chrs = ['{}'.format(i+1) for i in range(22)] + ['X', 'Y']

@@ -695,6 +695,7 @@ def main(args):
             env.log('Loading linkage analysis result from archive ...'.format(fmt.upper()))
             cache.load(target_dir = env.output, names = ['heatmap'])
         else:
+            env.log('Running linkage analysis ...'.format(fmt.upper()))
             run_linkage(args.blueprint, args.theta_inc, args.theta_max, args.output_limit)
             env.log('Linkage analysis succesfully performed for {:,d} units\n'.\
                     format(env.run_counter.value, fmt.upper()), flush = True)
