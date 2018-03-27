@@ -348,7 +348,8 @@ def zipdir(path, zipfile, arcroot = '/'):
     path = os.path.normpath(path)
     for root, dirs, files in os.walk(path):
         for f in files:
-            zipfile.write(os.path.join(root, f), arcname = os.path.join(arcroot, root[len(path) + 1:], f))
+            zipfile.write(os.path.join(root, f),
+                          arcname = os.path.join(arcroot, root[len(path) + 1:], f))
 
 def removeFiles(dest, exclude = [], hidden = False):
     if os.path.isdir(dest):
@@ -565,7 +566,7 @@ class Cache:
     def load(self, target_dir = None, names = None):
         if target_dir is None:
             target_dir = self.cache_dir
-        with ZipFile(self.cache_name) as f:
+        with ZipFile(self.cache_name, allowZip64 = True) as f:
             if names is None:
                 mkpath(target_dir)
                 f.extractall(target_dir)
