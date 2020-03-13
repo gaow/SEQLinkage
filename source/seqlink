@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-# Copyright (c) 2013 - 2014, Gao Wang <gaow@uchicago.edu> and Di Zhang <di.zhang@bcm.edu>
+# Copyright (c) 2013 - 2014, Gao Wang <wang.gao@columbia.edu> and Di Zhang <di.zhang@bcm.edu>
 # GNU General Public License (http://www.gnu.org/licenses/gpl.html)
 
 from argparse import ArgumentParser, ArgumentTypeError, RawDescriptionHelpFormatter, SUPPRESS
@@ -14,10 +14,10 @@ class Args:
         self.parser = ArgumentParser(
         description = '''\t{}, linkage analysis using sequence data\n\t[{}]'''.\
         format(env.proj, env.version),
-        formatter_class = RawDescriptionHelpFormatter, 
+        formatter_class = RawDescriptionHelpFormatter,
         prog = env.prog,
         fromfile_prefix_chars = '@', add_help = False,
-        epilog = '''\tCopyright (c) 2013 - 2014 Gao Wang <gaow@uchicago.edu> and Di Zhang <di.zhang@bcm.edu>\n\tDistributed under GNU General Public License\n\tHome page: {}'''.format(HOMEPAGE))
+        epilog = '''\tCopyright (c) 2013 - 2014 Gao Wang <wang.gao@columbia.edu>\n\tDistributed under GNU General Public License\n\tHome page: {}'''.format(HOMEPAGE))
         self.getEncoderArguments(self.parser)
         self.getIOArguments(self.parser)
         self.getLinkageArguments(self.parser)
@@ -61,7 +61,7 @@ class Args:
         vargs.add_argument('-f', '--format', metavar = 'FORMAT', nargs='+',
                            choices = ["LINKAGE", "MERLIN", "MEGA2", "PLINK"], default=['LINKAGE'],
                            help='''Output format. Default to LINKAGE.''')
-        
+
     def getRuntimeArguments(self, parser):
         vargs = parser.add_argument_group('Runtime arguments')
         vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
@@ -96,7 +96,7 @@ class Args:
                            help='''Perform Linkage analysis using FASTLINK program.''')
             vargs.add_argument('--output-entries', metavar='N', type=int, dest = "output_limit", default = 10,
                            help='Write the highest N LOD/HLOD scores to output tables. Default to 10.')
-        
+
 if __name__ == '__main__':
     try:
         args = Args().get()

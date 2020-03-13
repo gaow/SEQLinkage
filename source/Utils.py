@@ -1,5 +1,5 @@
 #!/usr/bin/python2.7
-# Copyright (c) 2013 - 2014, Gao Wang <gaow@uchicago.edu> and Di Zhang <di.zhang@bcm.edu>
+# Copyright (c) 2013 - 2014, Gao Wang <wang.gao@columbia.edu> and Di Zhang <di.zhang@bcm.edu>
 # GNU General Public License (http://www.gnu.org/licenses/gpl.html)
 from . import VERSION
 import sys, os, subprocess, shutil, glob, shlex, urlparse, re, hashlib, tempfile
@@ -101,7 +101,7 @@ class Environment:
         self.tmp_dir = self.__mktmpdir(path)
         self.tmp_cache = os.path.join(self.tmp_dir, 'CACHE')
         self.tmp_log = os.path.join(self.tmp_dir, "clog." + self.output)
-            
+
     def error(self, msg = None, show_help = False, exit = False):
         if msg is None:
             sys.stderr.write('\n')
@@ -119,7 +119,7 @@ class Environment:
             sys.exit()
         if exit:
             sys.exit()
-        
+
     def log(self, msg = None, flush=False):
         if self.debug or self.quiet:
             return
@@ -244,7 +244,7 @@ class CMDWorker(Process):
                     runCommand(cmd)
             except KeyboardInterrupt:
                 break
-            
+
 def runCommands(cmds, ncpu):
     try:
         jobs = []
@@ -343,7 +343,7 @@ def calculateFileMD5(filename):
     except IOError as e:
         sys.exit('Failed to read {}: {}'.format(filename, e))
     return md5.hexdigest()
- 
+
 def zipdir(path, zipfile, arcroot = '/'):
     path = os.path.normpath(path)
     for root, dirs, files in os.walk(path):
@@ -379,7 +379,7 @@ def downloadResources(fromto):
     for idx, item in enumerate(fromto):
         env.log('Checking local resources {0}/{1} ...'.format(idx + 1, len(fromto)), flush = True)
         downloadURL(item[0], item[1], mode = 777)
-    env.log() 
+    env.log()
     return True
 
 def getColumn(fn, num, delim = None, exclude = None):
@@ -435,7 +435,7 @@ def listit(t):
     return list(map(listit, t)) if isinstance(t, (list, tuple)) else t
 
 ###
-# Supporting functions / classes for Core.py 
+# Supporting functions / classes for Core.py
 ###
 
 def parseVCFline(line, exclude = []):
@@ -605,7 +605,7 @@ class Cache:
                 pass
         #
         for pre, ext in itertools.product(pres, exts):
-            for fl in glob.glob(os.path.join(self.cache_dir, pre) +  "*" + ext): 
+            for fl in glob.glob(os.path.join(self.cache_dir, pre) +  "*" + ext):
                 try:
                     os.remove(fl)
                 except:
