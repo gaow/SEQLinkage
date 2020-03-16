@@ -621,6 +621,10 @@ class PseudoAutoRegion:
             self.check = self.checkChrX_hg19
         elif build in ['hg19', 'build37'] and chrom.lower() in ['y', '24']:
             self.check = self.checkChrY_hg19
+        elif build in ['hg38', 'build38'] and chrom.lower() in ['x', '23']:
+            self.check = self.checkChrX_hg38
+        elif build in ['hg38', 'build38'] and chrom.lower() in ['y', '24']:
+            self.check = self.checkChrY_hg38
         else:
             self.check = self.notWithinRegion
 
@@ -639,6 +643,15 @@ class PseudoAutoRegion:
     def checkChrY_hg19(self, pos):
         return (pos >= 10001 and pos <= 2649520) or \
             (pos >= 59034050 and pos <= 59373566)
+
+    def checkChrX_hg38(self, pos):
+        # https://useast.ensembl.org/info/genome/genebuild/human_PARS.html
+        return (pos >= 10001 and pos <= 2781479) or \
+            (pos >= 155701383 and pos <= 156030895)
+
+    def checkChrY_hg38(self, pos):
+        return (pos >= 10001 and pos <= 2781479) or \
+            (pos >= 56887903 and pos <= 57217415)
 
     def notWithinRegion(self, pos):
         return False

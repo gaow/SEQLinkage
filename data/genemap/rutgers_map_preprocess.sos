@@ -1,5 +1,5 @@
 # Copied from Hang Dai's preprocessing scripts in 2014
-# to SoS workflow, with minor adjustments
+# to SoS workflow, with minor data formatting adjustments
 
 # add_chr_to_original_file
 [preprocess_1]
@@ -15,7 +15,7 @@ bash: expand = '${ }'
 [preprocess_2]
 output: f'{_input}.tbi'
 bash: expand = '${ }'
-	tabix  -s1 -b5 -e5 -c# ${_input} 
+	tabix  -s1 -b5 -e5 -c# ${_input}
 
 # chr_min_max_dict
 [preprocess_3]
@@ -37,3 +37,34 @@ for item in [${_input:nr,}]:
 print(chr_min_max_dict)
 print(len(chr_min_max_dict))
 
+[liftover_download: provides = ['hg19ToHg38.over.chain.gz', 'liftOver']]
+download:
+	https://hgdownload.soe.ucsc.edu/gbdb/hg19/liftOver/hg19ToHg38.over.chain.gz
+	http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver
+bash:
+	chmod +x liftOver
+
+[liftover_genemap]
+depends: 'hg19ToHg38.over.chain.gz', 'liftOver'
+parameter: genemap = ''
+input: genemap
+output: f'{_input:nn}.hg38.txt'
+bash: expand = '${ }'
+	awk '{print "chr"$1,$2,$3,$4}' ${_input} > ${_output:nn}.hg19.bed
+	./liftOver ${_output:nn}.hg19.bed hg19ToHg38.over.chain.gz ${_output:nn}.hg38.bed ${_output:nn}.unlifted.bed
+python: expand = '${ }'
+	genemap = dict([(x.split()[3], x.strip().split()) for x in open(${_input:r}).readlines()])
+	new_coord = dict([(x.split()[3], x.strip().split()) for x in open('${_output:nn}.hg38.bed').readlines()])
+	total = len(genemap)
+	unmapped = 0
+	for k in list(genemap.keys()):
+		if k in new_coord:
+			genemap[k][0] = new_coord[k][0][3:]
+			genemap[k][1] = new_coord[k][1]
+			genemap[k][2] = new_coord[k][2]
+		else:
+			del genemap[k]
+			unmapped += 1
+	print(f'{unmapped} units failed to be mapped to hg38.')
+	with open(${_output:r}, 'w') as f:
+		f.write('\n'.join(['\t'.join(x) for x in genemap.values()]))

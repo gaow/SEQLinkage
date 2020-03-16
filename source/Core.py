@@ -36,7 +36,7 @@ def checkParams(args):
         env.trait = 'quantitative'
     env.log('{} trait detected in [{}]'.format(env.trait.capitalize(), args.tfam))
     if not args.blueprint:
-        args.blueprint = os.path.join(env.resource_dir, 'genemap.txt')
+        args.blueprint = os.path.join(env.resource_dir, 'genemap.{}.txt'.format(args.build))
     args.format = [x.lower() for x in set(args.format)]
     if args.run_linkage and "linkage" not in args.format:
         args.format.append('linkage')
@@ -561,7 +561,7 @@ def main(args):
     '''the main encoder function'''
     checkParams(args)
     download_dir = 'http://bioinformatics.org/spower/download/.private'
-    downloadResources([('{}/genemap.txt'.format(download_dir), env.resource_dir),
+    downloadResources([('{}/genemap.{}.txt'.format(download_dir, args.build), env.resource_dir),
                        ('{}/{}/mlink'.format(download_dir, platform.system().lower()), env.resource_bin),
                        ('{}/{}/unknown'.format(download_dir, platform.system().lower()), env.resource_bin),
                        ('{}/{}/makeped'.format(download_dir, platform.system().lower()), env.resource_bin),
@@ -623,7 +623,7 @@ def main(args):
                 queue.put(i)
             jobs = [EncoderWorker(
                 queue, len(regions), deepcopy(data),
-                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = args.freq),
+                RegionExtractor(args.vcf, build=args.build, chr_prefix = args.chr_prefix, allele_freq_info = args.freq),
                 MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
