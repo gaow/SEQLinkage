@@ -1,0 +1,39 @@
+# Copied from Hang Dai's preprocessing scripts in 2014
+# to SoS workflow, with minor adjustments
+
+# add_chr_to_original_file
+[preprocess_1]
+depends: executable('bgzip')
+parameter: chrom = list()
+if len(chrom) == 0: chrom = list(range(1,23)) + ['X']
+input: for_each = 'chrom'
+output: f'RUMap_chr{_chrom}.txt.gz'
+bash: expand = '${ }'
+	awk -F'\t' -v chromosome="${_chrom}" 'BEGIN {OFS="\t"} {if (NR==1) {print "#chr",$1,$2,$3,$6,$7,$8,$9} else {if ($2=="SNP") {print chromosome,$1,$2,$3,$6,$7,$8,$9}}}' RUMapv3_B137_chr${_chrom if _chrom != 'X' else 23}.txt | sort -k5 -g | bgzip -c > ${_output}
+
+# make_tabix_index_file.sh
+[preprocess_2]
+output: f'{_input}.tbi'
+bash: expand = '${ }'
+	tabix  -s1 -b5 -e5 -c# ${_input} 
+
+# chr_min_max_dict
+[preprocess_3]
+input: group_by='all'
+python: expand = '${ }'
+import subprocess
+chr_min_max_dict={}
+for item in [${_input:nr,}]:
+	print(item)
+	command='zcat {} | head -2 | tail -1'.format(item)
+	p=subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)
+	out=p.stdout.read().split('\t')  #a list
+	min_pos=out[4]
+	command='zcat {} | tail -1'.format(item)
+	p=subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)
+	out=p.stdout.read().split('\t')  #a list
+	max_pos=out[4]
+	chr_min_max_dict[item]=[min_pos, max_pos]
+print(chr_min_max_dict)
+print(len(chr_min_max_dict))
+
