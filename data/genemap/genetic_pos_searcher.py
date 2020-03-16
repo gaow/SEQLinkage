@@ -20,7 +20,7 @@ with open ('cM_'+genemap_file,'w') as write_genemap:
 			end=genemap_info[2]  #str
 			pos=int((int(start)+int(end))/2)  #int
 			gene=genemap_info[3] #str
-			
+
 			if chromosome!='X':
 				command='tabix RUMap_chr{}.txt.gz {}:{}-{}'.format(chromosome, chromosome, str(pos), str(pos))
 				p=subprocess.Popen(command, universal_newlines=True, shell=True, stdout=subprocess.PIPE)

@@ -2,7 +2,6 @@ FROM ubuntu:trusty
 
 MAINTAINER Gao Wang (wang.gao@columbia.edu)
 
-# Both RV-NPL and RarePedSim run python 2.7
 # Install miniconda2 and dependencies: https://hub.docker.com/r/conda/miniconda2/dockerfile
 RUN apt-get -qq update && apt-get -qq -y install software-properties-common \
     && add-apt-repository ppa:ubuntu-toolchain-r/test \
@@ -28,10 +27,11 @@ RUN pip install --no-cache-dir brewer2mpl==1.4.1 prettyplotlib==0.1.7
 
 # Install cstatgen
 RUN cd /tmp && wget https://github.com/statgenetics/cstatgen/archive/master.tar.gz && tar xzvf master.tar.gz && cd cstatgen-master && python setup.py install && rm -rf /tmp/*
+
 # Install SEQLinkage
 ARG DUMMY=unknown
 RUN cd /tmp && wget https://github.com/gaow/SEQLinkage/archive/master.tar.gz && tar xzvf master.tar.gz && cd SEQLinkage-master && python setup.py install && rm -rf /tmp/*
-RUN mkdir -p /seqlink/.SEQLinkage/bin && cd /seqlink/.SEQLinkage && wget http://bioinformatics.org/spower/download/.private/genemap.txt && cd bin && wget http://bioinformatics.org/spower/download/.private/linux/mlink http://bioinformatics.org/spower/download/.private/linux/unknown http://bioinformatics.org/spower/download/.private/linux/makeped http://bioinformatics.org/spower/download/.private/linux/pedcheck && chmod 777 -R /seqlink/.SEQLinkage
+RUN mkdir -p /seqlink/.SEQLinkage/bin && cd /seqlink/.SEQLinkage && wget http://bioinformatics.org/spower/download/.private/genemap.hg19.txt http://bioinformatics.org/spower/download/.private/genemap.hg38.txt && cd bin && wget http://bioinformatics.org/spower/download/.private/linux/mlink http://bioinformatics.org/spower/download/.private/linux/unknown http://bioinformatics.org/spower/download/.private/linux/makeped http://bioinformatics.org/spower/download/.private/linux/pedcheck && chmod 777 -R /seqlink/.SEQLinkage
 ENV PYTHON_EGG_CACHE=/tmp/Python-Eggs
 
 # Default command
