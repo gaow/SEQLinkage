@@ -328,7 +328,9 @@ class MarkerMaker:
                     clusters = self.__ClusterByLD(data, haplotypes, varnames)
                     # recoding the genotype of the region
                     self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
-        except Exception:
+        except Exception as e:
+            if env.debug:
+                raise
             return -1
         self.__FormatHaplotypes(data,recombPos,varnames,uniq_vars)
         return 0
@@ -477,12 +479,12 @@ class MarkerMaker:
                 mafs[item]={}
                 tfreq_fam=data.freq_by_fam[item]
                 for pop in data.gnomAD_estimate.keys():
-                    if pop in tfreq_fam:
+                    if pop == tfreq_fam:
                         gnomAD_pop=pop
                         break
             elif gnomAD_pop is None:
                 for pop in data.gnomAD_estimate.keys():
-                    if pop in data.freq:
+                    if pop == data.freq:
                         gnomAD_pop=pop
                         break
             for idx, v in enumerate(varnames[item]):
@@ -549,7 +551,7 @@ class MarkerMaker:
                 if not env.prephased:
                     tmp_log_output=env.tmp_log + str(os.getpid())
                     with stdoutRedirect(to = tmp_log_output + '.log'):
-                        haplotypes[item] = self.haplotyper.Execute(data.chrom, var_for_haplotype,positions_for_haplotype, output_sample,self.rsq,tmp_log_output)[0]
+                        haplotypes[item] = self.haplotyper.Execute(data.chrom, var_for_haplotype, positions_for_haplotype, output_sample, self.rsq, tmp_log_output)[0]
                 else:
                     haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))
             if len(haplotypes[item]) == 0:
