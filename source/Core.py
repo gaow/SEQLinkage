@@ -1308,7 +1308,6 @@ def main(args):
         else:
             env.log('{:,d} units will be converted to {} format'.format(env.success_counter.value, fmt.upper()))
             env.format_counter.value = 0
-            format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)))
             format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)),
                    args.prevalence, args.wild_pen, args.muta_pen, fmt,
                    args.inherit_mode, args.theta_max, args.theta_inc)
