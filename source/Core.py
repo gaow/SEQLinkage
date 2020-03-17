@@ -30,6 +30,7 @@ def checkParams(args):
     if args.output:
         env.outdir = args.output
         env.output = os.path.split(args.output)[-1]
+        env.cache_dir = os.path.join(os.path.dirname(args.output), 'cache')
         env.tmp_log = os.path.join(env.tmp_dir, env.output + ".STDOUT")
     #
     if len([x for x in set(getColumn(args.tfam, 6)) if x.lower() not in env.ped_missing]) > 2:
@@ -42,10 +43,9 @@ def checkParams(args):
         args.format.append('linkage')
     if None in [args.inherit_mode, args.prevalence, args.wild_pen, args.muta_pen] and "linkage" in args.format:
         env.error('To generate LINKAGE format or run LINKAGE analysis, please specify all options below:\n\t--prevalence, -K\n\t--moi\n\t--wild-pen, -W\n\t--muta-pen, -M', show_help = True, exit = True)
-    if args.tempdir is not None:
+    if not args.tempdir is None:
         env.ResetTempdir(args.tempdir)
     return True
-
 
 class RData(dict):
     def __init__(self, samples_vcf, tfam):
@@ -60,6 +60,14 @@ class RData(dict):
         self.famsampidx = {}
         # a dict of {fid:[maf1, maf2 ...]}
         self.maf = OrderedDict()
+        # finalized sub_regions that are compliant to all families
+        self.complied_markers = []
+        # finalized sub regions (variants)
+        self.combined_regions = []
+        # RV varnames by family
+        self.varnames_by_fam = {}
+        self.patterns={}
+        self.gnomAD_estimate={'AFR':(1-0.4589)/(2*7652),'AMR':(1-0.4455)/(2*16791),'ASJ':(1-0.2357)/(2*4925),'EAS':(1-0.4735)/(2*8624),'FIN':(1-0.3048)/(2*11150),'NFE':(1-0.5729)/(2*55860),'OTH':(1-0.4386)/(2*2743),'SAS':(1-0.5624)/(2*15391)}
         # reorder family samples based on order of VCF file
         for k in self.families.keys():
             if len(self.families[k]) == 0:
@@ -69,35 +77,67 @@ class RData(dict):
                 self.famsampidx[k] = [i for i, x in enumerate(samples_vcf) if x in self.families[k]]
         # a dict of {fid:[idx ...], ...}
         self.famvaridx = {}
+        self.wtvar = {}
+        self.freq_by_fam = {}
+        self.include_vars = []
+        self.total_varnames={}
+        self.total_mafs={}
+        self.wt_maf={}
+        self.freq = []
+        self.genotype_all={}
+        self.mle_mafs={}
+        self.missing_persons=[]
         self.reset()
 
     def reset(self):
         for item in self.samples:
             self[item] = []
+            self.genotype_all[item] = []
         self.variants = []
+        self.include_vars = []
+        self.total_varnames={}
+        self.total_mafs={}
+        self.wt_maf={}
         self.chrom = None
         for k in self.families:
             self.famvaridx[k] = []
+            self.wtvar[k] = []
         self.maf = OrderedDict()
         # superMarkerCount is the max num. of recombinant fragments among all fams
         self.superMarkerCount = 0
+        self.complied_markers = []
+        self.combined_regions = []
+        self.patterns={}
+        self.missing_persons=[]
 
     def getMidPosition(self):
         if len(self.variants) == 0:
             return None
         return sum([x[1] for x in self.variants]) / len(self.variants)
 
-    def getFamVariants(self, fam, style = None):
+    def getFamVariants(self, fam, style = None, include_wt = False):
         if style is None:
-            return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam]]
+            if include_wt:
+                return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam]]
+            else:
+                return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam] and idx not in self.wtvar[fam]]
         elif style == "map":
             names = []
             pos = []
             mafs = []
-            for idx in self.famvaridx[fam]:
+            tmp_vars = self.famvaridx[fam]
+            if not include_wt:
+                tmp_vars=[idx for idx in self.famvaridx[fam] if idx not in self.wtvar[fam]]
+            if len(self.freq_by_fam.keys()) != 0:
+                pop_idx=self.freq.index(self.freq_by_fam[fam])
+            for idx in tmp_vars:
                 names.append("V{}-{}".format(idx, self.variants[idx][1]))
                 pos.append(self.variants[idx][1])
-                mafs.append(self.variants[idx][-1])
+                tmp_mafs=self.variants[idx][-1]
+                if type(tmp_mafs) is list:
+                    mafs.append(tmp_mafs[pop_idx])
+                else:
+                    mafs.append(tmp_mafs)
             return names, pos, mafs
         else:
             raise ValueError("Unknown style '{}'".format(style))
@@ -120,7 +160,7 @@ class RegionExtractor:
     '''Extract given genomic region from VCF
     converting genotypes into dictionary of
     genotype list'''
-    def __init__(self, filename, build = env.build, chr_prefix = None, allele_freq_info = None):
+    def __init__(self, filename, build = env.build, chr_prefix = None, allele_freq_info = None, include_vars_file=None):
         self.vcf = cstatgen.VCFstream(filename)
         self.chrom = self.startpos = self.endpos = self.name = None
         self.chr_prefix = chr_prefix
@@ -128,6 +168,7 @@ class RegionExtractor:
         self.af_info = allele_freq_info
         self.xchecker = PseudoAutoRegion('X', build)
         self.ychecker = PseudoAutoRegion('Y', build)
+        self.include_vars_file = include_vars_file
 
     def apply(self, data):
         # Clean up
@@ -142,15 +183,38 @@ class RegionExtractor:
                 with env.triallelic_counter.get_lock():
                     env.triallelic_counter.value += 1
                 continue
+            if len(data.variants) > 0:
+                if self.vcf.GetPosition()==data.variants[-1][1]:
+                    continue
             # check if the line's sample number matches the entire VCF sample number
             if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
                 raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
                              format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
             # valid line found, get variant info
             try:
-                maf = float(self.vcf.GetInfo(self.af_info)) if self.af_info else None
-                if maf > 0.5:
-                    maf = 1 - maf
+                if type(self.af_info) is list:
+                    maf = []
+                    large_maf = []
+                    for pop_info in self.af_info:
+                        large_maf.append(False)
+                        try:
+                            maf.append(float(self.vcf.GetInfo(pop_info)))
+                        except ValueError:
+                            maf.append(0.0)
+                    for idx in range(len(maf)):
+                        if maf[idx] > 0.5:
+                            large_maf[idx]=True
+                            maf[idx] = 1-maf[idx]
+
+                else:
+                    large_maf=False
+                    try:
+                        maf = float(self.vcf.GetInfo(self.af_info)) if self.af_info else None
+                    except ValueError:
+                        maf = 0.0
+                    if maf > 0.5:
+                        large_maf=True
+                        maf = 1 - maf
             except Exception as e:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), self.af_info))
@@ -158,10 +222,33 @@ class RegionExtractor:
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                if len(data.freq_by_fam) > 0:
+                    popidx=self.af_info.index(data.freq_by_fam[k])
+                    if large_maf[popidx]:
+                        tmpgs=[]
+                        for tmpg in gs:
+                            if tmpg=='00':
+                                tmpgs.append(tmpg)
+                            else:
+                                tmpgs.append(''.join([str(3-int(tg)) for tg in tmpg]))
+                        gs=tuple(tmpgs)
+                else:
+                    if large_maf:
+                        tmpgs=[]
+                        for tmpg in gs:
+                            if tmpg=='00':
+                                tmpgs.append(tmpg)
+                            else:
+                                tmpgs.append(''.join([str(3-int(tg)) for tg in tmpg]))
+                        gs=tuple(tmpgs)
+                for person, g in zip(data.families[k], gs):
+                    data.genotype_all[person].append(g)
+                if len(set(''.join(gs))) <= 1:
                     # skip monomorphic gs
                     continue
                 else:
+                    if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                        data.wtvar[k].append(varIdx)
                     # this variant is found in the family
                     data.famvaridx[k].append(varIdx)
                     for person, g in zip(data.families[k], gs):
@@ -171,6 +258,16 @@ class RegionExtractor:
         if varIdx == 0:
             return 1
         else:
+            if not self.include_vars_file is None:
+                with open(self.include_vars_file) as invar_fh:
+                    for invar_line in invar_fh:
+                        chrom, pos = invar_line.split()
+                        for vidx,v in enumerate(data.variants):
+                            if v[0] == chrom and v[1] == int(pos):
+                                data.include_vars.append("{}".format(pos))
+                                break
+            else:
+                data.include_vars = ["{}".format(item[1]) for item in data.variants]
             with env.variants_counter.get_lock():
                 env.variants_counter.value += varIdx
             return 0
@@ -191,26 +288,37 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None):
+    def __init__(self, wsize, maf_cutoff = None,single_markers=False,recomb_max = 1,af_info=None,freq_by_fam=False,rsq=0.0,mle=False,rvhaplo=False):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
+        self.recomb_max = recomb_max
         self.haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
+        self.af_info = af_info
+        self.freq_by_fam = freq_by_fam
+        self.rsq=rsq
+        self.mle=mle
+        self.rvhaplo=rvhaplo
         if wsize == 0 or wsize >= 1:
             self.r2 = None
         else:
             self.r2 = wsize
         self.coder = cstatgen.HaplotypeCoder(wsize)
         self.maf_cutoff = maf_cutoff
+        self.single_markers = single_markers
+        self.name = None
 
     def apply(self, data):
         # temp raw haplotype, maf and variant names data
         haplotypes = OrderedDict()
-        mafs = {}
+        mafs = {}   ##Per fam per variant
+        uniq_vars = []
+        exclude_vars = []
         varnames = {}
+        recombPos = {}
         try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-            self.__Haplotype(data, haplotypes, mafs, varnames)
+            self.__Haplotype(data, haplotypes, mafs, varnames,recombPos,uniq_vars,exclude_vars)
             if len(varnames):
                 if not any ([len(varnames[x]) - 1 for x in varnames]):
                     # all families have only one variant
@@ -222,10 +330,54 @@ class MarkerMaker:
                     self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
         except Exception as e:
             return -1
-        self.__FormatHaplotypes(data)
+        self.__FormatHaplotypes(data,recombPos,varnames,uniq_vars)
         return 0
 
-    def __Haplotype(self, data, haplotypes, mafs, varnames):
+    def __getMLEfreq(self,data, markers_to_analyze, pos_all, families, rsq, output_log):
+        output_sample=[]
+        mle_mafs={}
+        if len(markers_to_analyze)==0:
+            return mle_mafs
+        for fam in families:
+            for person in data.tfam.sort_family(fam):
+                output_sample.append([])
+                last_ele=len(output_sample)-1
+                output_sample[last_ele] = data.tfam.samples[person][:-1]
+                if person in data.samples:
+                    for marker in markers_to_analyze:
+                        idx=int(marker.split('-')[0][1:])
+                        output_sample[last_ele].append(data.genotype_all[person][idx])
+                else:
+                    output_sample[last_ele].extend(["00"] * len(markers_to_analyze))
+        with stdoutRedirect(to = output_log):
+            af=self.haplotyper.Execute(data.chrom, markers_to_analyze, pos_all, output_sample, rsq, output_log,False)
+        with open(output_log) as mle_fh:
+            for line in mle_fh:
+                if line.startswith('V'):
+                    tmp_eles = line.split(':')
+                    if tmp_eles[0] not in mle_mafs:
+                        freqs=tmp_eles[1].split()
+                        mle_maf = float(freqs[1])
+                        if mle_maf>0.5:
+                            mle_mafs[tmp_eles[0]]=float("%.9f"%(1-mle_maf))
+                        else:
+                            #alt allele is more frequent
+                            mle_mafs[tmp_eles[0]]=float("%.9f"%mle_maf)
+                            marker_idx=int(tmp_eles[0].split('-')[0][1:])
+                            for fam in families:
+                                if marker_idx not in data.famvaridx[fam]:
+                                    continue
+                                tmp_famvaridx=data.famvaridx[fam].index(marker_idx)
+                                for person in data.families[fam]:
+                                    tmpg=data.genotype_all[person][marker_idx]
+                                    tmpg_switch=''.join([str(3-int(tg)) for tg in tmpg]) if tmpg!='00' else tmpg
+                                    data.genotype_all[person][marker_idx]=tmpg_switch
+                                    tmpg2=data[person][tmp_famvaridx]
+                                    tmpg_switch2=''.join([str(3-int(tg)) for tg in tmpg2]) if tmpg2!='00' else tmpg2
+                                    data[person][tmp_famvaridx]=tmpg_switch2
+        return mle_mafs
+
+    def __Haplotype(self, data, haplotypes, mafs, varnames,recombPos,uniq_vars,exclude_vars):
         '''genetic haplotyping. haplotypes stores per family data'''
         # FIXME: it is SWIG's (2.0.12) fault not to properly destroy the object "Pedigree" in "Execute()"
         # So there is a memory leak here which I tried to partially handle on C++
@@ -233,79 +385,327 @@ class MarkerMaker:
         # Per family haplotyping
         #
         self.markers = ["V{}-{}".format(idx, item[1]) for idx, item in enumerate(data.variants)]
+        tmp_mafs = {}
+        if self.mle:
+            ## estimate MLE allele frequency using all fam
+            local_mle_mafs={}
+            if self.freq_by_fam:
+                ## if families are from different populations
+                ## estimate MLE by different population
+                fam_to_analyze={}
+                for fam,pop in data.freq_by_fam.iteritems():
+                    if pop not in fam_to_analyze:
+                        fam_to_analyze[pop]=[fam]
+                    else:
+                        fam_to_analyze[pop].append(fam)
+                for pop in fam_to_analyze:
+                    local_mle_mafs[pop]={}
+                    markers_to_analyze=[]
+                    pos_all=[]
+                    markers_analyzed={}
+                    if pop not in data.mle_mafs:
+                        data.mle_mafs[pop]={}
+                    else:
+                        for tmpv in data.mle_mafs[pop]:
+                            markers_analyzed[tmpv.split('-')[-1]]=data.mle_mafs[pop][tmpv]
+                    output_log=env.tmp_log+"AF_{}_{}.log".format(pop,self.name)
+                    popidx=self.af_info.index(pop)
+                    variants_in_fams=[]
+                    for item in fam_to_analyze[pop]:
+                        for tmpvar in data.getFamVariants(item):
+                            if tmpvar not in variants_in_fams:
+                                variants_in_fams.append(tmpvar)
+                    variants_in_fams=sorted(variants_in_fams, key=lambda x: x[1])
+                    for item in variants_in_fams:
+                        idx=data.variants.index(item)
+                        if item[-1][popidx]==0:
+                            if str(item[1]) in markers_analyzed.keys():
+                                #if variant has been analyzed
+                                vname="V{}-{}".format(idx,item[1])
+                                local_mle_mafs[pop][vname]=markers_analyzed[str(item[1])]
+                            else:
+                                #variant not analyzed before
+                                markers_to_analyze.append("V{}-{}".format(idx,item[1]))
+                                pos_all.append(item[1])
+                    tmp_mle_mafs=self.__getMLEfreq(data, markers_to_analyze, pos_all, fam_to_analyze[pop], self.rsq, output_log)
+                    if len(tmp_mle_mafs) > 0:
+                        for vname,vmaf in tmp_mle_mafs.iteritems():
+                            data.mle_mafs[pop][vname]=vmaf
+                            local_mle_mafs[pop][vname]=vmaf
+            else:
+                #Homogeneous families
+                markers_to_analyze=[]
+                pos_all=[]
+                markers_analyzed={}
+                for tmpv in data.mle_mafs:
+                    markers_analyzed[tmpv.split('-')[-1]]=data.mle_mafs[tmpv]
+                variants_in_fams=[]
+                for item in data.families.keys():
+                    var_per_fam=[tuple(tmpvar) for tmpvar in data.getFamVariants(item)]
+                    variants_in_fams=list(set(var_per_fam+variants_in_fams))
+                variants_in_fams=[list(tmpvar) for tmpvar in sorted(variants_in_fams, key=lambda x: x[1])]
+                for item in variants_in_fams:
+                    idx=data.variants.index(item)
+                    if item[-1]==0 or self.af_info is None:
+                        if str(item[1]) in markers_analyzed.keys():
+                            #if variant has been analyzed
+                            vname="V{}-{}".format(idx,item[1])
+                            local_mle_mafs[vname]=markers_analyzed[str(item[1])]
+                        else:
+                            #variant not analyzed before
+                            markers_to_analyze.append("V{}-{}".format(idx,item[1]))
+                            pos_all.append(item[1])
+                output_log=env.tmp_log+"AF_{}.log".format(self.name)
+                tmp_mle_mafs=self.__getMLEfreq(data, markers_to_analyze, pos_all, data.families.keys(), self.rsq, output_log)
+                if len(tmp_mle_mafs) > 0:
+                    for vname, vmaf in tmp_mle_mafs.iteritems():
+                        data.mle_mafs[vname]=vmaf
+                        local_mle_mafs[vname]=vmaf
+        gnomAD_pop=None
         for item in data.families:
             varnames[item], positions, vcf_mafs = data.getFamVariants(item, style = "map")
-            if len(varnames[item]) == 0:
-                for person in data.families[item]:
-                    data[person] = self.missings
-                continue
+            recombPos[item]={}
+            var_for_haplotype=[]
+            positions_for_haplotype=[]
+            output_sample=[]
             if env.debug:
                 with env.lock:
+                    sys.stderr.write('\n'+repr(varnames[item])+'\n')
                     sys.stderr.write('\n'.join(['\t'.join(x) for x in data.getFamSamples(item)]) + '\n\n')
+            # either use privided MAF or compute MAF
+            if self.freq_by_fam:
+                mafs[item]={}
+                tfreq_fam=data.freq_by_fam[item]
+                for pop in data.gnomAD_estimate.keys():
+                    if pop in tfreq_fam:
+                        gnomAD_pop=pop
+                        break
+            elif gnomAD_pop is None:
+                for pop in data.gnomAD_estimate.keys():
+                    if pop in data.freq:
+                        gnomAD_pop=pop
+                        break
+            for idx, v in enumerate(varnames[item]):
+                tmp_maf_var=0
+                if self.mle and self.af_info is None:
+                    #no vcf freq specified and MLE speicified
+                    #use MLE freq for all variants
+                    if v not in tmp_mafs:
+                        tmp_mafs[v]=local_mle_mafs[v]
+                    tmp_maf_var=tmp_mafs[v]
+                elif not self.af_info is None:
+                    #if vcf freq column specified
+                    #use vcf_mafs if possible
+                    if vcf_mafs[idx]:
+                        tmp_maf_var=vcf_mafs[idx]
+                        if self.freq_by_fam:
+                            mafs[item][v] = vcf_mafs[idx]
+                        else:
+                            if v not in tmp_mafs:
+                                tmp_mafs[v] = vcf_mafs[idx]
+                    else:
+                        #use MLE/gnomAD estimate for variants without vcf_mafs if specified
+                        if self.freq_by_fam:
+                            if self.mle:
+                                    mafs[item][v]=local_mle_mafs[data.freq_by_fam[item]][v]
+                            else:
+                                mafs[item][v]=data.gnomAD_estimate[gnomAD_pop]
+                            tmp_maf_var=mafs[item][v]
+                        else:
+                            if v not in tmp_mafs:
+                                if self.mle:
+                                    tmp_mafs[v]=local_mle_mafs[v]
+                                else:
+                                    tmp_mafs[v]=data.gnomAD_estimate[gnomAD_pop]
+                            tmp_maf_var=tmp_mafs[v]
+                if self.rvhaplo:
+                    if tmp_maf_var<=self.maf_cutoff:
+                        var_for_haplotype.append(v)
+                        positions_for_haplotype.append(positions[idx])
+            if not self.rvhaplo:
+                var_for_haplotype=varnames[item]
+                positions_for_haplotype=positions
+            #collect sample+genotypes
+            for person in data.tfam.sort_family(item):
+                output_sample.append([])
+                last_ele=len(output_sample)-1
+                output_sample[last_ele] = data.tfam.samples[person][:-1]
+                if person in data.samples:
+                    for marker in var_for_haplotype:
+                        idx=int(marker.split('-')[0][1:])
+                        output_sample[last_ele].append(data.genotype_all[person][idx])
+                else:
+                    output_sample[last_ele].extend(["00"] * len(var_for_haplotype))
             # haplotyping
+            if len(var_for_haplotype)==0:
+                varnames.pop(item,None)
+                #for person in data.families[item]:
+                #    data[person] = self.missings
+                continue
+            for person in output_sample:
+                if set(person[5:])==set(['00']):
+                    data.missing_persons.append(person[1])
             with env.lock:
                 if not env.prephased:
-                    with stdoutRedirect(to = env.tmp_log + str(os.getpid()) + '.log'):
-                        haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item],
-                                                               sorted(positions), data.getFamSamples(item))[0]
+                    tmp_log_output=env.tmp_log + str(os.getpid())
+                    with stdoutRedirect(to = tmp_log_output + '.log'):
+                        haplotypes[item] = self.haplotyper.Execute(data.chrom, var_for_haplotype,positions_for_haplotype, output_sample,self.rsq,tmp_log_output)[0]
                 else:
                     haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))
             if len(haplotypes[item]) == 0:
                 # C++ haplotyping implementation failed
                 with env.chperror_counter.get_lock():
                     env.chperror_counter.value += 1
-            # either use privided MAF or computer MAF
-            if all(vcf_mafs):
-                for idx, v in enumerate(varnames[item]):
-                    if v not in mafs:
-                        mafs[v] = vcf_mafs[idx]
-            else:
-                # count founder alleles
-                for hap in haplotypes[item]:
-                    if not data.tfam.is_founder(hap[1]):
-                        continue
-                    for idxv, v in enumerate(varnames[item]):
-                        if v not in mafs:
-                            # [#alt, #haplotypes]
-                            mafs[v] = [0, 0]
-                        gt = hap[2 + idxv][1] if hap[2 + idxv][0].isupper() else hap[2 + idxv][0]
-                        if not gt == "?":
-                            mafs[v][0] += self.gtconv[gt]
-                            mafs[v][1] += 1.0
+            varnames[item]=var_for_haplotype
+        for item in haplotypes:
+            for hap_idx,haploid in enumerate(haplotypes[item]):
+                for vidx,var in enumerate(haploid[2:]):
+                    if not var.endswith(':') and not var.endswith('|') and vidx!=0:
+                        postvar_name=varnames[item][vidx]
+                        prevar_name=varnames[item][vidx-1]
+                        recomb_pair = (prevar_name,postvar_name)
+                        try:
+                            recombPos[item][recomb_pair].append(hap_idx)
+                        except:
+                            recombPos[item][recomb_pair]=[hap_idx]
         #
         # Compute founder MAFs
         #
-        for v in mafs:
-            if type(mafs[v]) is not list:
-                continue
-            mafs[v] = mafs[v][0] / mafs[v][1] if mafs[v][1] > 0 else 0.0
+        if len(tmp_mafs) > 0:
+            if self.freq_by_fam:
+                for pop in tmp_mafs:
+                    for v in tmp_mafs[pop]:
+                        if type(tmp_mafs[pop][v]) is list:
+                            tmp_mafs[pop][v] = tmp_mafs[pop][v][0]/tmp_mafs[pop][v][1] if tmp_mafs[pop][v][1] >0 else 0.0
+            else:
+                for v in tmp_mafs:
+                        if type(tmp_mafs[v]) is list:
+                        tmp_mafs[v] = tmp_mafs[v][0]/tmp_mafs[v][1] if tmp_mafs[v][1] > 0 else 0.0
+        ## Make mafs consistent in structure regardless of freq_by_fam
+        if self.freq_by_fam:
+            for item in haplotypes:
+                popname=data.freq_by_fam[item]
+                if popname not in tmp_mafs:
+                    continue
+                if item not in mafs:
+                    mafs[item]=tmp_mafs[popname]
+                else:
+                    for v in tmp_mafs[popname]:
+                        if v not in mafs[item]:
+                            mafs[item][v]=tmp_mafs[popname][v]
+        else:
+            for item in haplotypes:
+                mafs[item]=tmp_mafs
         if env.debug:
             with env.lock:
                 print("variant mafs = ", mafs, "\n", file = sys.stderr)
+        ##
         #
         # Drop some variants if maf is greater than given threshold
         #
-        if self.maf_cutoff is not None:
-            exclude_vars = []
-            for v in mafs.keys():
-                if mafs[v] > self.maf_cutoff:
-                    exclude_vars.append(v)
+        if not self.maf_cutoff is None or self.single_markers:
+            if self.freq_by_fam:
+                exclude_vars=[[] for x in range(len(data.freq))]
             for i in haplotypes.keys():
+                if self.freq_by_fam:
+                    pop_idx=data.freq.index(data.freq_by_fam[i])
+                    tmp_exclude_vars=exclude_vars[pop_idx]
+                else:
+                    tmp_exclude_vars=exclude_vars
+                for v in mafs[i].keys():
+                    if not self.maf_cutoff is None:
+                        if mafs[i][v] > self.maf_cutoff and v not in tmp_exclude_vars or v.split('-')[-1] not in data.include_vars:
+                            tmp_exclude_vars.append(v)
+                    if self.single_markers:
+                        if v.split('-')[-1] not in data.include_vars:
+                            tmp_exclude_vars.append(v)
                 haplotypes[i] = listit(haplotypes[i])
+                tmp_remain_vars=[x for x in varnames[i] if x not in tmp_exclude_vars]
+                recomb_remain_vars=[]
+                if len(tmp_remain_vars) == 0:
+                    recombPos[i]={}
+                else:
+                    if len(recombPos[i]) > 0:
+                        #extend recombination signal to neighbouring RVs
+                        #if the original variant is to be excluded
+                        #Only allow a maximum of one recombination event between one pair of consecutive markers
+                        for pair in recombPos[i].keys():
+                            if pair[1] not in tmp_exclude_vars:
+                                if tmp_remain_vars.index(pair[1])!=0 and pair[1] not in recomb_remain_vars:
+                                    recomb_remain_vars.append(pair[1])
+                                else:
+                                    del recombPos[i][pair]
+                            else:
+                                if varnames[i].index(pair[1]) > varnames[i].index(tmp_remain_vars[-1]):
+                                    #last variant
+                                    del recombPos[i][pair]
+                                    continue
+                                for tmp_idx in range(varnames[i].index(pair[1])+1,len(varnames[i])):
+                                    if varnames[i][tmp_idx] not in tmp_exclude_vars:
+                                        if tmp_remain_vars.index(varnames[i][tmp_idx])==0:
+                                            #delete recombination pair if the recombination was marked to the first remaining variant
+                                            del recombPos[i][pair]
+                                            break
+                                        for tmp_hap in recombPos[i][pair]:
+                                            tmp_var=haplotypes[i][tmp_hap][tmp_idx+2]
+                                            if tmp_var.endswith(':') or tmp_var.endswith('|'):
+                                                haplotypes[i][tmp_hap][tmp_idx+2]=tmp_var[:-1]+'/'
+                                        if varnames[i][tmp_idx] not in recomb_remain_vars:
+                                            recomb_remain_vars.append(varnames[i][tmp_idx])
+                                        else:
+                                            del recombPos[i][pair]
+                                        break
                 for j in range(len(haplotypes[i])):
                     haplotypes[i][j] = haplotypes[i][j][:2] + \
-                      [x for idx, x in enumerate(haplotypes[i][j][2:]) if varnames[i][idx] not in exclude_vars]
-                varnames[i] = [x for x in varnames[i] if x not in exclude_vars]
+                      [x for idx, x in enumerate(haplotypes[i][j][2:]) if varnames[i][idx] not in tmp_exclude_vars]
+                for tmp_var in varnames[i]:
+                    if tmp_var not in uniq_vars:
+                             uniq_vars.append(tmp_var)
+                varnames[i] = [x for x in varnames[i] if x not in tmp_exclude_vars]
                 # handle trivial data
                 if len(varnames[i]) == 0:
+                    del varnames[i]
+                    del haplotypes[i]
+                if len(recombPos[i].keys())>self.recomb_max:
+                    #treat as missing if recombination events occurred more than speicified times
                     for person in data.families[i]:
                         data[person] = self.missings
                     del varnames[i]
                     del haplotypes[i]
             # count how many variants are removed
             with env.commonvar_counter.get_lock():
-                env.commonvar_counter.value += len(exclude_vars)
-
+                if self.freq_by_fam:
+                    tmp_ex_vars=[tmp_var for tmp_vars in exclude_vars for tmp_var in tmp_vars]
+                    env.commonvar_counter.value += len(set(tmp_ex_vars))
+                else:
+                    env.commonvar_counter.value += len(exclude_vars)
+            # get total observed variants
+            if self.freq_by_fam:
+                for item in varnames:
+                    pop=data.freq_by_fam[item]
+                    if pop not in data.total_mafs:
+                        data.total_mafs[pop]={}
+                        data.total_varnames[pop]=[]
+                    for v in varnames[item]:
+                        if v not in data.total_mafs[pop]:
+                            data.total_varnames[pop].append(v)
+                            data.total_mafs[pop][v]=mafs[item][v]
+                for pop in data.total_varnames:
+                    data.total_varnames[pop]=sorted(data.total_varnames[pop], key=lambda x: int(x.split("-")[0][1:]))
+                    data.wt_maf[pop]=1.0
+                    for v,tmaf in data.total_mafs[pop].iteritems():
+                        data.wt_maf[pop]*=(1-tmaf)
+            else:
+                data.total_varnames['pop']=[]
+                for item in varnames:
+                    for v in varnames[item]:
+                        if v not in data.total_mafs:
+                            data.total_varnames['pop'].append(v)
+                            data.total_mafs[v]=mafs[item][v]
+                data.wt_maf['pop']=1.0
+                for v,tmaf in data.total_mafs.iteritems():
+                    data.wt_maf['pop']*=(1-tmaf)
+                data.total_varnames['pop']=sorted(data.total_varnames['pop'], key=lambda x: int(x.split("-")[0][1:]))
 
     def __ClusterByLD(self, data, haplotypes, varnames):
         if self.r2 is None:
@@ -340,11 +740,61 @@ class MarkerMaker:
 
     def __CodeHaplotypes(self, data, haplotypes, mafs, varnames, clusters):
         # apply CHP coding
-        if clusters is not None:
+        ##Add non variant haplotype if not present in a family
+        for item in data.famvaridx:
+            if item not in haplotypes and data[data.families[item][0]] != ('0','0'):
+                if self.freq_by_fam:
+                    pop=data.freq_by_fam[item]
+                    try:
+                        varnames[item]=data.total_varnames[pop]
+                        mafs[item]=data.total_mafs[pop]
+                    except:
+                        continue
+                else:
+                    varnames[item]=data.total_varnames['pop']
+                    mafs[item]=data.total_mafs
+                haplotypes[item]=[]
+                for person in data.families[item]:
+                    tmp_person=[item, person]
+                    if '00' in data[person]:
+                        tmp_person+=['?:']*len(varnames[item])
+                    else:
+                        tmp_person+=['1:']*len(varnames[item])
+                    haplotypes[item].append(tmp_person)
+                    haplotypes[item].append(tmp_person)
+            elif item in haplotypes:
+                nonvar_hap_flag=False
+                for hap in haplotypes[item]:
+                    tmp_genes=[]
+                    for tmpa in hap[2:]:
+                        if 'A' in tmpa or 'B' in tmpa:
+                            tmp_genes.append(tmpa[1])
+                        else:
+                            tmp_genes.append(tmpa[0])
+                    if set(tmp_genes)==set(['1']):
+                        #non variant haplotype
+                        nonvar_hap_flag=True
+                        break
+                if not nonvar_hap_flag:
+                    #if family don't have non variant haplotype
+                    var_num=len(varnames[item])
+                    fake_person=[item, 'FAKEPERSON']+['1:']*var_num
+                    haplotypes[item].append(fake_person)
+                for hidx,hap in enumerate(haplotypes[item]):
+                    if hap[1] in data.missing_persons:
+                        missing_person=[item,hap[1]]+['?:']*len(varnames[item])
+                        haplotypes[item][hidx]=missing_person
+
+        if not clusters is None:
             clusters_idx = [[[varnames[item].index(x) for x in y] for y in clusters] for item in haplotypes]
         else:
             clusters_idx = [[[]] for item in haplotypes]
-        self.coder.Execute(haplotypes.values(), [[mafs[v] for v in varnames[item]] for item in haplotypes], clusters_idx)
+        if env.debug:
+            for item in haplotypes:
+                with env.lock:
+                    print(varnames[item],file=sys.stderr)
+                    print("hap{0}\t{1}\n".format(item,haplotypes[item]),file=sys.stderr)
+        self.coder.Execute(haplotypes.values(), [[mafs[item][v] for v in varnames[item]] for item in haplotypes], clusters_idx)
         if env.debug:
             with env.lock:
                 if clusters:
@@ -356,14 +806,54 @@ class MarkerMaker:
                 # this sample is not in VCF file. Every variant site should be missing
                 # they have to be skipped for now
                 continue
-            data[line[1]] = (line[2].split(','), line[3].split(','))
+            data[line[1]] = (line[2].split(','), line[4].split(','))
+            superMarkerCount=len(data[line[1]][0])
+            if line[0] not in data.patterns:
+                data.patterns[line[0]]=[[] for x in range(superMarkerCount)]
+            for t_Marker in range(superMarkerCount):
+                t_pat1=line[3].split(',')[t_Marker]
+                t_pat2=line[5].split(',')[t_Marker]
+                if t_pat1 not in data.patterns[line[0]][t_Marker]:
+                    data.patterns[line[0]][t_Marker].append(t_pat1)
+                if t_pat2 not in data.patterns[line[0]][t_Marker]:
+                    data.patterns[line[0]][t_Marker].append(t_pat2)
             if len(data[line[1]][0]) > data.superMarkerCount:
                 data.superMarkerCount = len(data[line[1]][0])
         # get MAF
+        for item in data.famvaridx:
+            if item not in haplotypes:
+                for person in data.families[item]:
+                    data[person]=('0','0')*data.superMarkerCount
         for item in haplotypes:
             data.maf[item] = self.coder.GetAlleleFrequencies(item)
-            data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
-                              for v in data.maf[item])
+            if not len(data.maf[item][0]):
+                continue
+            data.varnames_by_fam[item]=varnames[item]
+            wt_maf=0
+            if self.freq_by_fam:
+                try:
+                    wt_maf=data.wt_maf[data.freq_by_fam[item]]
+                except:
+                    pass
+            else:
+                wt_maf=data.wt_maf['pop']
+            tmp_data_maf=[]
+            for v in data.maf[item]:
+                if len(v)==1:
+                    tmp_data_maf.append((v[0],1-v[0]))
+                else:
+                    if np.sum(v)<1:
+                        tmp_ratio=sum(v[1:])/(1-wt_maf)
+                        tmp_list=[wt_maf]
+                        if tmp_ratio==0:
+                            tmp_list.append(1-wt_maf)
+                        else:
+                            for tmpv in v[1:]:
+                                tmp_list.append(tmpv/tmp_ratio)
+                        tmp_data_maf.append(tuple(tmp_list))
+                    else:
+                        tmp_data_maf.append(v)
+            data.maf[item]=tuple(tmp_data_maf)
         if env.debug:
             with env.lock:
                 print("marker freqs = ", data.maf, "\n", file = sys.stderr)
@@ -372,23 +862,115 @@ class MarkerMaker:
     def __AssignSNVHaplotypes(self, data, haplotypes, mafs, varnames):
         for item in haplotypes:
             # each person's haplotype
+            data.varnames_by_fam[item]=varnames[item]
             token = ''
-            for idx, line in enumerate(haplotypes[item]):
-                if not idx % 2:
-                    token = line[2][1] if line[2][0].isupper() else line[2][0]
+            for idx,line in enumerate(haplotypes[item]):
+                if line[1] in data.missing_persons:
+                    data[line[1]]=('0','0')
                 else:
-                    data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
-            # get maf
-            data.maf[item] = [(1 - mafs[varnames[item][0]], mafs[varnames[item][0]])]
+                    if not idx % 2:
+                        token = line[2][1] if line[2][0].isupper() else line[2][0]
+                        if token=='?':
+                            token='0'
+                    else:
+                        tmp_token = line[2][1] if line[2][0].isupper() else line[2][0]
+                        if tmp_token=='?':
+                            tmp_token='0'
+                        data[line[1]] = (token, tmp_token)
+
+            # get MAF
+            data.maf[item] = [(1 - mafs[item][varnames[item][0]], mafs[item][varnames[item][0]])]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
+        for item in data.famvaridx:
+            if item not in haplotypes and data[data.families[item][0]] != ('0','0'):
+                for person in data.families[item]:
+                    if '00' in data[person]:
+                        data[person]=('0','0')
+                    else:
+                        data[person]=('1','1')
+                t_maf=0
+                if self.freq_by_fam:
+                    try:
+                        t_maf=data.wt_maf[data.freq_by_fam[item]]
+                    except:
+                        for person in data.families[item]:
+                            data[person]=('0','0')
+                else:
+                    t_maf=data.wt_maf['pop']
+                data.maf[item]=((t_maf,1-t_maf),)
         if env.debug:
             with env.lock:
                 print("marker freqs = ", data.maf, "\n", file = sys.stderr)
 
 
-    def __FormatHaplotypes(self, data):
+    def __FormatHaplotypes(self, data,recombPos,varnames,uniq_vars):
         # Reformat sample genotypes
+        ## Linhai Edit: Reformat to deal with recombination events in families
+        tmp_combined_recombPos={}
+        sorted_var = sorted(uniq_vars, key=lambda x: int(x.split('-')[0][1:]))
+        for fam in data.maf.keys():
+            if len(data.maf[fam])>1:
+                for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
+                    if pair[1] == varnames[fam][0]:
+                        ##remove recombination event if occurred at 1st RV
+                        del recombPos[fam][pair]
+                        continue
+                    if fam not in tmp_combined_recombPos:
+                        tmp_combined_recombPos[fam]=[pair]
+                    else:
+                            tmp_combined_recombPos[fam].append(pair)
+        tmp_all_recombs=[pair for pairs in tmp_combined_recombPos.values() for pair in pairs]
+        sorted_combined_recombPos=sorted(list(set(tmp_all_recombs)),key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1])))
+        recomb_fams=tmp_combined_recombPos.keys()
+        ##get sub-regions that applies to all families
+        for varidx,variant in enumerate(sorted_var):
+            included_fams=len(recomb_fams)
+            for recomb_region in sorted_combined_recombPos:
+                if varidx > sorted_var.index(recomb_region[0]) and varidx < sorted_var.index(recomb_region[1]):
+                    ##if the variant is in a recombination region
+                    included_fams-=1
+            if included_fams==len(recomb_fams):
+                if data.combined_regions==[]:
+                    data.combined_regions.append([variant])
+                else:
+                    if sorted_var.index(data.combined_regions[-1][-1])==varidx-1:
+                        neighbour_recomb_flag=False
+                        for recomb_region in sorted_combined_recombPos:
+                            recomb_idx=sorted_var.index(recomb_region[1])
+                            if recomb_idx==varidx:
+                                neighbour_recomb_flag=True
+                                break
+                            elif recomb_idx>varidx:
+                                break
+                        if neighbour_recomb_flag:
+                            data.combined_regions.append([variant])
+                        else:
+                            data.combined_regions[-1].append(variant)
+                    else:
+                        data.combined_regions.append([variant])
+        ##Get the markers in families compliant with the sub_regions
+        for sub_region in data.combined_regions:
+            markers={}
+            for fam in recomb_fams:
+                pidx=0
+                for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
+                    sub_region_start=sorted_var.index(sub_region[0])
+                    sub_region_end=sorted_var.index(sub_region[-1])
+                    recomb_start=sorted_var.index(pair[0])
+                    recomb_end=sorted_var.index(pair[1])
+                    if sub_region_end <= recomb_start:
+                        markers[fam]=pidx
+                        break
+                    elif sub_region_end > recomb_start and sub_region_start>recomb_start and sub_region_end<recomb_end:
+                        ##within the recombination region
+                        markers[fam]=None
+                        break
+                    pidx+=1
+                if fam not in markers:
+                    markers[fam]=pidx
+            data.complied_markers.append(markers)
+        data.superMarkerCount=len(data.combined_regions)
         for person in data:
             if type(data[person]) is not tuple:
                 data[person] = self.missings
@@ -396,7 +978,18 @@ class MarkerMaker:
             diff = data.superMarkerCount - len(data[person][0])
             data[person] = zip(*data[person])
             if diff > 0:
-                data[person].extend([self.missings] * diff)
+                if len(data[person]) == 1:
+                    ##only one whole region with no recombination
+                    data[person].extend(data[person] * diff)
+                else:
+                    famid=''
+                    for fam in data.complied_markers[0].keys():
+                        if person in data.families[fam]:
+                            famid=fam
+                    complied_data=[]
+                    for marker in data.complied_markers:
+                        complied_data.append(data[person][marker[famid]])
+                    data[person]=complied_data
 
     def __PedToHaplotype(self, ped):
         '''convert prephased ped format to haplotype format.
@@ -411,6 +1004,8 @@ class MarkerMaker:
             haps.append(tuple(entry))
         return tuple(haps)
 
+    def getRegion(self, region):
+        self.name = region[3]
 
 class LinkageWriter:
     def __init__(self, num_missing_append = 0):
@@ -463,11 +1058,22 @@ class LinkageWriter:
                 for idx in range(data.superMarkerCount):
                     if idx in skipped_chunk:
                         continue
-                    if idx >= len(data.maf[k]):
-                        break
-                    cid += 1
-                    self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
-                                                    map(str, data.maf[k][idx])) + "\n"
+                    if len(data.maf[k])>1:
+                        matched_idx=data.complied_markers[idx][k]
+                        cid += 1
+                        self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
+                                                map(str, data.maf[k][matched_idx])) + "\n"
+                    elif len(data.maf[k])==1:
+                        cid += 1
+                        self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
+                                                map(str, data.maf[k][0])) + "\n"
+        self.chp += "CHP Super Marker positions: "+repr(data.combined_regions)+"\n"
+        for item in data.varnames_by_fam:
+            try:
+                pattern_txt=[tuple(sorted(data.patterns[item][tmarker],key=lambda x:x.count('2') )) for tmarker in range(len(data.patterns[item]))]
+            except:
+                pattern_txt=''
+            self.varfam += "{}\t{}\t{}\n".format(item,data.varnames_by_fam[item],pattern_txt)
         if self.counter < env.batch:
             self.counter += data.superMarkerCount
         else:
@@ -485,11 +1091,23 @@ class LinkageWriter:
                 with open(os.path.join(env.tmp_cache, '{}.chr{}.freq'.format(env.output, self.prev_chrom)),
                           'a') as f:
                     f.write(self.freq)
+        if self.chp:
+            with env.lock:
+                with open(os.path.join(env.tmp_cache, '{}.chr{}.chp'.format(env.output, self.prev_chrom)),
+                          'a') as f:
+                    f.write(self.chp)
+        if self.varfam:
+            with env.lock:
+                with open(os.path.join(env.tmp_cache, '{}.chr{}.var'.format(env.output, self.prev_chrom)),
+                          'a') as f:
+                    f.write(self.varfam)
         self.reset()
 
     def reset(self):
         self.tped = ''
         self.freq = ''
+        self.chp = ''
+        self.varfam = ''
         self.counter = 0
         self.prev_chrom = self.chrom
 
@@ -532,6 +1150,7 @@ class EncoderWorker(Process):
                         env.total_counter.value += 1
                     self.extractor.getRegion(region)
                     self.writer.getRegion(region)
+                    self.maker.getRegion(region)
                     isSuccess = True
                     for m in [self.extractor, self.maker, self.writer]:
                         status = m.apply(self.data)
@@ -601,13 +1220,15 @@ def main(args):
         rewriteFamfile(os.path.join(env.tmp_cache, '{}.tfam'.format(env.output)),
                        data.tfam.samples, data.samples.keys() + samples_not_vcf)
         if args.single_markers:
-            regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
-                       for x in vs.GetGenomeCoordinates()]
+            regions=[]
+            for x in vs.GetGenomeCoordinates():
+                region_info = (x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
+                if region_info not in regions:
+                    regions.append(region_info)
             args.blueprint = None
         else:
             # load blueprint
             try:
-                env.log('Loading marker map from [{}] ...'.format(args.blueprint))
                 with open(args.blueprint, 'r') as f:
                     regions = [x.strip().split() for x in f.readlines()]
             except IOError:
@@ -621,10 +1242,20 @@ def main(args):
             faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
             for i in regions:
                 queue.put(i)
+            freq_by_fam_flag = False
+            if not args.freq_by_fam is None:
+                freq_by_fam_flag = True
+                with open(args.freq_by_fam) as freq_fh:
+                    for freq_line in freq_fh:
+                        tmp_eles=freq_line.split()   #Fam and Population
+                        data.freq_by_fam[tmp_eles[0]]=tmp_eles[1]
+                data.freq=sorted(list(set(data.freq_by_fam.values())))
+            else:
+                data.freq=args.freq
             jobs = [EncoderWorker(
                 queue, len(regions), deepcopy(data),
-                RegionExtractor(args.vcf, build=args.build, chr_prefix = args.chr_prefix, allele_freq_info = args.freq),
-                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = data.freq, include_vars_file=args.include_vars),
+                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff,single_markers=args.single_markers,recomb_max=args.recomb_max,af_info=data.freq,freq_by_fam=freq_by_fam_flag,rsq=args.rsq,mle=args.mle, rvhaplo=args.rvhaplo),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
             for j in jobs:
@@ -645,7 +1276,7 @@ def main(args):
             if env.triallelic_counter.value:
                 env.log('{:,d} tri-allelic loci were ignored'.format(env.triallelic_counter.value))
             if env.commonvar_counter.value:
-                env.log('{:,d} variants ignored due to having MAF > {}'.\
+                env.log('{:,d} variants ignored due to having MAF > {} and other specified constraints'.\
                         format(env.commonvar_counter.value, args.maf_cutoff))
             if env.null_counter.value:
                 env.log('{:,d} units ignored due to absence in VCF file'.format(env.null_counter.value))
@@ -677,6 +1308,7 @@ def main(args):
         else:
             env.log('{:,d} units will be converted to {} format'.format(env.success_counter.value, fmt.upper()))
             env.format_counter.value = 0
+            format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)))
             format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)),
                    args.prevalence, args.wild_pen, args.muta_pen, fmt,
                    args.inherit_mode, args.theta_max, args.theta_inc)
@@ -712,4 +1344,4 @@ def main(args):
         html(args.theta_inc, args.theta_max, args.output_limit)
     else:
         env.log('Saving data to [{}]'.format(os.path.abspath(env.output)))
-        cache.load(target_dir = env.output)
+        cache.load(target_dir = env.output, names = [fmt.upper() for fmt in args.format])

@@ -54,6 +54,12 @@ class Args:
         vargs.add_argument('--build', metavar='STRING', default='hg19', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
         vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
         vargs.add_argument('--freq', metavar='INFO', help='''Info field name for allele frequency in VCF file.''')
+        vargs.add_argument('--freq_by_fam', metavar='FILE', help='''Per family info field name for allele frequency in VCF file.''')
+        vargs.add_argument('--mle', action='store_true', help='''Estimate allele frequency from sample''')
+        vargs.add_argument('--rvhaplo', action='store_true', help='''Only using rare variants for haplotyping''')
+        vargs.add_argument('--recomb_max', metavar='INT', default = 1, type = int, help='''Maximum recombination events allowed per region.''')
+        vargs.add_argument('--rsq', metavar='R', default=0.0,type=float, help=SUPPRESS)
+        vargs.add_argument('--include_vars', metavar='FILE', help='''Variants to be included in CHP construction''')
         vargs.add_argument('-c', '--maf-cutoff', metavar='P', type=float, dest = "maf_cutoff",
                            help='''MAF cutoff to define "common" variants to be excluded from analyses.''')
         vargs.add_argument('--chrom-prefix', metavar='STRING', dest = 'chr_prefix',
