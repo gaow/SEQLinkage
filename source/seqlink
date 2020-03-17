@@ -8,6 +8,7 @@ from SEQLinkage import HOMEPAGE
 from SEQLinkage.Utils import env, getColumn
 from SEQLinkage.Core import main
 import os
+from multiprocessing import cpu_count
 
 class Args:
     def __init__(self):
@@ -66,7 +67,7 @@ class Args:
     def getRuntimeArguments(self, parser):
         vargs = parser.add_argument_group('Runtime arguments')
         vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
-        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(os.cpu_count() / 2), 32), 1),
+        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 32), 1),
                            help='''Number of CPUs to use.''')
         vargs.add_argument('--tempdir', metavar='PATH',
                            help='''Temporary directory to use.''')
