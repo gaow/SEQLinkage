@@ -215,7 +215,7 @@ class RegionExtractor:
                     if maf > 0.5:
                         large_maf=True
                         maf = 1 - maf
-            except Exception as e:
+            except Exception:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), self.af_info))
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name, maf])
@@ -328,7 +328,7 @@ class MarkerMaker:
                     clusters = self.__ClusterByLD(data, haplotypes, varnames)
                     # recoding the genotype of the region
                     self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
-        except Exception as e:
+        except Exception:
             return -1
         self.__FormatHaplotypes(data,recombPos,varnames,uniq_vars)
         return 0
@@ -350,7 +350,7 @@ class MarkerMaker:
                 else:
                     output_sample[last_ele].extend(["00"] * len(markers_to_analyze))
         with stdoutRedirect(to = output_log):
-            af=self.haplotyper.Execute(data.chrom, markers_to_analyze, pos_all, output_sample, rsq, output_log,False)
+            af = self.haplotyper.Execute(data.chrom, markers_to_analyze, pos_all, output_sample, rsq, output_log,False)
         with open(output_log) as mle_fh:
             for line in mle_fh:
                 if line.startswith('V'):
@@ -579,7 +579,7 @@ class MarkerMaker:
                             tmp_mafs[pop][v] = tmp_mafs[pop][v][0]/tmp_mafs[pop][v][1] if tmp_mafs[pop][v][1] >0 else 0.0
             else:
                 for v in tmp_mafs:
-                        if type(tmp_mafs[v]) is list:
+                    if type(tmp_mafs[v]) is list:
                         tmp_mafs[v] = tmp_mafs[v][0]/tmp_mafs[v][1] if tmp_mafs[v][1] > 0 else 0.0
         ## Make mafs consistent in structure regardless of freq_by_fam
         if self.freq_by_fam:
