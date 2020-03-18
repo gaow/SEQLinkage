@@ -205,7 +205,6 @@ class RegionExtractor:
                         if maf[idx] > 0.5:
                             large_maf[idx]=True
                             maf[idx] = 1-maf[idx]
-
                 else:
                     large_maf=False
                     try:
@@ -479,12 +478,12 @@ class MarkerMaker:
                 mafs[item]={}
                 tfreq_fam=data.freq_by_fam[item]
                 for pop in data.gnomAD_estimate.keys():
-                    if pop == tfreq_fam:
+                    if pop in tfreq_fam:
                         gnomAD_pop=pop
                         break
             elif gnomAD_pop is None:
                 for pop in data.gnomAD_estimate.keys():
-                    if pop == data.freq:
+                    if pop in data.freq:
                         gnomAD_pop=pop
                         break
             for idx, v in enumerate(varnames[item]):
