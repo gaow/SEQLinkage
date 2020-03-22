@@ -295,7 +295,8 @@ class MarkerMaker:
         self.af_info = af_info
         self.freq_by_fam = freq_by_fam
         self.rsq=rsq
-        self.mle=mle
+        self.mle=mle          #use MLE estimate from families for MAF
+        self.count= not mle   #count founder alleles to estimate MAF
         self.rvhaplo=rvhaplo
         if wsize == 0 or wsize >= 1:
             self.r2 = None
@@ -378,6 +379,36 @@ class MarkerMaker:
                                     data[person][tmp_famvaridx]=tmpg_switch2
         return mle_mafs
 
+    def __computefounderfreq(self,data, families):
+        #count founder alleles to estimate MAF
+        total_founder_alleles=0
+        tmp_haplotypes=OrderedDict()
+        tmp_mafs={}
+        for item in families:
+            tmp_haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))
+            # count founder alleles
+            for hap in tmp_haplotypes[item]:
+                if not data.tfam.is_founder(hap[1]):
+                    continue
+                total_founder_alleles+=1.0
+                for idxv, v in enumerate(data.getFamVariants(item,style="map",include_wt=True)[0]):
+                    if v not in tmp_mafs:
+                        # [#alt, #haplotypes]
+                        tmp_mafs[v] = [0, 0]
+                    gt = hap[2 + idxv][1] if hap[2 + idxv][0].isupper() else hap[2 + idxv][0]
+                    if not gt == "?":
+                    #genotyped
+                        tmp_mafs[v][0] += self.gtconv[gt]
+                    else:
+                    #genotype is missing
+                        tmp_mafs[v][1] -= 1.0
+        #compute MAFs based on counts
+        for v in tmp_mafs:
+            if type(tmp_mafs[v]) is not list:
+                continue
+            tmp_mafs[v] = tmp_mafs[v][0] / (tmp_mafs[v][1]+total_founder_alleles) if tmp_mafs[v][1]+total_founder_alleles > 0 else 0.0
+        return tmp_mafs
+
     def __Haplotype(self, data, haplotypes, mafs, varnames,recombPos,uniq_vars,exclude_vars):
         '''genetic haplotyping. haplotypes stores per family data'''
         # FIXME: it is SWIG's (2.0.12) fault not to properly destroy the object "Pedigree" in "Execute()"
@@ -387,18 +418,27 @@ class MarkerMaker:
         #
         self.markers = ["V{}-{}".format(idx, item[1]) for idx, item in enumerate(data.variants)]
         tmp_mafs = {}
+        if self.freq_by_fam:
+            ## if families are from different populations
+            ## estimate MAF by different population
+            fam_to_analyze={}
+            for fam,pop in data.freq_by_fam.iteritems():
+                if pop not in fam_to_analyze:
+                    fam_to_analyze[pop]=[fam]
+                else:
+                    fam_to_analyze[pop].append(fam)
+        if self.count:
+            ## estimate MAF by counting founder alleles
+            if self.freq_by_fam:
+                local_count_mafs={}
+                for pop in fam_to_analyze:
+                    local_count_mafs[pop]=self.__computefounderfreq(data,fam_to_analyze[pop])
+            else:
+                local_count_mafs=self.__computefounderfreq(data,data.families.keys())
         if self.mle:
             ## estimate MLE allele frequency using all fam
             local_mle_mafs={}
             if self.freq_by_fam:
-                ## if families are from different populations
-                ## estimate MLE by different population
-                fam_to_analyze={}
-                for fam,pop in data.freq_by_fam.iteritems():
-                    if pop not in fam_to_analyze:
-                        fam_to_analyze[pop]=[fam]
-                    else:
-                        fam_to_analyze[pop].append(fam)
                 for pop in fam_to_analyze:
                     local_mle_mafs[pop]={}
                     markers_to_analyze=[]
@@ -481,21 +521,25 @@ class MarkerMaker:
                     if pop in tfreq_fam:
                         gnomAD_pop=pop
                         break
-            elif gnomAD_pop is None:
+            elif gnomAD_pop is None and data.freq is not None:
                 for pop in data.gnomAD_estimate.keys():
                     if pop in data.freq:
                         gnomAD_pop=pop
                         break
             for idx, v in enumerate(varnames[item]):
                 tmp_maf_var=0
-                if self.mle and self.af_info is None:
-                    #no vcf freq specified and MLE speicified
-                    #use MLE freq for all variants
+                if self.af_info is None:
+                #no vcf freq column specified
                     if v not in tmp_mafs:
-                        tmp_mafs[v]=local_mle_mafs[v]
-                    tmp_maf_var=tmp_mafs[v]
+                        if self.mle:
+                        #use MLE freq for all variants
+                            tmp_mafs[v]=local_mle_mafs[v]
+                        elif self.count:
+                        #estimate MAF based on founder counts if MLE not specified
+                            tmp_mafs[v]=local_count_mafs[v]
+                        tmp_maf_var=tmp_mafs[v]
                 elif not self.af_info is None:
-                    #if vcf freq column specified
+                    #if vcf freq column is specified
                     #use vcf_mafs if possible
                     if vcf_mafs[idx]:
                         tmp_maf_var=vcf_mafs[idx]
@@ -505,19 +549,23 @@ class MarkerMaker:
                             if v not in tmp_mafs:
                                 tmp_mafs[v] = vcf_mafs[idx]
                     else:
-                        #use MLE/gnomAD estimate for variants without vcf_mafs if specified
+                        #if variants do not have valid vcf_mafs values if specified
                         if self.freq_by_fam:
-                            if self.mle:
-                                    mafs[item][v]=local_mle_mafs[data.freq_by_fam[item]][v]
-                            else:
+                            if gnomAD_pop is not None:
                                 mafs[item][v]=data.gnomAD_estimate[gnomAD_pop]
+                            elif self.mle:
+                                    mafs[item][v]=local_mle_mafs[data.freq_by_fam[item]][v]
+                            elif self.count:
+                                    mafs[item][v]=local_count_mafs[data.freq_by_fam[item]][v]
                             tmp_maf_var=mafs[item][v]
                         else:
                             if v not in tmp_mafs:
-                                if self.mle:
-                                    tmp_mafs[v]=local_mle_mafs[v]
-                                else:
+                                if gnomAD_pop is not None:
                                     tmp_mafs[v]=data.gnomAD_estimate[gnomAD_pop]
+                                elif self.mle:
+                                    tmp_mafs[v]=local_mle_mafs[v]
+                                elif self.count:
+                                    tmp_mafs[v]=local_count_mafs[v]
                             tmp_maf_var=tmp_mafs[v]
                 if self.rvhaplo:
                     if tmp_maf_var<=self.maf_cutoff:
@@ -1135,7 +1183,7 @@ class EncoderWorker(Process):
     def run(self):
         while True:
             try:
-                region = self.queue.get()
+                region = self.queue.pop(0)
                 if region is None:
                     self.writer.commit()
                     self.report()
@@ -1238,11 +1286,11 @@ def main(args):
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
         regions.extend([None] * env.jobs)
-        queue = Queue()
+        queue = []
         try:
             faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
             for i in regions:
-                queue.put(i)
+                queue.append(i)
             freq_by_fam_flag = False
             if not args.freq_by_fam is None:
                 freq_by_fam_flag = True
