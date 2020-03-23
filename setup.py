@@ -16,19 +16,18 @@ except ImportError:
     from source.Utils import downloadURL
     from distutils.dir_util import remove_tree
     import tempfile
-    cstatgen_url = "http://bioinformatics.org/spower/download/.private/cstatgen.tar.gz"
+    cstatgen_url = "https://github.com/statgenetics/cstatgen/archive/master.tar.gz"
     download_dir = tempfile.gettempdir()
-    pkg = os.path.join(download_dir, "cstatgen.tar.gz")
-    pkg_dir = os.path.join(download_dir, "cstatgen")
+    pkg = os.path.join(download_dir, "master.tar.gz")
+    pkg_dir = os.path.join(download_dir, "cstatgen-master")
     sys.stderr.write("Downloading cstatgen library ...\n")
     downloadURL(cstatgen_url, download_dir, force = True)
     sys.stderr.write("Installing cstatgen library ...\n")
     try:
         remove_tree(pkg_dir)
-        os.mkdir(pkg_dir)
     except:
-        os.mkdir(pkg_dir)
-    os.system("tar zxvf {} -C {} > /dev/null".format(pkg, pkg_dir))
+        pass
+    os.system("tar zxvf {} -C {} > /dev/null".format(pkg, download_dir))
     cwd = os.getcwd()
     os.chdir(pkg_dir)
     cmd = "python2.7 setup.py install {}".format(" ".join(sys.argv[2:]))
