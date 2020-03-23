@@ -1183,7 +1183,7 @@ class EncoderWorker(Process):
     def run(self):
         while True:
             try:
-                region = self.queue.pop(0)
+                region = self.queue.pop(0) if isinstance(queue, list) else self.queue.get()
                 if region is None:
                     self.writer.commit()
                     self.report()
@@ -1286,11 +1286,14 @@ def main(args):
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
         regions.extend([None] * env.jobs)
-        queue = []
+        queue = [] if env.jobs == 1 else Queue()
         try:
             faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
             for i in regions:
-                queue.append(i)
+                if isinstance(queue, list):
+                    queue.append(i)
+                else:
+                    queue.get(i)
             freq_by_fam_flag = False
             if not args.freq_by_fam is None:
                 freq_by_fam_flag = True
