@@ -1183,7 +1183,7 @@ class EncoderWorker(Process):
     def run(self):
         while True:
             try:
-                region = self.queue.pop(0) if isinstance(queue, list) else self.queue.get()
+                region = self.queue.pop(0) if isinstance(self.queue, list) else self.queue.get()
                 if region is None:
                     self.writer.commit()
                     self.report()
