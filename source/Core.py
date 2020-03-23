@@ -1293,7 +1293,7 @@ def main(args):
                 if isinstance(queue, list):
                     queue.append(i)
                 else:
-                    queue.get(i)
+                    queue.put(i)
             freq_by_fam_flag = False
             if not args.freq_by_fam is None:
                 freq_by_fam_flag = True
