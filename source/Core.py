@@ -287,7 +287,7 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None,single_markers=False,recomb_max = 1,af_info=None,freq_by_fam=False,rsq=0.0,mle=False,rvhaplo=False):
+    def __init__(self, wsize, maf_cutoff = None,single_markers=False,recomb_max = 1,af_info=None,freq_by_fam=False,rsq=0.0,mle=False,rvhaplo=False,recomb_perfam=False):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
         self.recomb_max = recomb_max
@@ -298,6 +298,7 @@ class MarkerMaker:
         self.mle=mle          #use MLE estimate from families for MAF
         self.count= not mle   #count founder alleles to estimate MAF
         self.rvhaplo=rvhaplo
+        self.recomb_perfam=recomb_perfam
         if wsize == 0 or wsize >= 1:
             self.r2 = None
         else:
@@ -789,9 +790,9 @@ class MarkerMaker:
 
     def __CodeHaplotypes(self, data, haplotypes, mafs, varnames, clusters):
         # apply CHP coding
-        ##Add non variant haplotype if not present in a family
         for item in data.famvaridx:
             if item not in haplotypes and data[data.families[item][0]] != ('0','0'):
+                # when only wild-type haplotypes are present in a family, still code them instead of ignoring the family
                 if self.freq_by_fam:
                     pop=data.freq_by_fam[item]
                     try:
@@ -813,6 +814,7 @@ class MarkerMaker:
                     haplotypes[item].append(tmp_person)
             elif item in haplotypes:
                 nonvar_hap_flag=False
+                #determine if wild-type haplotype is present in a family
                 for hap in haplotypes[item]:
                     tmp_genes=[]
                     for tmpa in hap[2:]:
@@ -825,7 +827,7 @@ class MarkerMaker:
                         nonvar_hap_flag=True
                         break
                 if not nonvar_hap_flag:
-                    #if family don't have non variant haplotype
+                    #if family don't have wild-type haplotype, add a fake one to ensure correct coding
                     var_num=len(varnames[item])
                     fake_person=[item, 'FAKEPERSON']+['1:']*var_num
                     haplotypes[item].append(fake_person)
@@ -856,6 +858,7 @@ class MarkerMaker:
                 # they have to be skipped for now
                 continue
             data[line[1]] = (line[2].split(','), line[4].split(','))
+            #sub-region count for each sample individual
             superMarkerCount=len(data[line[1]][0])
             if line[0] not in data.patterns:
                 data.patterns[line[0]]=[[] for x in range(superMarkerCount)]
@@ -872,7 +875,7 @@ class MarkerMaker:
         for item in data.famvaridx:
             if item not in haplotypes:
                 for person in data.families[item]:
-                    data[person]=('0','0')*data.superMarkerCount
+                    data[person]=(['0']*data.superMarkerCount,['0']*data.superMarkerCount)
         for item in haplotypes:
             data.maf[item] = self.coder.GetAlleleFrequencies(item)
             if not len(data.maf[item][0]):
@@ -956,89 +959,101 @@ class MarkerMaker:
     def __FormatHaplotypes(self, data,recombPos,varnames,uniq_vars):
         # Reformat sample genotypes
         ## Linhai Edit: Reformat to deal with recombination events in families
-        tmp_combined_recombPos={}
-        sorted_var = sorted(uniq_vars, key=lambda x: int(x.split('-')[0][1:]))
-        for fam in data.maf.keys():
-            if len(data.maf[fam])>1:
-                for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
-                    if pair[1] == varnames[fam][0]:
-                        ##remove recombination event if occurred at 1st RV
-                        del recombPos[fam][pair]
-                        continue
-                    if fam not in tmp_combined_recombPos:
-                        tmp_combined_recombPos[fam]=[pair]
-                    else:
-                            tmp_combined_recombPos[fam].append(pair)
-        tmp_all_recombs=[pair for pairs in tmp_combined_recombPos.values() for pair in pairs]
-        sorted_combined_recombPos=sorted(list(set(tmp_all_recombs)),key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1])))
-        recomb_fams=tmp_combined_recombPos.keys()
-        ##get sub-regions that applies to all families
-        for varidx,variant in enumerate(sorted_var):
-            included_fams=len(recomb_fams)
-            for recomb_region in sorted_combined_recombPos:
-                if varidx > sorted_var.index(recomb_region[0]) and varidx < sorted_var.index(recomb_region[1]):
-                    ##if the variant is in a recombination region
-                    included_fams-=1
-            if included_fams==len(recomb_fams):
-                if data.combined_regions==[]:
-                    data.combined_regions.append([variant])
-                else:
-                    if sorted_var.index(data.combined_regions[-1][-1])==varidx-1:
-                        neighbour_recomb_flag=False
-                        for recomb_region in sorted_combined_recombPos:
-                            recomb_idx=sorted_var.index(recomb_region[1])
-                            if recomb_idx==varidx:
-                                neighbour_recomb_flag=True
-                                break
-                            elif recomb_idx>varidx:
-                                break
-                        if neighbour_recomb_flag:
-                            data.combined_regions.append([variant])
+        if self.recomb_perfam:
+            #code recombination per family basis, no need to consider overlap across families
+            for person in data:
+                if type(data[person]) is not tuple:
+                    data[person] = self.missings
+                    continue
+                diff = data.superMarkerCount - len(data[person][0])
+                data[person] = zip(*data[person])
+                if diff > 0:
+                    data[person].extend([self.missings] * diff)
+        else:
+            #code recombination across families to generate sub-regions that extend across families
+            tmp_combined_recombPos={}
+            sorted_var = sorted(uniq_vars, key=lambda x: int(x.split('-')[0][1:]))
+            for fam in data.maf.keys():
+                if len(data.maf[fam])>1:
+                    for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
+                        if pair[1] == varnames[fam][0]:
+                            ##remove recombination event if occurred at 1st RV
+                            del recombPos[fam][pair]
+                            continue
+                        if fam not in tmp_combined_recombPos:
+                            tmp_combined_recombPos[fam]=[pair]
                         else:
-                            data.combined_regions[-1].append(variant)
-                    else:
+                            tmp_combined_recombPos[fam].append(pair)
+            tmp_all_recombs=[pair for pairs in tmp_combined_recombPos.values() for pair in pairs]
+            sorted_combined_recombPos=sorted(list(set(tmp_all_recombs)),key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1])))
+            recomb_fams=tmp_combined_recombPos.keys()
+            ##get sub-regions that applies to all families
+            for varidx,variant in enumerate(sorted_var):
+                included_fams=len(recomb_fams)
+                for recomb_region in sorted_combined_recombPos:
+                    if varidx > sorted_var.index(recomb_region[0]) and varidx < sorted_var.index(recomb_region[1]):
+                        ##if the variant is in a recombination region
+                        included_fams-=1
+                if included_fams==len(recomb_fams):
+                    if data.combined_regions==[]:
                         data.combined_regions.append([variant])
-        ##Get the markers in families compliant with the sub_regions
-        for sub_region in data.combined_regions:
-            markers={}
-            for fam in recomb_fams:
-                pidx=0
-                for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
-                    sub_region_start=sorted_var.index(sub_region[0])
-                    sub_region_end=sorted_var.index(sub_region[-1])
-                    recomb_start=sorted_var.index(pair[0])
-                    recomb_end=sorted_var.index(pair[1])
-                    if sub_region_end <= recomb_start:
+                    else:
+                        if sorted_var.index(data.combined_regions[-1][-1])==varidx-1:
+                            neighbour_recomb_flag=False
+                            for recomb_region in sorted_combined_recombPos:
+                                recomb_idx=sorted_var.index(recomb_region[1])
+                                if recomb_idx==varidx:
+                                    neighbour_recomb_flag=True
+                                    break
+                                elif recomb_idx>varidx:
+                                    break
+                            if neighbour_recomb_flag:
+                                data.combined_regions.append([variant])
+                            else:
+                                data.combined_regions[-1].append(variant)
+                        else:
+                            data.combined_regions.append([variant])
+            ##Get the markers in families compliant with the sub_regions
+            for sub_region in data.combined_regions:
+                markers={}
+                for fam in recomb_fams:
+                    pidx=0
+                    for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
+                        sub_region_start=sorted_var.index(sub_region[0])
+                        sub_region_end=sorted_var.index(sub_region[-1])
+                        recomb_start=sorted_var.index(pair[0])
+                        recomb_end=sorted_var.index(pair[1])
+                        if sub_region_end <= recomb_start:
+                            markers[fam]=pidx
+                            break
+                        elif sub_region_end > recomb_start and sub_region_start>recomb_start and sub_region_end<recomb_end:
+                            ##within the recombination region
+                            markers[fam]=None
+                            break
+                        pidx+=1
+                    if fam not in markers:
                         markers[fam]=pidx
-                        break
-                    elif sub_region_end > recomb_start and sub_region_start>recomb_start and sub_region_end<recomb_end:
-                        ##within the recombination region
-                        markers[fam]=None
-                        break
-                    pidx+=1
-                if fam not in markers:
-                    markers[fam]=pidx
-            data.complied_markers.append(markers)
-        data.superMarkerCount=len(data.combined_regions)
-        for person in data:
-            if type(data[person]) is not tuple:
-                data[person] = self.missings
-                continue
-            diff = data.superMarkerCount - len(data[person][0])
-            data[person] = zip(*data[person])
-            if diff > 0:
-                if len(data[person]) == 1:
-                    ##only one whole region with no recombination
-                    data[person].extend(data[person] * diff)
-                else:
-                    famid=''
-                    for fam in data.complied_markers[0].keys():
-                        if person in data.families[fam]:
-                            famid=fam
-                    complied_data=[]
-                    for marker in data.complied_markers:
-                        complied_data.append(data[person][marker[famid]])
-                    data[person]=complied_data
+                data.complied_markers.append(markers)
+            data.superMarkerCount=len(data.combined_regions)
+            for person in data:
+                if type(data[person]) is not tuple:
+                    data[person] = self.missings
+                    continue
+                diff = data.superMarkerCount - len(data[person][0])
+                data[person] = zip(*data[person])
+                if diff > 0:
+                    if len(data[person]) == 1:
+                        ##only one whole region with no recombination
+                        data[person].extend(data[person] * diff)
+                    else:
+                        famid=''
+                        for fam in data.complied_markers[0].keys():
+                            if person in data.families[fam]:
+                                famid=fam
+                        complied_data=[]
+                        for marker in data.complied_markers:
+                            complied_data.append(data[person][marker[famid]])
+                        data[person]=complied_data
 
     def __PedToHaplotype(self, ped):
         '''convert prephased ped format to haplotype format.
@@ -1107,16 +1122,25 @@ class LinkageWriter:
                 for idx in range(data.superMarkerCount):
                     if idx in skipped_chunk:
                         continue
-                    if len(data.maf[k])>1:
-                        matched_idx=data.complied_markers[idx][k]
+                    if not data.complied_markers:
+                        #if recombination coded per family instead of across families
+                        if idx >= len(data.maf[k]):
+                            break
                         cid += 1
                         self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
+                                                    map(str, data.maf[k][idx])) + "\n"
+                    else:
+                        if len(data.maf[k])>1:
+                            matched_idx=data.complied_markers[idx][k]
+                            cid += 1
+                            self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
                                                 map(str, data.maf[k][matched_idx])) + "\n"
-                    elif len(data.maf[k])==1:
-                        cid += 1
-                        self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
+                        elif len(data.maf[k])==1:
+                            cid += 1
+                            self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
                                                 map(str, data.maf[k][0])) + "\n"
-        self.chp += "CHP Super Marker positions: "+repr(data.combined_regions)+"\n"
+        if data.combined_regions:
+            self.chp += "CHP Super Marker positions: "+repr(data.combined_regions)+"\n"
         for item in data.varnames_by_fam:
             try:
                 pattern_txt=[tuple(sorted(data.patterns[item][tmarker],key=lambda x:x.count('2') )) for tmarker in range(len(data.patterns[item]))]
@@ -1307,7 +1331,7 @@ def main(args):
             jobs = [EncoderWorker(
                 queue, len(regions), deepcopy(data),
                 RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = data.freq, include_vars_file=args.include_vars),
-                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff,single_markers=args.single_markers,recomb_max=args.recomb_max,af_info=data.freq,freq_by_fam=freq_by_fam_flag,rsq=args.rsq,mle=args.mle, rvhaplo=args.rvhaplo),
+                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff,single_markers=args.single_markers,recomb_max=args.recomb_max,af_info=data.freq,freq_by_fam=freq_by_fam_flag,rsq=args.rsq,mle=args.mle, rvhaplo=args.rvhaplo, recomb_perfam=args.recomb_perfam),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
             for j in jobs:

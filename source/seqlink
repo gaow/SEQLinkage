@@ -58,6 +58,7 @@ class Args:
         vargs.add_argument('--mle', action='store_true', help='''Estimate allele frequency using MERLIN's MLE method.''')
         vargs.add_argument('--rvhaplo', action='store_true', help='''Only using rare variants for haplotyping''')
         vargs.add_argument('--recomb_max', metavar='INT', default = 1, type = int, help='''Maximum recombination events allowed per region.''')
+        vargs.add_argument('--recomb_perfam', action='store_true', help='''Code recombination on per family basis, otherwise cross families''')
         vargs.add_argument('--rsq', metavar='R', default=0.0,type=float, help=SUPPRESS)
         vargs.add_argument('--include_vars', metavar='FILE', help='''Variants to be included in CHP construction''')
         vargs.add_argument('-c', '--maf-cutoff', metavar='P', default=1.0, type=float, dest = "maf_cutoff",
