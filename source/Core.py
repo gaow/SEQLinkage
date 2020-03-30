@@ -287,7 +287,7 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None,single_markers=False,recomb_max = 1,af_info=None,freq_by_fam=False,rsq=0.0,mle=False,rvhaplo=False,recomb_perfam=False):
+    def __init__(self, wsize, maf_cutoff = None,single_markers=False,recomb_max = 1,af_info=None,freq_by_fam=False,rsq=0.0,mle=False,rvhaplo=False,recomb_perfam=True):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
         self.recomb_max = recomb_max
@@ -1331,7 +1331,7 @@ def main(args):
             jobs = [EncoderWorker(
                 queue, len(regions), deepcopy(data),
                 RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = data.freq, include_vars_file=args.include_vars),
-                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff,single_markers=args.single_markers,recomb_max=args.recomb_max,af_info=data.freq,freq_by_fam=freq_by_fam_flag,rsq=args.rsq,mle=args.mle, rvhaplo=args.rvhaplo, recomb_perfam=args.recomb_perfam),
+                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff,single_markers=args.single_markers,recomb_max=args.recomb_max,af_info=data.freq,freq_by_fam=freq_by_fam_flag,rsq=args.rsq,mle=args.mle, rvhaplo=args.rvhaplo, recomb_perfam=not args.recomb_cross_fam),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
             for j in jobs:
