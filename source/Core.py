@@ -115,19 +115,14 @@ class RData(dict):
             return None
         return sum([x[1] for x in self.variants]) / len(self.variants)
 
-    def getFamVariants(self, fam, style = None, include_wt = False):
+    def getFamVariants(self, fam, style = None):
         if style is None:
-            if include_wt:
-                return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam]]
-            else:
-                return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam] and idx not in self.wtvar[fam]]
+            return [item for idx, item in enumerate(self.variants) if idx in self.famvaridx[fam]]
         elif style == "map":
             names = []
             pos = []
             mafs = []
             tmp_vars = self.famvaridx[fam]
-            if not include_wt:
-                tmp_vars=[idx for idx in self.famvaridx[fam] if idx not in self.wtvar[fam]]
             if len(self.freq_by_fam.keys()) != 0:
                 pop_idx=self.freq.index(self.freq_by_fam[fam])
             for idx in tmp_vars:
@@ -392,7 +387,7 @@ class MarkerMaker:
                 if not data.tfam.is_founder(hap[1]):
                     continue
                 total_founder_alleles+=1.0
-                for idxv, v in enumerate(data.getFamVariants(item,style="map",include_wt=True)[0]):
+                for idxv, v in enumerate(data.getFamVariants(item,style="map")[0]):
                     if v not in tmp_mafs:
                         # [#alt, #haplotypes]
                         tmp_mafs[v] = [0, 0]
