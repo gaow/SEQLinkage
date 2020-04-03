@@ -64,6 +64,7 @@ class RData(dict):
         self.complied_markers = []
         # finalized sub regions (variants)
         self.combined_regions = []
+        self.coordinates_by_region = []
         # RV varnames by family
         self.varnames_by_fam = {}
         self.patterns={}
@@ -107,6 +108,7 @@ class RData(dict):
         self.superMarkerCount = 0
         self.complied_markers = []
         self.combined_regions = []
+        self.coordinates_by_region = []
         self.patterns={}
         self.missing_persons=[]
 
@@ -713,6 +715,7 @@ class MarkerMaker:
                     del haplotypes[i]
                 if len(recombPos[i].keys())>self.recomb_max:
                     #treat as missing if recombination events occurred more than speicified times
+                    recombPos[i]={}
                     for person in data.families[i]:
                         data[person] = self.missings
                     del varnames[i]
@@ -964,6 +967,26 @@ class MarkerMaker:
                 data[person] = zip(*data[person])
                 if diff > 0:
                     data[person].extend([self.missings] * diff)
+            #get coordinates for sub_regions
+            sorted_var = sorted(uniq_vars, key=lambda x: int(x.split('-')[0][1:]))
+            start=int(sorted_var[0].split('-')[1])
+            end=int(sorted_var[-1].split('-')[1])
+            avg_coordinate = (start+end)/2
+            tmp_coordinate_by_region=[[] for x in range(data.superMarkerCount)]
+            for fam in data.maf.keys():
+                if not recombPos[fam]:
+                    #no recombination
+                    tmp_coordinate_by_region[0].append(avg_coordinate)
+                else:
+                    idx=0
+                    tmp_start,tmp_end=start,end
+                    for pair in sorted(recombPos[fam].keys(), key=lambda x:(sorted_var.index(x[0]),sorted_var.index(x[1]))):
+                        tmp_end=int(pair[0].split('-')[1])
+                        tmp_coordinate_by_region[idx].append((tmp_start+tmp_end)/2)
+                        tmp_start=int(pair[1].split('-')[1])
+                        idx+=1
+                    tmp_coordinate_by_region[idx].append((tmp_start+end)/2)
+            data.coordinates_by_region=[sum(x)/len(x) for x in tmp_coordinate_by_region]
         else:
             #code recombination across families to generate sub-regions that extend across families
             tmp_combined_recombPos={}
@@ -1030,6 +1053,8 @@ class MarkerMaker:
                         markers[fam]=pidx
                 data.complied_markers.append(markers)
             data.superMarkerCount=len(data.combined_regions)
+            #coordinates for sub_regions
+            data.coordinates_by_region=[(int(sub_region[0].split('-')[1])+int(sub_region[-1].split('-')[1]))/2 for sub_region in data.combined_regions]
             for person in data:
                 if type(data[person]) is not tuple:
                     data[person] = self.missings
@@ -1069,6 +1094,8 @@ class MarkerMaker:
 class LinkageWriter:
     def __init__(self, num_missing_append = 0):
         self.chrom = self.prev_chrom = self.name = self.distance = self.distance_avg = self.distance_m = self.distance_f = None
+        self.distance_by_region=[]
+        self.mid_position=None
         self.reset()
         self.missings = ["0", "0"]
         self.num_missing = num_missing_append
@@ -1100,13 +1127,14 @@ class LinkageWriter:
             # sub-chunk id
             cid = 0
             skipped_chunk = []
+            self.distance_by_region=[self.distance_converter(x,int(position)) for x in data.coordinates_by_region]
             for idx, g in enumerate(gs):
                 if len(set(g)) == 1:
                     skipped_chunk.append(idx)
                     continue
                 cid += 1
                 self.tped += \
-                  env.delimiter.join([self.chrom, '{}[{}]'.format(self.name, cid), self.distance, position] + \
+                  env.delimiter.join([self.chrom, '{}[{}]'.format(self.name, cid), self.distance_by_region[cid-1], position] + \
                   list(itertools.chain(*g)) + self.missings*self.num_missing) + "\n"
             if cid == 0:
                 # everyone's genotype is the same (most likely missing or monomorphic)
@@ -1178,6 +1206,13 @@ class LinkageWriter:
         self.varfam = ''
         self.counter = 0
         self.prev_chrom = self.chrom
+
+    def distance_converter(self, x, mid_position):
+        delta=(x-mid_position)/1000000.0
+        distance='%.5f'%(float(self.distance_avg)+delta)
+        distance_m='%.5f'%(float(self.distance_m)+delta)
+        distance_f='%.5f'%(float(self.distance_f)+delta)
+        return ";".join([distance,distance_m,distance_f])
 
     def getRegion(self, region):
         self.chrom = region[0]
