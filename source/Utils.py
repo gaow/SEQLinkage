@@ -505,7 +505,7 @@ def checkSamples(samp1, samp2):
     b_not_a = list(set(samp2).difference(set(samp1)))
     if b_not_a:
         env.log('{:,d} samples found in FAM file but not in VCF file:\n{}'.\
-                           format(len(b_not_a), '\, '.join(b_not_a)))
+                           format(len(b_not_a), ', '.join(b_not_a)))
     if a_not_b:
         env.log('{:,d} samples in VCF file will be ignored due to absence in FAM file'.format(len(a_not_b)))
     return a_not_b, b_not_a
