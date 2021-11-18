@@ -13,9 +13,10 @@ import numpy as np
 
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
+    from cstatgen.egglib import Align
 else:
     from cstatgen import cstatgen_py3 as cstatgen
-from cstatgen.egglib import Align
+    from egglib import Align
 
 def checkParams(args):
     '''set default arguments or make warnings'''
@@ -968,6 +969,7 @@ class MarkerMaker:
                 if diff > 0:
                     data[person].extend([self.missings] * diff)
             #get coordinates for sub_regions
+            print(uniq_vars)
             sorted_var = sorted(uniq_vars, key=lambda x: int(x.split('-')[0][1:]))
             start=int(sorted_var[0].split('-')[1])
             end=int(sorted_var[-1].split('-')[1])
