@@ -4,6 +4,9 @@ cache
 MWE
 alzheimers-family
 seqlinkage-example
+LINKAGE
+data
+testseqlink
 *.bak
 .gitattributes
 .last_checked

@@ -4,7 +4,7 @@ __all__ = ['mkpath', 'Environment', 'StdoutCapturer', 'stdoutRedirect', 'cd', 'r
            'parmap', 'downloadURL', 'calculateFileMD5', 'zipdir', 'removeFiles', 'removeEmptyDir', 'copyFiles',
            'downloadResources', 'getColumn', 'wordCount', 'fileLinesCount', 'connected_components', 'listit',
            'parseVCFline', 'indexVCF', 'extractSamplenames', 'checkVCFBundle', 'rewriteFamfile', 'checkSamples',
-           'NoCache', 'Cache', 'PseudoAutoRegion', 'TFAMParser', 'VERSION', 'env']
+           'NoCache', 'Cache', 'PseudoAutoRegion', 'TFAMParser', 'VERSION', 'env', 'isnotebook']
 
 # Cell
 VERSION = '1.1.0'
@@ -20,7 +20,6 @@ from multiprocessing import Pool, Process, Queue, Lock, Value, cpu_count
 import itertools
 from collections import OrderedDict, defaultdict, Counter
 from shutil import rmtree as remove_tree
-from distutils.file_util import copy_file
 from zipfile import ZipFile
 
 # from distutils.dir_util import mkpath
@@ -48,7 +47,7 @@ class Environment:
         self.debug = False
         self.quiet = False
         # File contents
-        self.build = 'hg19'
+        self.build = 'hg38'
         self.delimiter = " "
         self.ped_missing = ['0', '-9'] + ['none', 'null', 'na', 'nan', '.']
         self.trait = 'binary'
@@ -148,9 +147,8 @@ class Environment:
         msg = msg.strip()
         sys.stderr.write(start + "\033[1;40;32mMESSAGE: {}\033[0m".format(msg) + end)
         self.__width_cache = len(msg)
-
+global env
 env = Environment()
-
 ###
 # Utility function / classes
 ###
@@ -817,3 +815,17 @@ class TFAMParser:
             self.__update_graph(graph, item)
         return fams, samples, graph
 
+
+
+# Cell
+def isnotebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False      # Probably standard Python interpreter

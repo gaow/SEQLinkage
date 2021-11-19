@@ -1,0 +1,9 @@
+from SEQLinkage.Main import *
+
+if __name__ == '__main__':
+    try:
+        args = Args().get()
+        args.func(args)
+    except Exception as e:
+        raise
+        env.error("{}".format(e))

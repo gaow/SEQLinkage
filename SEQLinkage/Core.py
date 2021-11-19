@@ -275,9 +275,13 @@ class MarkerMaker:
                     #    haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item],
                     #                                           sorted(positions), data.getFamSamples(item))[0]
                     tmp_log_output=env.tmp_log + str(os.getpid()) + '.log'
-                    #with stdoutRedirect(to = tmp_log_output + '.log'):
-                    haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
-                                                                   data.getFamSamples(item), self.rsq, tmp_log_output)[0]
+                    if isnotebook():
+                        haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
+                                                                       data.getFamSamples(item), self.rsq, tmp_log_output)[0]
+                    else:
+                        with stdoutRedirect(to = tmp_log_output + '.log'):
+                            haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
+                                                                       data.getFamSamples(item), self.rsq, tmp_log_output)[0]
 
                 else:
                     haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))

@@ -20,7 +20,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import brewer2mpl
 from scipy.optimize import minimize_scalar
-
+import re, glob
+from shutil import rmtree as remove_tree
+from distutils.file_util import copy_file
 #formatters
 #the handler, called from main, can call specific formatter.
 def format(tpeds, tfam, prev = None, wild_pen = None, muta_pen = None, out_format = 'MERLIN', inherit_mode = None, theta_max = None, theta_inc = None):
