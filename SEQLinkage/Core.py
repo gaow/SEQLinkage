@@ -377,15 +377,25 @@ class MarkerMaker:
                 gt = [hap[2 + varnames[item].index(v)] if v in varnames[item] else '?' for v in markers]
                 founder_haplotypes.append(("{}-{}".format(hap[1], ihap % 2), "".join([x[1] if x[0].isupper() else x[0] for x in gt])))
         # calculate LD blocks, use r2 measure
-        ld = Align.create(founder_haplotypes).matrixLD(validCharacters="12")["r2"]
         blocks = []
-        for j in ld:
-            block = [j]
-            for k in ld[j]:
-                if ld[j][k] > self.r2:
-                    block.append(k)
-            if len(block) > 1:
-                blocks.append(block)
+        if sys.version_info.major == 2:
+            ld = Align.create(founder_haplotypes).matrixLD(validCharacters="12")["r2"]
+            for j in ld:  #upper triangle
+                block = [j]
+                for k in ld[j]:
+                    if ld[j][k] > self.r2:
+                        block.append(k)
+                if len(block) > 1:
+                    blocks.append(block)
+        else:
+            ldi,ld = egglib.stats.matrix_LD(Align.create(founder_haplotypes,egglib.Alphabet(cat='string',expl=['1','2'],miss='?')),('rsq'))
+            for j in range(len(ldi)): #lower triangle
+                block = [j]
+                for k in range(j+1,len(ldi)):
+                    if ld[k][j] > maker.r2:
+                        block.append(k)
+                if len(block) > 1:
+                    blocks.append(block)
         # get LD clusters
         clusters = [[markers[idx] for idx in item] for item in list(connected_components(blocks))]
         if env.debug:
