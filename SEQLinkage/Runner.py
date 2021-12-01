@@ -26,6 +26,7 @@ from distutils.file_util import copy_file
 #formatters
 #the handler, called from main, can call specific formatter.
 def format(tpeds, tfam, prev = None, wild_pen = None, muta_pen = None, out_format = 'MERLIN', inherit_mode = None, theta_max = None, theta_inc = None):
+    print(env.jobs) #testing line
     if out_format == 'plink':
         parmap(lambda x: format_plink(x, tfam), tpeds, env.jobs)
     elif out_format == 'mega2':
@@ -50,7 +51,7 @@ def format_plink(tped, tfam):
         with open(out_base + '.ped', 'w') as p:
             for line in tfam_fh:
                 p.write(line.strip())
-                map(lambda x: p.write(' {} {}'.format(x.popleft(), x.popleft)), geno)
+                list(map(lambda x: p.write(' {} {}'.format(x.popleft(), x.popleft)), geno))
                 p.write("\n")
 
 #mega2 format, datain.01, pedin.01, map.01
@@ -89,7 +90,7 @@ def format_mega2(tped, tfam):
             for line in tfh:
                 p.write(line.strip())
                 s = line.strip().split()
-                map(lambda x: p.write('\t{}\t{}'.format(x.popleft(), x.popleft())), geno)
+                list(map(lambda x: p.write('\t{}\t{}'.format(x.popleft(), x.popleft())), geno))
                 p.write("\n")
 
 #merlin format
@@ -129,7 +130,7 @@ def format_merlin(tped, tfam):
             for line in tfh:
                 p.write(line.strip())
                 s = line.strip().split()
-                map(lambda x: p.write('\t{}\t{}'.format(x.popleft(), x.popleft())), geno)
+                list(map(lambda x: p.write('\t{}\t{}'.format(x.popleft(), x.popleft())), geno))
                 p.write("\n")
 
 
@@ -148,9 +149,9 @@ def format_linkage(tped, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max
             with open(os.path.join(env.tmp_cache, basename(out_base) + '.freq')) as af_fh:
                 for line in af_fh:
                     s = line.strip().split()
-                    freq = map(lambda x: max(1e-3, float(x)), s[2:])
+                    freq = list(map(lambda x: max(1e-3, float(x)), s[2:]))
                     relativefreq = np.array(freq)/sum(freq)
-                    af[(s[0],s[1])] = map(str, relativefreq)
+                    af[(s[0],s[1])] = list(map(str, relativefreq))
         except IOError:
             env.error('freq info not properly read for [{}]'.format(basename(out_base)))
         #parse tped
@@ -182,8 +183,8 @@ def format_linkage(tped, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max
                     removeEmptyDir(workdir)
                     continue
                 ids = fams[fid].get_sorted_ids()
-                idxes = map(lambda x: fams[fid].get_member_idx(x), ids)
-                gs = map(lambda x: s[2 * x + 4 : 2 * x + 6], idxes)
+                idxes = list(map(lambda x: fams[fid].get_member_idx(x), ids))
+                gs = list(map(lambda x: s[2 * x + 4 : 2 * x + 6], idxes))
                 gs_num = len(set(filter(lambda x: x != '0', chain(*gs))))
                 if gs_num >= 10:
                     with env.skipped_counter.get_lock():
@@ -255,7 +256,7 @@ class Pedigree:
             return self.sorted
         else:
             #This algorithm was first described by Kahn (1962)
-            S_no_parents = filter(lambda x: True if self.get_member_info(x)[1] == '0' else False, self.get_member_ids())
+            S_no_parents = list(filter(lambda x: True if self.get_member_info(x)[1] == '0' else False, self.get_member_ids()))
             graph = self.graph.copy()
             while(S_no_parents):
                 n = S_no_parents.pop()
@@ -306,7 +307,7 @@ def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = 
     lods_fh = open('{}/heatmap/{}.lods'.format(env.outdir, basename(workdir)), 'w')
     hlods_fh = open('{}/heatmap/{}.hlods'.format(env.outdir, basename(workdir)), 'w')
     famlods_fh = open('{}/heatmap/{}.family-lods'.format(env.outdir, basename(workdir)), 'w')
-    genes = filter(lambda g: g in genemap, map(basename, glob.glob(workdir + '/*')))
+    genes = list(filter(lambda g: g in genemap, map(basename, glob.glob(workdir + '/*'))))
     for gene in sorted(genes, key=lambda g: genemap[g]):
         lods = {}
         hlods = {}
