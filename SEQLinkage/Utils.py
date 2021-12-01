@@ -76,6 +76,8 @@ class Environment:
         self.pedcheck_counter = Value('i',0)
         self.unknown_counter = Value('i',0)
         self.mlink_counter = Value('i',0)
+        self.dtest = {}  #test line
+        self.jobs = None
 
     def __mktmpdir(self, where = None):
         class LockedTempDir(str):
