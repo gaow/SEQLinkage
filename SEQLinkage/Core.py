@@ -22,6 +22,7 @@ if sys.version_info.major == 2:
     from cstatgen.egglib import Align
 else:
     from cstatgen import cstatgen_py3 as cstatgen
+    import egglib
     from egglib import Align
 
 # Cell
@@ -234,11 +235,10 @@ class MarkerMaker:
         self.coder = cstatgen.HaplotypeCoder(wsize)
         self.maf_cutoff = maf_cutoff
         self.rsq = 0.0
-        self.dtest = {}  #test line
     def getRegion(self, region):
         self.name = region[3]
-        self.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'hapimp':{},'gss':[]}
-        self.dtest[self.name]['dregions'].append(region) #test line
+        env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'hapimp':{},'gss':[]}
+        env.dtest[self.name]['dregions'].append(region) #test line
 
     def apply(self, data):
         # temp raw haplotype, maf and variant names data
@@ -248,11 +248,11 @@ class MarkerMaker:
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        self.dtest[self.name]['gss'].append(data.gss)
-        self.dtest[self.name]['dvariants'].append(data.variants)
-        self.dtest[self.name]['dfamvaridx'].append(data.famvaridx)
+        env.dtest[self.name]['gss'].append(data.gss)
+        env.dtest[self.name]['dvariants'].append(data.variants)
+        env.dtest[self.name]['dfamvaridx'].append(data.famvaridx)
         print('data',data)
-        self.dtest[self.name]['dgeno'].append(data.copy())
+        env.dtest[self.name]['dgeno'].append(data.copy())
         self.__Haplotype(data, haplotypes, mafs, varnames)
         if len(varnames):
             if not any ([len(varnames[x]) - 1 for x in varnames]):
@@ -261,7 +261,7 @@ class MarkerMaker:
             else:
                 # calculate LD clusters using founder haplotypes
                 clusters = self.__ClusterByLD(data, haplotypes, varnames)
-                print('clusters:',clusters)
+                #print('clusters:',clusters)
                 # recoding the genotype of the region
                 self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
         #except Exception as e:
@@ -279,7 +279,7 @@ class MarkerMaker:
         self.markers = ["V{}-{}".format(idx, item[1]) for idx, item in enumerate(data.variants)]
         for item in data.families:
             varnames[item], positions, vcf_mafs = data.getFamVariants(item, style = "map")
-            self.dtest[self.name]['hapimp'][item] = [item,varnames[item], positions, vcf_mafs] #test line
+            env.dtest[self.name]['hapimp'][item] = [item,varnames[item], positions, vcf_mafs] #test line
             if len(varnames[item]) == 0:
                 for person in data.families[item]:
                     data[person] = self.missings
@@ -304,7 +304,7 @@ class MarkerMaker:
 
                 else:
                     haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))
-            self.dtest[self.name]['hapimp'][item].append(haplotypes[item]) #test line
+            env.dtest[self.name]['hapimp'][item].append(haplotypes[item]) #test line
             if len(haplotypes[item]) == 0:
                 # C++ haplotyping implementation failed
                 with env.chperror_counter.get_lock():
@@ -328,7 +328,7 @@ class MarkerMaker:
                         if not gt == "?":
                             mafs[v][0] += self.gtconv[gt]
                             mafs[v][1] += 1.0
-        self.dtest[self.name]['hapimp'][item].append(mafs) #test line
+        env.dtest[self.name]['hapimp'][item].append(mafs) #test line
         #
         # Compute founder MAFs
         #
@@ -392,7 +392,7 @@ class MarkerMaker:
             for j in range(len(ldi)): #lower triangle
                 block = [j]
                 for k in range(j+1,len(ldi)):
-                    if ld[k][j] > maker.r2:
+                    if ld[k][j] > self.r2:
                         block.append(k)
                 if len(block) > 1:
                     blocks.append(block)
@@ -461,7 +461,7 @@ class MarkerMaker:
                 data[person] = self.missings
                 continue
             diff = data.superMarkerCount - len(data[person][0])
-            data[person] = zip(*data[person])
+            data[person] = list(zip(*data[person]))
             if diff > 0:
                 data[person].extend([self.missings] * diff)
 
@@ -506,10 +506,10 @@ class LinkageWriter:
                 list(itertools.chain(*gs)) + self.missings*self.num_missing) + "\n"
             # freqs
             for k in data.maf:
-                self.freq += env.delimiter.join([k, self.name] + map(str, data.maf[k][0])) + "\n"
+                self.freq += env.delimiter.join([k, self.name] + list(map(str, data.maf[k][0]))) + "\n"
         else:
             # have to expand each region into mutiple chunks to account for different recomb points
-            gs = zip(*[data[s] for s in data.samples])
+            gs = list(zip(*[data[s] for s in data.samples]))
             # sub-chunk id
             cid = 0
             skipped_chunk = []
@@ -534,7 +534,7 @@ class LinkageWriter:
                         break
                     cid += 1
                     self.freq += env.delimiter.join([k, '{}[{}]'.format(self.name, cid)] + \
-                                                    map(str, data.maf[k][idx])) + "\n"
+                                                    list(map(str, data.maf[k][idx]))) + "\n"
         if self.counter < env.batch:
             self.counter += data.superMarkerCount
         else:
@@ -598,6 +598,7 @@ class EncoderWorker(Process):
                     with env.total_counter.get_lock():
                         env.total_counter.value += 1
                     self.extractor.getRegion(region)
+                    self.maker.getRegion(region)
                     self.writer.getRegion(region)
                     isSuccess = True
                     for m in [self.extractor, self.maker, self.writer]:
