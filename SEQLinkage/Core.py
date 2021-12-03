@@ -199,7 +199,7 @@ class RegionExtractor:
                         data[person].append(g)
             data.gss[varIdx] = gss #test line
             varIdx += 1
-        print(self.name,'varIdx',varIdx)
+        #print(self.name,'varIdx',varIdx)
         #
         if varIdx == 0:
             return 1
@@ -237,8 +237,9 @@ class MarkerMaker:
         self.rsq = 0.0
     def getRegion(self, region):
         self.name = region[3]
-        env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'hapimp':{},'gss':[]}
+        env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'gss':[],'hapimp':{},'ld':[],'coder':{},'format':[]}
         env.dtest[self.name]['dregions'].append(region) #test line
+        env.dtest[self.name] = OrderedDict(env.dtest[self.name])
 
     def apply(self, data):
         # temp raw haplotype, maf and variant names data
@@ -248,10 +249,10 @@ class MarkerMaker:
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        env.dtest[self.name]['gss'].append(data.gss)
+        env.dtest[self.name]['gss'].append(deepcopy(data.gss))
         env.dtest[self.name]['dvariants'].append(data.variants)
-        env.dtest[self.name]['dfamvaridx'].append(data.famvaridx)
-        print('data',data)
+        env.dtest[self.name]['dfamvaridx'].append(deepcopy(data.famvaridx))
+        #print('data',data)
         env.dtest[self.name]['dgeno'].append(data.copy())
         self.__Haplotype(data, haplotypes, mafs, varnames)
         if len(varnames):
@@ -263,10 +264,13 @@ class MarkerMaker:
                 clusters = self.__ClusterByLD(data, haplotypes, varnames)
                 #print('clusters:',clusters)
                 # recoding the genotype of the region
+                env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
                 self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
+                env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
         #except Exception as e:
         #    return -1
         self.__FormatHaplotypes(data)
+        env.dtest[self.name]['format'] = data.copy()
         return 0
 
     def __Haplotype(self, data, haplotypes, mafs, varnames):
@@ -298,7 +302,7 @@ class MarkerMaker:
                         haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
                                                                        data.getFamSamples(item), self.rsq, tmp_log_output)[0]
                     else:
-                        with stdoutRedirect(to = tmp_log_output + '.log'):
+                        with stdoutRedirect(to = tmp_log_output):
                             haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
                                                                        data.getFamSamples(item), self.rsq, tmp_log_output)[0]
 
@@ -398,6 +402,7 @@ class MarkerMaker:
                     blocks.append(block)
         # get LD clusters
         clusters = [[markers[idx] for idx in item] for item in list(connected_components(blocks))]
+        env.dtest[self.name]['ld'] = [ld,blocks,clusters]
         if env.debug:
             with env.lock:
                 print("LD blocks: ", blocks, file = sys.stderr)
@@ -423,7 +428,7 @@ class MarkerMaker:
                 # this sample is not in VCF file. Every variant site should be missing
                 # they have to be skipped for now
                 continue
-            data[line[1]] = (line[2].split(','), line[3].split(','))
+            data[line[1]] = (line[2].split(','), line[4].split(','))
             if len(data[line[1]][0]) > data.superMarkerCount:
                 data.superMarkerCount = len(data[line[1]][0])
         # get MAF
