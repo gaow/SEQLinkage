@@ -133,7 +133,7 @@ def checkParams(args):
         args.format.append('linkage')
     if None in [args.inherit_mode, args.prevalence, args.wild_pen, args.muta_pen] and "linkage" in args.format:
         env.error('To generate LINKAGE format or run LINKAGE analysis, please specify all options below:\n\t--prevalence, -K\n\t--moi\n\t--wild-pen, -W\n\t--muta-pen, -M', show_help = True, exit = True)
-    if not args.tempdir is None:
+    if args.tempdir is not None:
         env.ResetTempdir(args.tempdir)
     return True
 

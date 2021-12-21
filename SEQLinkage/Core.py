@@ -52,7 +52,7 @@ class RData(dict):
         self.patterns={}
         self.gnomAD_estimate={'AFR':(1-0.4589)/(2*7652),'AMR':(1-0.4455)/(2*16791),'ASJ':(1-0.2357)/(2*4925),'EAS':(1-0.4735)/(2*8624),'FIN':(1-0.3048)/(2*11150),'NFE':(1-0.5729)/(2*55860),'OTH':(1-0.4386)/(2*2743),'SAS':(1-0.5624)/(2*15391)}
         # reorder family samples based on order of VCF file
-        for k in self.families.keys():
+        for k in list(self.families.keys()):
             if len(self.families[k]) == 0:
                 # skip families having no samples in VCF file
                 del self.families[k]
@@ -261,7 +261,8 @@ class MarkerMaker:
                 self.__AssignSNVHaplotypes(data, haplotypes, mafs, varnames)
             else:
                 # calculate LD clusters using founder haplotypes
-                clusters = self.__ClusterByLD(data, haplotypes, varnames)
+                #clusters = self.__ClusterByLD(data, haplotypes, varnames)
+                clusters=[]
                 #print('clusters:',clusters)
                 # recoding the genotype of the region
                 env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
@@ -281,7 +282,9 @@ class MarkerMaker:
         # Per family haplotyping
         #
         self.markers = ["V{}-{}".format(idx, item[1]) for idx, item in enumerate(data.variants)]
+        print('in Haplotype')
         for item in data.families:
+            print('running family',item)
             varnames[item], positions, vcf_mafs = data.getFamVariants(item, style = "map")
             env.dtest[self.name]['hapimp'][item] = [item,varnames[item], positions, vcf_mafs] #test line
             if len(varnames[item]) == 0:
@@ -387,8 +390,11 @@ class MarkerMaker:
             for j in ld:  #upper triangle
                 block = [j]
                 for k in ld[j]:
-                    if ld[j][k] > self.r2:
-                        block.append(k)
+                    try:
+                        if ld[j][k] > self.r2:
+                            block.append(k)
+                    except:
+                        print('ld value',ld[j][k])
                 if len(block) > 1:
                     blocks.append(block)
         else:
@@ -396,8 +402,11 @@ class MarkerMaker:
             for j in range(len(ldi)): #lower triangle
                 block = [j]
                 for k in range(j+1,len(ldi)):
-                    if ld[k][j] > self.r2:
-                        block.append(k)
+                    try:
+                        if ld[k][j] > self.r2:
+                            block.append(k)
+                    except:
+                        print('ld value',ld[k][j])
                 if len(block) > 1:
                     blocks.append(block)
         # get LD clusters
@@ -424,10 +433,10 @@ class MarkerMaker:
                 self.coder.Print()
         # line: [fid, sid, hap1, hap2]
         for line in self.coder.GetHaplotypes():
-            if not line[1] in data:
+            #if not line[1] in data:
                 # this sample is not in VCF file. Every variant site should be missing
                 # they have to be skipped for now
-                continue
+            #    continue
             data[line[1]] = (line[2].split(','), line[4].split(','))
             if len(data[line[1]][0]) > data.superMarkerCount:
                 data.superMarkerCount = len(data[line[1]][0])
