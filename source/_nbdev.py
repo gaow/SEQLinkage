@@ -59,12 +59,15 @@ index = {"RData": "00_Core.ipynb",
          "Args": "04_Main.ipynb",
          "HOMEPAGE": "04_Main.ipynb",
          "checkParams": "04_Main.ipynb",
-         "main": "04_Main.ipynb"}
+         "main": "04_Main.ipynb",
+         "update_attributes": "07_plotped.ipynb",
+         "plotped": "07_plotped.ipynb"}
 
 modules = ["Core.py",
            "Runner.py",
            "Utils.py",
-           "Main.py"]
+           "Main.py",
+           "Plot.py"]
 
 doc_url = "https://changebio.github.io/SEQLinkage/"
 
