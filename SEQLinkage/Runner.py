@@ -443,16 +443,13 @@ def heatmap(file, theta_inc, theta_max):
         if max(lods) == min(lods):
             #env.log('Max equals Min for [{}], No real heatmap will be generated.'.format(file))
             hinton('{}.png'.format(file))
-            return
+            #return
         Num=int(round(theta_max/theta_inc))
-        lods = np.array(map(float,lods)).reshape((-1,Num))
+        lods = np.array(list(map(float,lods))).reshape((-1,Num))
         chrID = re.search(r'\.chr([0-9XY]+)\.', file).group(1)
         fig, ax = plt.subplots(1)
         ax.set_title('Chromosome {}'.format(chrID))
-        plt.pcolormesh(fig,ax,lods.transpose(),
-                       xticklabels=[''] * len(lods),
-                       yticklabels=np.round(np.array(range(Num)) * theta_inc,2).tolist(),
-                       cmap=brewer2mpl.get_map('Blues', 'Sequential', 9).mpl_colormap)
+        plt.pcolormesh(fig,ax,lods.transpose(),cmap=brewer2mpl.get_map('Blues', 'Sequential', 9).mpl_colormap)
         fig.savefig('{}.png'.format(file))
         #fig.close()
     #env.log("Finished ploting heatmap for {}.".format(file), flush=True)
