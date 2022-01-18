@@ -459,7 +459,7 @@ def heatmap(file, theta_inc, theta_max):
 
 def hlod_fun(Li, sign=1):
     def _fun(alpha):
-        return sign * sum(np.log10(alpha*np.power(10, Li) + 1 - alpha))
+        return sign * sum(np.log10(alpha*np.power(10, list(Li)) + 1 - alpha))
     return _fun
 
 def html(theta_inc, theta_max, limit):
