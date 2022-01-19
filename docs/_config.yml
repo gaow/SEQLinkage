@@ -64,4 +64,4 @@ plugins:
     
 remote_theme: fastai/nbdev-jekyll-theme
 baseurl: /SEQLinkage/
-theme: jekyll-theme-leap-day
+theme: jekyll-theme-cayman
