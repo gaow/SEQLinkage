@@ -449,7 +449,7 @@ def heatmap(file, theta_inc, theta_max):
         chrID = re.search(r'\.chr([0-9XY]+)\.', file).group(1)
         fig, ax = plt.subplots(1)
         ax.set_title('Chromosome {}'.format(chrID))
-        plt.pcolormesh(fig,ax,lods.transpose(),cmap=brewer2mpl.get_map('Blues', 'Sequential', 9).mpl_colormap)
+        ax.pcolormesh(lods.transpose(),cmap=brewer2mpl.get_map('Blues', 'Sequential', 9).mpl_colormap)
         fig.savefig('{}.png'.format(file))
         #fig.close()
     #env.log("Finished ploting heatmap for {}.".format(file), flush=True)
