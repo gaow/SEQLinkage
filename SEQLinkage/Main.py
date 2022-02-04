@@ -49,10 +49,10 @@ class Args:
 
     def getEncoderArguments(self, parser):
         vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
-        vargs.add_argument('--bin', metavar = "FLOAT", default = 0.8, type = float,
+        vargs.add_argument('--bin', metavar = "FLOAT", default = 0, type = float,
                            help='''Defines theme to collapse variants. Set to 0 for "complete collapsing",
         1 for "no collapsing", r2 value between 0 and 1 for "LD based collapsing" and other integer values for customized
-        collapsing bin sizes. Default to 0.8 (variants having r2 >= 0.8 will be collapsed).''')
+        collapsing bin sizes. Default to 0 (all variants will be collapsed).''')
         vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
                            help='''Blueprint file that defines regional marker
         (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
@@ -206,6 +206,7 @@ def main(args):
         env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
+        env.log('Phasing haplotypes log file: [{}]'.format(env.tmp_log + str(os.getpid()) + '.log'))
         regions.extend([None] * env.jobs)
         queue = Queue()
         try:
@@ -260,6 +261,7 @@ def main(args):
     env.jobs = args.jobs
     # STEP 2: write to PLINK or mega2 format
     tpeds = [os.path.join(env.tmp_cache, item) for item in os.listdir(env.tmp_cache) if item.startswith(env.output) and item.endswith('.tped')]
+    print(tpeds) #testing line
     for fmt in args.format:
         print(fmt.lower())
         cache.setID(fmt.lower())
@@ -272,12 +274,10 @@ def main(args):
             format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)),
                    args.prevalence, args.wild_pen, args.muta_pen, fmt,
                    args.inherit_mode, args.theta_max, args.theta_inc)
-            env.log('{:,d} units successfully converted to {} format\n'.\
-                    format(env.format_counter.value, fmt.upper()), flush = True)
+            env.log('{:,d} units successfully converted to {} format\n'.format(env.format_counter.value, fmt.upper()), flush = True)
             if env.skipped_counter.value:
                 # FIXME: perhaps we need to rephrase this message?
-                env.log('{} region - family pairs skipped'.\
-                        format(env.skipped_counter.value))
+                env.log('{} region - family pairs skipped'.format(env.skipped_counter.value))
             env.log('Archiving {} format to directory [{}]'.format(fmt.upper(), env.cache_dir))
             cache.write(arcroot = fmt.upper(),
                         source_dir = os.path.join(env.tmp_dir, fmt.upper()), mode = 'a')
