@@ -65,6 +65,8 @@ class Args:
         vargs.add_argument('--fam', metavar='FILE', required=True, dest = "tfam",
                            help='''Input pedigree and phenotype information in FAM format.''')
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
+        vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
+        vargs.add_argument('--pop', metavar='FILE', required=False, help='''Input two columns file, first column is family ID,second column population information.''')
         vargs.add_argument('--build', metavar='STRING', default='hg19', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
         vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
         vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
