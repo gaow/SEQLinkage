@@ -32,11 +32,13 @@ class RData(dict):
         # tfam.samples: a dict of {sid:[fid, pid, mid, sex, trait], ...}
         # tfam.families: a dict of {fid:[s1, s2 ...], ...}
         self.tfam = TFAMParser(tfam)
-        self.vs = self.load_vcf(vcf)
-        self.samples_vcf = self.vs.GetSampleNames()
-        self.samples_not_vcf = checkSamples(self.samples_vcf, self.tfam.samples.keys())[1]
         # name of allele frequency meta info
         self.af_info = allele_freq_info
+        self.vs = self.load_vcf(vcf)
+        self.fam_pop = self.load_fam_info(fam_pop_file)
+        self.anno = self.load_anno(anno_file)
+        self.samples_vcf = self.vs.GetSampleNames()
+        self.samples_not_vcf = checkSamples(self.samples_vcf, self.tfam.samples.keys())[1]
         # samples have to be in both vcf and tfam data
         self.samples = OrderedDict([(k, self.tfam.samples[k]) for k in self.samples_vcf if k in self.tfam.samples])
         # a dict of {fid:[member names], ...}
@@ -63,6 +65,7 @@ class RData(dict):
                 self.famsampidx[k] = [i for i, x in enumerate(self.samples_vcf) if x in self.families[k]]
         # a dict of {fid:[idx ...], ...}
         self.famvaridx = {}
+        self.famvarmafs = {}
         self.wtvar = {}
         self.freq_by_fam = {}
         self.include_vars = []
@@ -79,11 +82,23 @@ class RData(dict):
     def load_vcf(self,vcf):
         # load VCF file header
         return cstatgen.VCFstream(vcf)
-    def load_annot(self,anno_file):
-        pass
+    def load_anno(self,anno_file):
+        anno = pd.read_csv(anno_file)
+        tmp = anno[list(set(self.fam_pop.values()))]
+        tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
+        tmp = tmp.replace(0,np.nan)
+        anno = pd.concat([anno[['Chr','Start']],tmp.astype(np.float64)],axis=1)
+        return anno
     def load_fam_info(self,fam_pop_file):
-        fam_pop = pd.read_csv(fam_pop_file,delim_whitespace=True,header=None,index_col=0,squeeze=True)
-        return fam_pop.to_dict()
+        fam_pop = {}
+        with open(fam_pop_file) as f:
+            for line in f:
+                key, value = line.split()
+                if value == 'NA':   #Fixme: deal with missing info
+                    fam_pop[key]=self.af_info
+                else:
+                    fam_pop[key] = value
+        return fam_pop
     def load_ind_samples(self,ind_sample_file):
         pass
 
@@ -92,15 +107,13 @@ class RData(dict):
             self[item] = []
             self.genotype_all[item] = []
         self.variants = []
-        self.varmafs = None
         self.include_vars = []
         self.total_varnames={}
         self.total_mafs={}
-        self.wt_maf={}
         self.chrom = None
         for k in self.families.keys():
             self.famvaridx[k] = []
-            self.wtvar[k] = []
+            self.famvarmafs[k] = []
         self.maf = OrderedDict()
         # superMarkerCount is the max num. of recombinant fragments among all fams
         self.superMarkerCount = 0
@@ -126,10 +139,7 @@ class RData(dict):
             for idx in self.famvaridx[fam]:
                 names.append("V{}-{}".format(idx, self.variants[idx][1]))
                 pos.append(self.variants[idx][1])
-            if self.af_info is not None:
-                mafs = self.varmafs[self.famvaridx[fam]]
-            else:
-                mafs = self.varmafs[self.fam_pop[fam]][self.famvaridx[fam]]
+            mafs = self.famvarmafs[fam]
             return np.array(names), pos, np.array(mafs)  #pos can't be array -> TypeError: in method 'HaplotypingEngine_Execute'
         else:
             raise ValueError("Unknown style '{}'".format(style))
@@ -163,52 +173,11 @@ class RegionExtractor:
         # Clean up
         data.reset()
         data.chrom = self.chrom
-        #data.varmafs = data.anno
         self.vcf.Extract(self.chrom, self.startpos, self.endpos)
-        varIdx = 0
-        # for each variant site
-        gss = {} #test line
-        varmafs = []
-        while (self.vcf.Next()):
-            # skip tri-allelic sites
-            if not self.vcf.IsBiAllelic():
-                with env.triallelic_counter.get_lock():
-                    env.triallelic_counter.value += 1
-                continue
-            # check if the line's sample number matches the entire VCF sample number
-            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
-                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
-                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
-            # valid line found, get variant info
-            if data.af_info is not None:
-                try:
-                    maf = float(self.vcf.GetInfo(data.af_info))
-                    if maf > 0.5:
-                        maf = 1 - maf
-                    elif maf<=0.0:
-                        continue
-                    varmafs.append(maf)
-                except Exception as e:
-                    raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
-                                     format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
-            data.varmafs = np.array(varmafs)
-            # for each family assign member genotype if the site is non-trivial to the family
-            for k in data.families:
-                gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                gss[k] = gs
-                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
-                    # skip monomorphic gs
-                    continue
-                else:
-                    # this variant is found in the family
-                    data.famvaridx[k].append(varIdx)
-                    for person, g in zip(data.families[k], gs):
-                        data[person].append(g)
-            data.gss[varIdx] = gss #test line
-            varIdx += 1
-        #print(self.name,'varIdx',varIdx)
-        #
+        if data.anno is None:
+            varIdx=self.extract_vcf(data)
+        else:
+            varIdx=self.extract_vcf_with_anno(data)
         if varIdx == 0:
             return 1
         else:
@@ -216,6 +185,88 @@ class RegionExtractor:
                 env.variants_counter.value += varIdx
             return 0
 
+    def extract_vcf(self,data):
+        varIdx = 0
+        # for each variant site
+        while (self.vcf.Next()):
+            # check if the line's sample number matches the entire VCF sample number
+            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
+                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
+                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
+            # skip tri-allelic sites
+            if not self.vcf.IsBiAllelic():
+                with env.triallelic_counter.get_lock():
+                    env.triallelic_counter.value += 1
+                continue
+            # valid line found, get variant info
+            try:
+                maf = float(self.vcf.GetInfo(data.af_info))
+                if maf > 0.5:
+                    maf = 1 - maf
+                elif maf<=0.0:
+                    continue
+            except Exception as e:
+                raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
+                                 format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
+            # for each family assign member genotype if the site is non-trivial to the family
+            for k in data.families:
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    # this variant is found in the family
+                    data.famvaridx[k].append(varIdx)
+                    data.famvarmafs[k].append(maf)
+                    for person, g in zip(data.families[k], gs):
+                        data[person].append(g)
+            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            varIdx += 1
+        return varIdx
+
+    def extract_vcf_with_anno(self,data):
+        '''extract variants and annotation by region'''
+        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>self.startpos) & (data.anno.Start<self.endpos)
+        if anno_idx.any()==False:
+            return 0
+        varmafs = data.anno[anno_idx]
+        varIdx = 0
+        i = -1
+        # for each variant site
+        while (self.vcf.Next()):
+            i += 1
+            # check if the line's sample number matches the entire VCF sample number
+            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
+                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
+                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
+            # skip tri-allelic sites
+            if not self.vcf.IsBiAllelic():
+                with env.triallelic_counter.get_lock():
+                    env.triallelic_counter.value += 1
+                continue
+            # valid line found, get variant info
+            mafs=varmafs.iloc[i,2:]
+            if mafs.any()==False:
+                continue
+            # for each family assign member genotype if the site is non-trivial to the family
+            for k in data.families:
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    maf = mafs[data.fam_pop[k]]
+                    if maf:
+                        # this variant is found in the family
+                        data.famvaridx[k].append(varIdx)
+                        data.famvarmafs[k].append(maf)
+                        for person, g in zip(data.families[k], gs):
+                            data[person].append(g)
+            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            varIdx += 1
+        if i!=(varmafs.shape[0]-1):
+            raise ValueError("VCF file and annotation file don't match with each other")
+        return varIdx
 
     def getRegion(self, region):
         self.chrom, self.startpos, self.endpos, self.name = region[:4]
@@ -286,6 +337,7 @@ class MarkerMaker:
         varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
         for item in data.families:
             item_varnames, positions, item_mafs = data.getFamVariants(item, style = "map")
+            print(item_varnames, positions, item_mafs)
             env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
             if len(item_varnames) == 0:  #no variants in the family
                 for person in data.families[item]:
@@ -381,7 +433,7 @@ class MarkerMaker:
             clusters_idx = [[[varnames[item].index(x) for x in y if x in varnames[item]] for y in clusters] for item in haplotypes]
         else:
             clusters_idx = [[[]] for item in haplotypes]
-        self.coder.Execute(list(haplotypes.values()), [[mafs[v] for v in varnames[item]] for item in haplotypes], clusters_idx)
+        self.coder.Execute(list(haplotypes.values()), [mafs[item] for item in haplotypes], clusters_idx)
         if env.debug:
             with env.lock:
                 if clusters:
@@ -416,7 +468,7 @@ class MarkerMaker:
                 else:
                     data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
             # get maf
-            data.maf[item] = [(1 - mafs[varnames[item][0]], mafs[varnames[item][0]])]
+            data.maf[item] = [(1 - mafs[item], mafs[item])]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
         if env.debug:
