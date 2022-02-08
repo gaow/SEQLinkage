@@ -37,12 +37,16 @@ class Environment:
         self.proj = "SEQLinkage"
         self.prog = 'seqlink'
         self.version = VERSION
+        # Input & output options
+        self.outdir = 'LINKAGE'
+        self.output = 'SEQLINKAGE'
         # Runtime support
         self.resource_dir = os.path.expanduser('~/.{}'.format(self.proj))
         self.resource_bin = os.path.join(self.resource_dir, 'bin')
-        self.cache_dir = os.path.join(os.getcwd(), 'cache')
+        self.cache_dir = os.path.join(self.outdir, 'cache')
         self.tmp_dir = self.__mktmpdir()
         self.tmp_cache = os.path.join(self.tmp_dir, 'CACHE')
+        self.tmp_log = os.path.join(self.tmp_dir, "clog." + self.output)
         self.path = {'PATH':"{}:{}".format(self.resource_bin, os.environ["PATH"])}
         self.debug = False
         self.quiet = False
@@ -52,10 +56,6 @@ class Environment:
         self.ped_missing = ['0', '-9'] + ['none', 'null', 'na', 'nan', '.']
         self.trait = 'binary'
         self.prephased = False
-        # Input & output options
-        self.output = 'LINKAGE'
-        self.outdir = 'LINKAGE'
-        self.tmp_log = os.path.join(self.tmp_dir, "clog." + self.output)
         # Multiprocessing counters
         self.batch = 50
         self.lock = Lock()
@@ -546,7 +546,7 @@ class Cache:
         self.infofiles = [params['vcf'], params['tfam'], params['blueprint']] if params['blueprint'] else [params['vcf'], params['tfam']]
         self.infofiles.append(self.cache_name)
         self.pchecklist = {'.vcf': ['bin', 'single_markers'],
-                           '.mega2':None, '.merlin':None,
+                           '.mega2':None, '.merlin':None,'.plink':None,
                            '.linkage': ['prevalence', 'inherit_mode', 'wild_pen',
                                         'muta_pen', 'theta_max', 'theta_inc'],
                            '.analysis': ['prevalence', 'inherit_mode', 'wild_pen',
