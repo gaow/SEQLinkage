@@ -135,7 +135,6 @@ def checkParams(args):
             env.error("Cannot find file [{}]!".format(item), exit = True)
     if args.output:
         env.outdir = args.output
-        env.output = os.path.split(args.output)[-1]
         env.cache_dir = os.path.join(os.path.dirname(args.output), 'cache')
         env.tmp_log = os.path.join(env.tmp_dir, env.output + ".STDOUT")
     #
@@ -176,8 +175,7 @@ def main(args):
         env.batch = 10
     else:
         # load data
-        data = RData(args.vcf, args.tfam)
-        vs = data.vs
+        data = RData(args.vcf, args.tfam,args.anno,args.pop,allele_freq_info=args.freq)
         samples_vcf = data.samples_vcf
 
         if len(samples_vcf) == 0:
@@ -195,7 +193,7 @@ def main(args):
                        data.tfam.samples, list(data.samples.keys()) + samples_not_vcf)
         if args.single_markers:
             regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
-                       for x in vs.GetGenomeCoordinates()]
+                       for x in data.vs.GetGenomeCoordinates()]
             args.blueprint = None
         else:
             # load blueprint
@@ -217,7 +215,7 @@ def main(args):
                 queue.put(i)
             jobs = [EncoderWorker(
                 queue, len(regions), data,
-                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = args.freq),
+                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix),
                 MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
@@ -288,7 +286,7 @@ def main(args):
         cache.setID('analysis')
         if not args.vanilla and cache.check():
             env.log('Loading linkage analysis result from archive ...'.format(fmt.upper()))
-            cache.load(target_dir = env.output, names = ['heatmap'])
+            cache.load(target_dir = env.outdir, names = ['heatmap'])
         else:
             env.log('Running linkage analysis ...'.format(fmt.upper()))
             run_linkage(args.blueprint, args.theta_inc, args.theta_max, args.output_limit)
@@ -302,8 +300,8 @@ def main(args):
                 env.log('{} "unknown" runtime errors occurred'.format(env.unknown_counter.value))
             if env.mlink_counter.value:
                 env.log('{} "mlink" runtime errors occurred'.format(env.mlink_counter.value))
-            cache.write(arcroot = 'heatmap', source_dir = os.path.join(env.output, 'heatmap'), mode = 'a')
+            cache.write(arcroot = 'heatmap', source_dir = os.path.join(env.outdir, 'heatmap'), mode = 'a')
         html(args.theta_inc, args.theta_max, args.output_limit)
     else:
-        env.log('Saving data to [{}]'.format(os.path.abspath(env.output)))
-        cache.load(target_dir = env.output)
+        env.log('Saving data to [{}]'.format(os.path.abspath(env.outdir)))
+        cache.load(target_dir = env.outdir)
