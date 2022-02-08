@@ -83,6 +83,8 @@ class RData(dict):
         # load VCF file header
         return cstatgen.VCFstream(vcf)
     def load_anno(self,anno_file):
+        if anno_file is None:
+            return None
         anno = pd.read_csv(anno_file)
         tmp = anno[list(set(self.fam_pop.values()))]
         tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
@@ -90,6 +92,8 @@ class RData(dict):
         anno = pd.concat([anno[['Chr','Start']],tmp.astype(np.float64)],axis=1)
         return anno
     def load_fam_info(self,fam_pop_file):
+        if fam_pop_file is None:
+            return None
         fam_pop = {}
         with open(fam_pop_file) as f:
             for line in f:
@@ -468,7 +472,7 @@ class MarkerMaker:
                 else:
                     data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
             # get maf
-            data.maf[item] = [(1 - mafs[item], mafs[item])]
+            data.maf[item] = [1 - mafs[item], mafs[item]]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
         if env.debug:
