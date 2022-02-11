@@ -90,6 +90,7 @@ class RData(dict):
         tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
         tmp = tmp.replace(0,np.nan)
         anno = pd.concat([anno[['Chr','Start']],tmp.astype(np.float64)],axis=1)
+        print('anno',anno.shape)
         return anno
     def load_fam_info(self,fam_pop_file):
         if fam_pop_file is None:
@@ -166,10 +167,12 @@ class RegionExtractor:
     '''Extract given genomic region from VCF
     converting genotypes into dictionary of
     genotype list'''
-    def __init__(self, filename, build = env.build, chr_prefix = None):
+    def __init__(self, filename, build = None, chr_prefix = None):
         self.vcf = cstatgen.VCFstream(filename)
         self.chrom = self.startpos = self.endpos = self.name = None
         self.chr_prefix = chr_prefix
+        if build is None:
+            build = env.build
         self.xchecker = PseudoAutoRegion('X', build)
         self.ychecker = PseudoAutoRegion('Y', build)
 
@@ -230,7 +233,7 @@ class RegionExtractor:
 
     def extract_vcf_with_anno(self,data):
         '''extract variants and annotation by region'''
-        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>self.startpos) & (data.anno.Start<self.endpos)
+        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>=self.startpos) & (data.anno.Start<=self.endpos)
         if anno_idx.any()==False:
             return 0
         varmafs = data.anno[anno_idx]
@@ -269,6 +272,7 @@ class RegionExtractor:
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         if i!=(varmafs.shape[0]-1):
+            print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
             raise ValueError("VCF file and annotation file don't match with each other")
         return varIdx
 
@@ -309,7 +313,6 @@ class MarkerMaker:
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        env.dtest[self.name]['gss'].append(pd.DataFrame(deepcopy(data.gss)))
         env.dtest[self.name]['dvariants'].append(data.variants)
         env.dtest[self.name]['dfamvaridx'].append(deepcopy(data.famvaridx))
         #print('data',data)
@@ -329,7 +332,7 @@ class MarkerMaker:
         #except Exception as e:
         #    return -1
         self.__FormatHaplotypes(data)
-        env.dtest[self.name]['format'] = pd.DataFrame(data.copy())
+        env.dtest[self.name]['format'] = data.copy()
         return 0
 
     def __Haplotype(self, data):
@@ -342,7 +345,6 @@ class MarkerMaker:
         varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
         for item in data.families:
             item_varnames, positions, item_mafs = data.getFamVariants(item, style = "map")
-            print(item_varnames, positions, item_mafs)
             env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
             if len(item_varnames) == 0:  #no variants in the family
                 for person in data.families[item]:
