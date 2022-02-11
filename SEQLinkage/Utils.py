@@ -38,15 +38,15 @@ class Environment:
         self.prog = 'seqlink'
         self.version = VERSION
         # Input & output options
-        self.outdir = 'LINKAGE'
-        self.output = 'SEQLINKAGE'
+        self.outdir = None
+        self.output = None
+        self.cache_dir = None
+        self.tmp_dir = None
+        self.tmp_cache = None
+        self.tmp_log = None
         # Runtime support
         self.resource_dir = os.path.expanduser('~/.{}'.format(self.proj))
         self.resource_bin = os.path.join(self.resource_dir, 'bin')
-        self.cache_dir = os.path.join(self.outdir, 'cache')
-        self.tmp_dir = self.__mktmpdir()
-        self.tmp_cache = os.path.join(self.tmp_dir, 'CACHE')
-        self.tmp_log = os.path.join(self.tmp_dir, "clog." + self.output)
         self.path = {'PATH':"{}:{}".format(self.resource_bin, os.environ["PATH"])}
         self.debug = False
         self.quiet = False
@@ -79,6 +79,20 @@ class Environment:
         self.dtest = {}  #test line
         self.jobs = None
 
+    def setoutput(self,outdir):
+        # Input & output options
+        if outdir:
+            self.outdir = outdir
+            self.output = os.path.split(outdir)[-1]
+        else:
+            self.outdir = 'LINKAGE'
+            self.output = 'LINKAGE'
+        mkpath(self.outdir)
+        self.cache_dir = os.path.join(self.outdir, 'cache')
+        self.tmp_dir = self.__mktmpdir(os.path.join(self.outdir, 'tmp'))
+        self.tmp_cache = os.path.join(self.tmp_dir, 'CACHE')
+        self.tmp_log = os.path.join(self.tmp_dir, "clog." + self.output + ".STDOUT")
+
     def __mktmpdir(self, where = None):
         class LockedTempDir(str):
             def __init__(self, path):
@@ -95,6 +109,7 @@ class Environment:
             where = tempfile.gettempdir()
         else:
             where = os.path.expanduser(where)
+            mkpath(where)
         if os.path.isdir(where) and ((not os.access(where, os.R_OK)) or (not os.access(where, os.W_OK))):
             self.error('Cannot set temporary directory to directory {} because '.format(where) + \
                        'it is not readable or writable.', exit = True)
@@ -555,7 +570,7 @@ class Cache:
     def setID(self, ID):
         self.id = "." + str(ID)
 
-    def check(self):
+    def check(self,path=None):
         if not os.path.isfile(self.cache_info) or not os.path.isfile(self.param_info + self.id):
             return False
         with open(self.cache_info, 'r') as f:
@@ -572,6 +587,8 @@ class Cache:
             for item in self.pchecklist[self.id]:
                 if params[item] != str(self.params[item]):
                     return False
+        if path:
+            return os.path.isdir(path)
         return True
 
     def load(self, target_dir = None, names = None):

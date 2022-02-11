@@ -287,7 +287,7 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None):
+    def __init__(self, wsize, maf_cutoff = None, recomb=False):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
         self.haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
@@ -298,6 +298,7 @@ class MarkerMaker:
         self.coder = cstatgen.HaplotypeCoder(wsize)
         self.maf_cutoff = maf_cutoff
         self.rsq = 0.0
+        self.recomb = recomb
     def getRegion(self, region):
         self.name = region[3]
         env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'gss':[],'hapimp':{},'ld':[],'coder':{},'format':[]}
@@ -437,7 +438,7 @@ class MarkerMaker:
             clusters_idx = [[[varnames[item].index(x) for x in y if x in varnames[item]] for y in clusters] for item in haplotypes]
         else:
             clusters_idx = [[[]] for item in haplotypes]
-        self.coder.Execute(list(haplotypes.values()), [mafs[item] for item in haplotypes], clusters_idx)
+        self.coder.Execute(list(haplotypes.values()), [mafs[item] for item in haplotypes], clusters_idx,self.recomb)
         if env.debug:
             with env.lock:
                 if clusters:
