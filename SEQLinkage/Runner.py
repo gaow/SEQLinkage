@@ -284,7 +284,7 @@ def run_linkage(blueprint, theta_inc, theta_max, to_plot = True):
     except OSError:
         pass
     with open(os.path.join(env.tmp_dir, 'LinkageRuntimeError.txt'), 'w') as runtime_err:
-        workdirs = glob.glob('{}/LINKAGE/{}.chr*'.format(env.tmp_dir, env.output))
+        workdirs = glob.glob('{}/LINKAGE/{}.chr*'.format(env.outdir, env.output))
         parmap(lambda x: linkage_worker(blueprint, x, theta_inc, theta_max, runtime_err, to_plot) , workdirs, env.jobs)
 
 def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = True):
