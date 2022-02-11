@@ -108,7 +108,7 @@ class RData(dict):
         pass
 
     def reset(self):
-        for item in self.samples:
+        for item in self.tfam.samples: #for all samples in fam ( with or without vcfs)
             self[item] = []
             self.genotype_all[item] = []
         self.variants = []
@@ -218,6 +218,7 @@ class RegionExtractor:
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                data.gss[k] = gs  #test line
                 if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
                     # skip monomorphic gs
                     continue
@@ -258,6 +259,9 @@ class RegionExtractor:
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                #test line
+                for person, g in zip(data.families[k], gs):
+                    data.genotype_all[person].append(g)
                 if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
                     # skip monomorphic gs
                     continue
@@ -270,6 +274,7 @@ class RegionExtractor:
                         for person, g in zip(data.families[k], gs):
                             data[person].append(g)
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
         if i!=(varmafs.shape[0]-1):
             print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
@@ -299,7 +304,7 @@ class MarkerMaker:
             self.r2 = None
         else:
             self.r2 = wsize
-        self.coder = cstatgen.HaplotypeCoder(wsize)
+        self.coder = cstatgen.HaplotypeCoder(0.5)#wsize)
         self.maf_cutoff = maf_cutoff
         self.rsq = 0.0
         self.recomb = recomb
@@ -527,7 +532,7 @@ class LinkageWriter:
         position = str(data.getMidPosition())
         if data.superMarkerCount <= 1:
             # genotypes
-            gs = [data[s][0] for s in data.samples]
+            gs = [data[s][0] for s in data.tfam.samples]
             if len(set(gs)) == 1:
                 # everyone's genotype is the same (most likely missing or monomorphic)
                 return 2
@@ -538,7 +543,7 @@ class LinkageWriter:
                 self.freq += env.delimiter.join([k, self.name] + list(map(str, data.maf[k][0]))) + "\n"
         else:
             # have to expand each region into mutiple chunks to account for different recomb points
-            gs = list(zip(*[data[s] for s in data.samples]))
+            gs = list(zip(*[data[s] for s in data.tfam.samples]))
             # sub-chunk id
             cid = 0
             skipped_chunk = []
