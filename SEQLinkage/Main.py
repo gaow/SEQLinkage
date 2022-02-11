@@ -28,9 +28,9 @@ class Args:
     def __init__(self):
         self.parser = ArgumentParser(
         description = '''\t{}, linkage analysis using sequence data\n\t[{}]'''.\
-        format(env.proj, env.version),
+        format("SEQLinkage", VERSION),
         formatter_class = RawDescriptionHelpFormatter,
-        prog = env.prog,
+        prog = 'seqlink',
         fromfile_prefix_chars = '@', add_help = False,
         epilog = '''\tCopyright (c) 2013 - 2014 Gao Wang <wang.gao@columbia.edu>\n\tDistributed under GNU General Public License\n\tHome page: {}'''.format(HOMEPAGE))
         self.getEncoderArguments(self.parser)
@@ -90,7 +90,7 @@ class Args:
     def getRuntimeArguments(self, parser):
         vargs = parser.add_argument_group('Runtime arguments')
         vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
-        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 32), 1),
+        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 8), 1),
                            help='''Number of CPUs to use.''')
         vargs.add_argument('--tempdir', metavar='PATH',
                            help='''Temporary directory to use.''')
@@ -125,6 +125,7 @@ class Args:
 # Cell
 def checkParams(args):
     '''set default arguments or make warnings'''
+    env.setoutput(args.output)
     env.debug = args.debug
     env.quiet = args.quiet
     env.prephased = args.prephased
@@ -133,11 +134,6 @@ def checkParams(args):
     for item in [args.vcf, args.tfam]:
         if not os.path.exists(item):
             env.error("Cannot find file [{}]!".format(item), exit = True)
-    if args.output:
-        env.outdir = args.output
-        env.cache_dir = os.path.join(os.path.dirname(args.output), 'cache')
-        env.tmp_log = os.path.join(env.tmp_dir, env.output + ".STDOUT")
-    #
     if len([x for x in set(getColumn(args.tfam, 6)) if x.lower() not in env.ped_missing]) > 2:
         env.trait = 'quantitative'
     env.log('{} trait detected in [{}]'.format(env.trait.capitalize(), args.tfam))
@@ -156,6 +152,7 @@ def checkParams(args):
 def main(args):
     '''the main encoder function'''
     checkParams(args)
+    print(env.version,'env')
     download_dir = 'http://bioinformatics.org/spower/download/.private'
     downloadResources([('{}/genemap.{}.txt'.format(download_dir, args.build), env.resource_dir),
                        ('{}/{}/mlink'.format(download_dir, platform.system().lower()), env.resource_bin),
@@ -215,7 +212,7 @@ def main(args):
                 queue.put(i)
             jobs = [EncoderWorker(
                 queue, len(regions), data,
-                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix),
+                RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
                 MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
                 LinkageWriter(len(samples_not_vcf))
                 ) for i in range(env.jobs)]
@@ -281,10 +278,10 @@ def main(args):
             env.log('Archiving {} format to directory [{}]'.format(fmt.upper(), env.cache_dir))
             cache.write(arcroot = fmt.upper(),
                         source_dir = os.path.join(env.tmp_dir, fmt.upper()), mode = 'a')
-    mkpath(env.outdir)
+
     if args.run_linkage:
         cache.setID('analysis')
-        if not args.vanilla and cache.check():
+        if not args.vanilla and cache.check(path=os.path.join(env.outdir,'heatmap')):
             env.log('Loading linkage analysis result from archive ...'.format(fmt.upper()))
             cache.load(target_dir = env.outdir, names = ['heatmap'])
         else:
