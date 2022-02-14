@@ -208,10 +208,6 @@ class RegionExtractor:
             # valid line found, get variant info
             try:
                 maf = float(self.vcf.GetInfo(data.af_info))
-                if maf > 0.5:
-                    maf = 1 - maf
-                elif maf<=0.0:
-                    continue
             except Exception as e:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
@@ -225,9 +221,9 @@ class RegionExtractor:
                 else:
                     # this variant is found in the family
                     data.famvaridx[k].append(varIdx)
-                    data.famvarmafs[k].append(maf)
+                    data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                     for person, g in zip(data.families[k], gs):
-                        data[person].append(g)
+                        data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         return varIdx
@@ -270,9 +266,9 @@ class RegionExtractor:
                     if maf:
                         # this variant is found in the family
                         data.famvaridx[k].append(varIdx)
-                        data.famvarmafs[k].append(maf)
+                        data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                         for person, g in zip(data.families[k], gs):
-                            data[person].append(g)
+                            data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
@@ -280,6 +276,14 @@ class RegionExtractor:
             print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
             raise ValueError("VCF file and annotation file don't match with each other")
         return varIdx
+
+    def reverse_genotypes(self,g):
+        ''' 11->22,12,21,22->11 '''
+        if g=='11':
+            g='22'
+        elif g=='22':
+            g='11'
+        return g
 
     def getRegion(self, region):
         self.chrom, self.startpos, self.endpos, self.name = region[:4]
