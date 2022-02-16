@@ -37,7 +37,7 @@ class Args:
         self.getIOArguments(self.parser)
         self.getLinkageArguments(self.parser)
         self.getRuntimeArguments(self.parser)
-        self.parser.set_defaults(func=main)
+        #self.parser.set_defaults(func=main)
 
     def isalnum(self, string):
         if not os.path.basename(string).isalnum():
@@ -149,8 +149,9 @@ def checkParams(args):
     return True
 
 # Cell
-def main(args):
+def main():
     '''the main encoder function'''
+    args = Args().get()
     checkParams(args)
     print(env.version,'env')
     download_dir = 'http://bioinformatics.org/spower/download/.private'
@@ -302,3 +303,6 @@ def main(args):
     else:
         env.log('Saving data to [{}]'.format(os.path.abspath(env.outdir)))
         cache.load(target_dir = env.outdir)
+
+if __name__ == '__main__':
+    main()
