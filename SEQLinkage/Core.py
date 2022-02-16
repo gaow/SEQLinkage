@@ -230,15 +230,18 @@ class RegionExtractor:
 
     def extract_vcf_with_anno(self,data):
         '''extract variants and annotation by region'''
-        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>=self.startpos) & (data.anno.Start<=self.endpos)
+        if str(data.anno.Chr[0])!=self.chrom:
+            return 1
+        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>=self.startpos) & (data.anno.Start<self.endpos)
         if anno_idx.any()==False:
-            return 0
+            return 1
         varmafs = data.anno[anno_idx]
         varIdx = 0
         i = -1
         # for each variant site
         while (self.vcf.Next()):
             i += 1
+            print(varmafs.iloc[i,1],self.vcf.GetPosition())
             # check if the line's sample number matches the entire VCF sample number
             if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
                 raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
@@ -274,6 +277,8 @@ class RegionExtractor:
             varIdx += 1
         if i!=(varmafs.shape[0]-1):
             print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
+            print(varmafs)
+            print(self.vcf.GetPosition())
             raise ValueError("VCF file and annotation file don't match with each other")
         return varIdx
 
