@@ -37,7 +37,6 @@ class Args:
         self.getIOArguments(self.parser)
         self.getLinkageArguments(self.parser)
         self.getRuntimeArguments(self.parser)
-        #self.parser.set_defaults(func=main)
 
     def isalnum(self, string):
         if not os.path.basename(string).isalnum():
