@@ -241,7 +241,6 @@ class RegionExtractor:
         # for each variant site
         while (self.vcf.Next()):
             i += 1
-            print(varmafs.iloc[i,1],self.vcf.GetPosition())
             # check if the line's sample number matches the entire VCF sample number
             if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
                 raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
@@ -277,8 +276,6 @@ class RegionExtractor:
             varIdx += 1
         if i!=(varmafs.shape[0]-1):
             print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
-            print(varmafs)
-            print(self.vcf.GetPosition())
             raise ValueError("VCF file and annotation file don't match with each other")
         return varIdx
 
@@ -489,7 +486,7 @@ class MarkerMaker:
                 else:
                     data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
             # get maf
-            data.maf[item] = [1 - mafs[item], mafs[item]]
+            data.maf[item] = [(1 - mafs[item], mafs[item])]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
         if env.debug:
