@@ -26,19 +26,18 @@ from distutils.file_util import copy_file
 #formatters
 #the handler, called from main, can call specific formatter.
 def format(tpeds, tfam, prev = None, wild_pen = None, muta_pen = None, out_format = 'MERLIN', inherit_mode = None, theta_max = None, theta_inc = None):
-    print(env.jobs) #testing line
     if out_format == 'plink':
         mkpath(os.path.join(env.outdir, 'PLINK'))
-        parmap(lambda x: format_plink(x, tfam), tpeds, env.jobs)
+        parmap(lambda x: format_plink(x, tfam), tpeds)
     elif out_format == 'mega2':
         mkpath(os.path.join(env.outdir, 'MEGA2'))
-        parmap(lambda x: format_mega2(x, tfam), tpeds, env.jobs)
+        parmap(lambda x: format_mega2(x, tfam), tpeds)
     elif out_format == 'merlin':
         mkpath(os.path.join(env.outdir, 'MERLIN'))
-        parmap(lambda x: format_merlin(x, tfam), tpeds, env.jobs)
+        parmap(lambda x: format_merlin(x, tfam), tpeds)
     elif out_format == 'linkage':
         mkpath(os.path.join(env.outdir, 'LINKAGE'))
-        parmap(lambda x: format_linkage(x, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc), tpeds, env.jobs)
+        parmap(lambda x: format_linkage(x, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc), tpeds)
 
 #plink format, ped and map
 def format_plink(tped, tfam):

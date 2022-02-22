@@ -86,6 +86,8 @@ class RData(dict):
         if anno_file is None:
             return None
         anno = pd.read_csv(anno_file)
+        anno.index = list(anno.Otherinfo1)
+        anno = anno[~anno.index.duplicated()]
         tmp = anno[list(set(self.fam_pop.values()))]
         tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
         tmp = tmp.replace(0,np.nan)
@@ -231,10 +233,10 @@ class RegionExtractor:
     def extract_vcf_with_anno(self,data):
         '''extract variants and annotation by region'''
         if str(data.anno.Chr[0])!=self.chrom:
-            return 1
+            return 0
         anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>=self.startpos) & (data.anno.Start<self.endpos)
         if anno_idx.any()==False:
-            return 1
+            return 0
         varmafs = data.anno[anno_idx]
         varIdx = 0
         i = -1
@@ -251,7 +253,11 @@ class RegionExtractor:
                     env.triallelic_counter.value += 1
                 continue
             # valid line found, get variant info
-            mafs=varmafs.iloc[i,2:]
+            try:
+                mafs=varmafs.loc[self.vcf.GetVariantID()][2:]
+            except:
+                print(self.vcf.GetVariantID(), 'is not in annotation')
+                continue
             if mafs.any()==False:
                 continue
             # for each family assign member genotype if the site is non-trivial to the family
@@ -274,9 +280,6 @@ class RegionExtractor:
             data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
-        if i!=(varmafs.shape[0]-1):
-            print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name)
-            raise ValueError("VCF file and annotation file don't match with each other")
         return varIdx
 
     def reverse_genotypes(self,g):
@@ -310,7 +313,7 @@ class MarkerMaker:
             self.r2 = None
         else:
             self.r2 = wsize
-        self.coder = cstatgen.HaplotypeCoder(0.5)#wsize)
+        self.coder = cstatgen.HaplotypeCoder(wsize)
         self.maf_cutoff = maf_cutoff
         self.rsq = 0.0
         self.recomb = recomb
@@ -329,17 +332,18 @@ class MarkerMaker:
         #print('data',data)
         env.dtest[self.name]['dgeno'].append(data.copy())
         varnames,mafs,haplotypes=self.__Haplotype(data)
-        if len(varnames):
-            if not any([len(varnames[x]) - 1 for x in varnames]):
-                # all families have only one variant
-                self.__AssignSNVHaplotypes(data, haplotypes, mafs, varnames)
-            else:
-                # calculate LD clusters using founder haplotypes
-                clusters = self.__ClusterByLD(data, haplotypes, varnames)
-                # recoding the genotype of the region
-                env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
-                self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
-                env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
+        if len(varnames)==0:
+            return -1
+        if not any([len(varnames[x]) - 1 for x in varnames]):
+            # all families have only one variant
+            self.__AssignSNVHaplotypes(data, haplotypes, mafs, varnames)
+        else:
+            # calculate LD clusters using founder haplotypes
+            clusters = self.__ClusterByLD(data, haplotypes, varnames)
+            # recoding the genotype of the region
+            env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
+            self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
+            env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
         #except Exception as e:
         #    return -1
         self.__FormatHaplotypes(data)
@@ -407,7 +411,7 @@ class MarkerMaker:
             for ihap, hap in enumerate(haplotypes[item]):
                 if not data.tfam.is_founder(hap[1]):
                     continue
-                gt = [hap[2 + varnames[item].index(v)] if v in varnames[item] else '?' for v in markers]
+                gt = [hap[2 + list(varnames[item]).index(v)] if v in varnames[item] else '?' for v in markers]
                 founder_haplotypes.append(("{}-{}".format(hap[1], ihap % 2), "".join([x[1] if x[0].isupper() else x[0] for x in gt])))
         # calculate LD blocks, use r2 measure
         blocks = []
@@ -448,7 +452,7 @@ class MarkerMaker:
     def __CodeHaplotypes(self, data, haplotypes, mafs, varnames, clusters):
         # apply CHP coding
         if clusters is not None:
-            clusters_idx = [[[varnames[item].index(x) for x in y if x in varnames[item]] for y in clusters] for item in haplotypes]
+            clusters_idx = [[[list(varnames[item]).index(x) for x in y if x in varnames[item]] for y in clusters] for item in haplotypes]
         else:
             clusters_idx = [[[]] for item in haplotypes]
         self.coder.Execute(list(haplotypes.values()), [mafs[item] for item in haplotypes], clusters_idx,self.recomb)
@@ -477,6 +481,7 @@ class MarkerMaker:
 
 
     def __AssignSNVHaplotypes(self, data, haplotypes, mafs, varnames):
+        print('SNVHap',self.name)
         for item in haplotypes:
             # each person's haplotype
             token = ''
@@ -486,7 +491,7 @@ class MarkerMaker:
                 else:
                     data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
             # get maf
-            data.maf[item] = [(1 - mafs[item], mafs[item])]
+            data.maf[item] = [(1 - mafs[item][0], mafs[item][0])]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
         if env.debug:

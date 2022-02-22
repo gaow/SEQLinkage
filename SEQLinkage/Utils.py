@@ -424,13 +424,13 @@ def wordCount(filename):
     word_count = {}
     with open(filename, 'r') as input_file:
         for line in input_file:
-           words = line.split()
-           for word in words:
-               word = word.lower()
-               if not word in word_count:
-                   word_count[word] = 1
-               else:
-                   word_count[word] += 1
+            words = line.split()
+            for word in words:
+                word = word.lower()
+                if not word in word_count:
+                    word_count[word] = 1
+                else:
+                    word_count[word] += 1
     return word_count
 
 def fileLinesCount(fname):
