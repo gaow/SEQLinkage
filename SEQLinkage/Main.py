@@ -262,7 +262,7 @@ def main():
     for fmt in args.format:
         print(fmt.lower())
         cache.setID(fmt.lower())
-        if not args.vanilla and cache.check():
+        if not args.vanilla and cache.check(path=os.path.join(env.outdir,fmt.upper())):
             env.log('Loading {} data from archive ...'.format(fmt.upper()))
             cache.load(target_dir = env.tmp_dir, names = [fmt.upper()])
         else:
