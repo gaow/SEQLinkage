@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 
-__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker']
+__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'run_each_region']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -76,7 +76,6 @@ class RData(dict):
         self.genotype_all={}
         self.mle_mafs={}
         self.missing_persons=[]
-        self.gss = {} #test line
         self.reset()
 
     def load_vcf(self,vcf):
@@ -216,7 +215,6 @@ class RegionExtractor:
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                data.gss[k] = gs  #test line
                 if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
                     # skip monomorphic gs
                     continue
@@ -234,7 +232,7 @@ class RegionExtractor:
         '''extract variants and annotation by region'''
         if str(data.anno.Chr[0])!=self.chrom:
             return 0
-        anno_idx = (data.anno.Chr.astype(str)==self.chrom) & (data.anno.Start>=self.startpos) & (data.anno.Start<self.endpos)
+        anno_idx = (data.anno.Start>=self.startpos) & (data.anno.Start<self.endpos)
         if anno_idx.any()==False:
             return 0
         varmafs = data.anno[anno_idx]
@@ -263,9 +261,6 @@ class RegionExtractor:
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                #test line
-                for person, g in zip(data.families[k], gs):
-                    data.genotype_all[person].append(g)
                 if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
                     # skip monomorphic gs
                     continue
@@ -319,18 +314,15 @@ class MarkerMaker:
         self.recomb = recomb
     def getRegion(self, region):
         self.name = region[3]
-        env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'gss':[],'hapimp':{},'ld':[],'coder':{},'format':[]}
-        env.dtest[self.name]['dregions'].append(region) #test line
-        env.dtest[self.name] = OrderedDict(env.dtest[self.name])
+        self.dtest = {}
+        self.dtest[self.name] = {}
+        self.dtest[self.name]['predata']={}
+
 
     def apply(self, data):
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        env.dtest[self.name]['dvariants'].append(data.variants)
-        env.dtest[self.name]['dfamvaridx'].append(deepcopy(data.famvaridx))
-        #print('data',data)
-        env.dtest[self.name]['dgeno'].append(data.copy())
         varnames,mafs,haplotypes=self.__Haplotype(data)
         if len(varnames)==0:
             return -1
@@ -341,13 +333,15 @@ class MarkerMaker:
             # calculate LD clusters using founder haplotypes
             clusters = self.__ClusterByLD(data, haplotypes, varnames)
             # recoding the genotype of the region
-            env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
+            #env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
             self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
-            env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
+            self.dtest[self.name]['maf']=data.maf
+            self.dtest[self.name]['hap']=self.haps
+            #env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
         #except Exception as e:
         #    return -1
         self.__FormatHaplotypes(data)
-        env.dtest[self.name]['format'] = data.copy()
+        #env.dtest[self.name]['format'] = data.copy()
         return 0
 
     def __Haplotype(self, data):
@@ -360,7 +354,7 @@ class MarkerMaker:
         varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
         for item in data.families:
             item_varnames, positions, item_mafs = data.getFamVariants(item, style = "map")
-            env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
+            #env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
             if len(item_varnames) == 0:  #no variants in the family
                 for person in data.families[item]:
                     data[person] = self.missings
@@ -368,7 +362,7 @@ class MarkerMaker:
             if self.maf_cutoff is not None:
                 keep_idx = item_mafs<self.maf_cutoff
                 if not keep_idx.any():
-                    for person in data.families[i]:
+                    for person in data.families[item]:
                         data[person] = self.missings
                     continue
             if env.debug:
@@ -382,15 +376,16 @@ class MarkerMaker:
                 else:
                     item_haplotypes = self.__PedToHaplotype(data.getFamSamples(item))
                 item_haplotypes = np.array(item_haplotypes)
-            env.dtest[self.name]['hapimp'][item].append(item_haplotypes)#test line
+            #env.dtest[self.name]['hapimp'][item].append(item_haplotypes)#test line
             if len(item_haplotypes) == 0:
                 # C++ haplotyping implementation failed
                 with env.chperror_counter.get_lock():
                     env.chperror_counter.value += 1
                     env.log('{} family failed to phase haplotypes.'.format(item))
-                for person in data.families[i]:
+                for person in data.families[item]:
                     data[person] = self.missings
                     continue
+            self.dtest[self.name]['predata'][item]=[item_varnames,item_mafs,item_haplotypes]
             # Drop some variants if maf is greater than given threshold
             if self.maf_cutoff is not None:
                 item_mafs = item_mafs[keep_idx]
@@ -441,7 +436,7 @@ class MarkerMaker:
                     blocks.append(block)
         # get LD clusters
         clusters = [[markers[idx] for idx in item] for item in list(connected_components(blocks))]
-        env.dtest[self.name]['ld'] = [ld,blocks,clusters]
+        #env.dtest[self.name]['ld'] = [ld,blocks,clusters]
         if env.debug:
             with env.lock:
                 print("LD blocks: ", blocks, file = sys.stderr)
@@ -462,12 +457,14 @@ class MarkerMaker:
                     print("Family LD clusters: ", clusters_idx, "\n", file = sys.stderr)
                 self.coder.Print()
         # line: [fid, sid, hap1, hap2]
+        self.haps = {}
         for line in self.coder.GetHaplotypes():
             #if not line[1] in data:
                 # this sample is not in VCF file. Every variant site should be missing
                 # they have to be skipped for now
             #    continue
             data[line[1]] = (line[2].split(','), line[4].split(','))
+            self.haps[line[0]] = self.haps.get(line[0], line)
             if len(data[line[1]][0]) > data.superMarkerCount:
                 data.superMarkerCount = len(data[line[1]][0])
         # get MAF
@@ -610,7 +607,6 @@ class LinkageWriter:
         self.name, self.distance_avg, self.distance_m, self.distance_f = region[3:]
         self.distance = ";".join([self.distance_avg, self.distance_m, self.distance_f])
 
-
 class EncoderWorker(Process):
     def __init__(self, queue, length, data, extractor, coder, writer):
         Process.__init__(self)
@@ -628,7 +624,7 @@ class EncoderWorker(Process):
     def run(self):
         while True:
             try:
-                region = self.queue.get()
+                region = self.queue.pop(0) if isinstance(self.queue, list) else self.queue.get()
                 if region is None:
                     self.writer.commit()
                     self.report()
@@ -643,8 +639,8 @@ class EncoderWorker(Process):
                     with env.total_counter.get_lock():
                         env.total_counter.value += 1
                     self.extractor.getRegion(region)
-                    self.maker.getRegion(region)
                     self.writer.getRegion(region)
+                    self.maker.getRegion(region)
                     isSuccess = True
                     for m in [self.extractor, self.maker, self.writer]:
                         status = m.apply(self.data)
@@ -668,3 +664,35 @@ class EncoderWorker(Process):
                         self.report()
             except KeyboardInterrupt:
                 break
+
+# Cell
+def run_each_region(regions,data,extractor,maker,writer):
+    results = {}
+    for region in regions:
+        extractor.getRegion(region)
+        maker.getRegion(region)
+        writer.getRegion(region)
+        isSuccess = True
+        for m in [extractor, maker, writer]:
+            status = m.apply(data)
+            if status == -1:
+                with env.chperror_counter.get_lock():
+                    # previous module failed
+                    env.chperror_counter.value += 1
+            if status == 1:
+                with env.null_counter.get_lock():
+                    env.null_counter.value += 1
+            if status == 2:
+                with env.trivial_counter.get_lock():
+                    env.trivial_counter.value += 1
+            if status != 0:
+                isSuccess = False
+                break
+        if isSuccess:
+            with env.success_counter.get_lock():
+                env.success_counter.value += 1
+            results[region[3]]=maker.dtest[region[3]]
+    env.log('write to pickle')
+    import pickle
+    with open(os.path.join(env.tmp_cache,env.output+'.pickle'), 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
