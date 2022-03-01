@@ -26,17 +26,18 @@ from distutils.file_util import copy_file
 #formatters
 #the handler, called from main, can call specific formatter.
 def format(tpeds, tfam, prev = None, wild_pen = None, muta_pen = None, out_format = 'MERLIN', inherit_mode = None, theta_max = None, theta_inc = None):
-    print(env.jobs) #testing line
     if out_format == 'plink':
-        parmap(lambda x: format_plink(x, tfam), tpeds, env.jobs)
+        mkpath(os.path.join(env.outdir, 'PLINK'))
+        parmap(lambda x: format_plink(x, tfam), tpeds)
     elif out_format == 'mega2':
         mkpath(os.path.join(env.outdir, 'MEGA2'))
-        parmap(lambda x: format_mega2(x, tfam), tpeds, env.jobs)
+        parmap(lambda x: format_mega2(x, tfam), tpeds)
     elif out_format == 'merlin':
         mkpath(os.path.join(env.outdir, 'MERLIN'))
-        parmap(lambda x: format_merlin(x, tfam), tpeds, env.jobs)
+        parmap(lambda x: format_merlin(x, tfam), tpeds)
     elif out_format == 'linkage':
-        parmap(lambda x: format_linkage(x, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc), tpeds, env.jobs)
+        mkpath(os.path.join(env.outdir, 'LINKAGE'))
+        parmap(lambda x: format_linkage(x, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc), tpeds)
 
 #plink format, ped and map
 def format_plink(tped, tfam):
@@ -51,7 +52,8 @@ def format_plink(tped, tfam):
         with open(out_base + '.ped', 'w') as p:
             for line in tfam_fh:
                 p.write(line.strip())
-                list(map(lambda x: p.write(' {} {}'.format(x.popleft(), x.popleft)), geno))
+                s = line.strip().split()
+                list(map(lambda x: p.write('\t{}\t{}'.format(x.popleft(), x.popleft())), geno))
                 p.write("\n")
 
 #mega2 format, datain.01, pedin.01, map.01
@@ -139,7 +141,7 @@ def format_merlin(tped, tfam):
 #because the haplotype patterns are different from family to family.
 #You can analyze them all together
 def format_linkage(tped, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc):
-    out_base = '{}/LINKAGE/{}'.format(env.tmp_dir, splitext(basename(tped))[0])
+    out_base = '{}/LINKAGE/{}'.format(env.outdir, splitext(basename(tped))[0])
     with open(tped) as tped_fh, open(tfam) as tfam_fh:
         fams = parse_tfam(tfam_fh)
         #parse per family per locus AF file
@@ -281,7 +283,7 @@ def run_linkage(blueprint, theta_inc, theta_max, to_plot = True):
     except OSError:
         pass
     with open(os.path.join(env.tmp_dir, 'LinkageRuntimeError.txt'), 'w') as runtime_err:
-        workdirs = glob.glob('{}/LINKAGE/{}.chr*'.format(env.tmp_dir, env.output))
+        workdirs = glob.glob('{}/LINKAGE/{}.chr*'.format(env.outdir, env.output))
         parmap(lambda x: linkage_worker(blueprint, x, theta_inc, theta_max, runtime_err, to_plot) , workdirs, env.jobs)
 
 def linkage_worker(blueprint, workdir, theta_inc, theta_max, errfile, to_plot = True):

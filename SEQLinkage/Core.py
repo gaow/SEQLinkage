@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 
-__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker']
+__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'run_each_region']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -16,6 +16,7 @@ import itertools
 from copy import deepcopy
 import sys, faulthandler, platform
 import numpy as np
+import pandas as pd
 import os
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
@@ -27,11 +28,15 @@ else:
 
 # Cell
 class RData(dict):
-    def __init__(self, vcf, tfam):
+    def __init__(self, vcf, tfam,anno_file=None,fam_pop_file=None,ind_sample_file=None,allele_freq_info = None):
         # tfam.samples: a dict of {sid:[fid, pid, mid, sex, trait], ...}
         # tfam.families: a dict of {fid:[s1, s2 ...], ...}
         self.tfam = TFAMParser(tfam)
+        # name of allele frequency meta info
+        self.af_info = allele_freq_info
         self.vs = self.load_vcf(vcf)
+        self.fam_pop = self.load_fam_info(fam_pop_file)
+        self.anno = self.load_anno(anno_file)
         self.samples_vcf = self.vs.GetSampleNames()
         self.samples_not_vcf = checkSamples(self.samples_vcf, self.tfam.samples.keys())[1]
         # samples have to be in both vcf and tfam data
@@ -60,6 +65,7 @@ class RData(dict):
                 self.famsampidx[k] = [i for i, x in enumerate(self.samples_vcf) if x in self.families[k]]
         # a dict of {fid:[idx ...], ...}
         self.famvaridx = {}
+        self.famvarmafs = {}
         self.wtvar = {}
         self.freq_by_fam = {}
         self.include_vars = []
@@ -70,26 +76,50 @@ class RData(dict):
         self.genotype_all={}
         self.mle_mafs={}
         self.missing_persons=[]
-        self.gss = {} #test line
         self.reset()
 
     def load_vcf(self,vcf):
         # load VCF file header
         return cstatgen.VCFstream(vcf)
+    def load_anno(self,anno_file):
+        if anno_file is None:
+            return None
+        anno = pd.read_csv(anno_file)
+        anno.index = list(anno.Otherinfo1)
+        anno = anno[~anno.index.duplicated()]
+        tmp = anno[list(set(self.fam_pop.values()))]
+        tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
+        tmp = tmp.replace(0,np.nan)
+        anno = pd.concat([anno[['Chr','Start']],tmp.astype(np.float64)],axis=1)
+        print('anno',anno.shape)
+        return anno
+    def load_fam_info(self,fam_pop_file):
+        if fam_pop_file is None:
+            return None
+        fam_pop = {}
+        with open(fam_pop_file) as f:
+            for line in f:
+                key, value = line.split()
+                if value == 'NA':   #Fixme: deal with missing info
+                    fam_pop[key]=self.af_info
+                else:
+                    fam_pop[key] = value
+        return fam_pop
+    def load_ind_samples(self,ind_sample_file):
+        pass
 
     def reset(self):
-        for item in self.samples:
+        for item in self.tfam.samples: #for all samples in fam ( with or without vcfs)
             self[item] = []
             self.genotype_all[item] = []
         self.variants = []
         self.include_vars = []
         self.total_varnames={}
         self.total_mafs={}
-        self.wt_maf={}
         self.chrom = None
         for k in self.families.keys():
             self.famvaridx[k] = []
-            self.wtvar[k] = []
+            self.famvarmafs[k] = []
         self.maf = OrderedDict()
         # superMarkerCount is the max num. of recombinant fragments among all fams
         self.superMarkerCount = 0
@@ -112,19 +142,11 @@ class RData(dict):
         elif style == "map":
             names = []
             pos = []
-            mafs = []
-            tmp_vars = self.famvaridx[fam]
-            if len(self.freq_by_fam.keys()) != 0:
-                pop_idx=self.freq.index(self.freq_by_fam[fam])
-            for idx in tmp_vars:
+            for idx in self.famvaridx[fam]:
                 names.append("V{}-{}".format(idx, self.variants[idx][1]))
                 pos.append(self.variants[idx][1])
-                tmp_mafs=self.variants[idx][-1]
-                if type(tmp_mafs) is list:
-                    mafs.append(tmp_mafs[pop_idx])
-                else:
-                    mafs.append(tmp_mafs)
-            return names, pos, mafs
+            mafs = self.famvarmafs[fam]
+            return np.array(names), pos, np.array(mafs)  #pos can't be array -> TypeError: in method 'HaplotypingEngine_Execute'
         else:
             raise ValueError("Unknown style '{}'".format(style))
 
@@ -146,12 +168,12 @@ class RegionExtractor:
     '''Extract given genomic region from VCF
     converting genotypes into dictionary of
     genotype list'''
-    def __init__(self, filename, build = env.build, chr_prefix = None, allele_freq_info = None):
+    def __init__(self, filename, build = None, chr_prefix = None):
         self.vcf = cstatgen.VCFstream(filename)
         self.chrom = self.startpos = self.endpos = self.name = None
         self.chr_prefix = chr_prefix
-        # name of allele frequency meta info
-        self.af_info = allele_freq_info
+        if build is None:
+            build = env.build
         self.xchecker = PseudoAutoRegion('X', build)
         self.ychecker = PseudoAutoRegion('Y', build)
 
@@ -160,47 +182,10 @@ class RegionExtractor:
         data.reset()
         data.chrom = self.chrom
         self.vcf.Extract(self.chrom, self.startpos, self.endpos)
-        varIdx = 0
-        # for each variant site
-        gss = {} #test line
-        while (self.vcf.Next()):
-            # skip tri-allelic sites
-            if not self.vcf.IsBiAllelic():
-                with env.triallelic_counter.get_lock():
-                    env.triallelic_counter.value += 1
-                continue
-            # check if the line's sample number matches the entire VCF sample number
-            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
-                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
-                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
-            # valid line found, get variant info
-            try:
-                maf = float(self.vcf.GetInfo(self.af_info)) if self.af_info else None
-                if maf > 0.5:
-                    maf = 1 - maf
-                elif maf<=0.0:
-                    maf = 0.0001    #fixme
-            except Exception as e:
-                maf = 0.005
-                #raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
-                #                 format(self.vcf.GetChrom(), self.vcf.GetPosition(), self.af_info))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name, maf])
-            # for each family assign member genotype if the site is non-trivial to the family
-            for k in data.families:
-                gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                gss[k] = gs
-                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
-                    # skip monomorphic gs
-                    continue
-                else:
-                    # this variant is found in the family
-                    data.famvaridx[k].append(varIdx)
-                    for person, g in zip(data.families[k], gs):
-                        data[person].append(g)
-            data.gss[varIdx] = gss #test line
-            varIdx += 1
-        #print(self.name,'varIdx',varIdx)
-        #
+        if data.anno is None:
+            varIdx=self.extract_vcf(data)
+        else:
+            varIdx=self.extract_vcf_with_anno(data)
         if varIdx == 0:
             return 1
         else:
@@ -208,6 +193,97 @@ class RegionExtractor:
                 env.variants_counter.value += varIdx
             return 0
 
+    def extract_vcf(self,data):
+        varIdx = 0
+        # for each variant site
+        while (self.vcf.Next()):
+            # check if the line's sample number matches the entire VCF sample number
+            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
+                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
+                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
+            # skip tri-allelic sites
+            if not self.vcf.IsBiAllelic():
+                with env.triallelic_counter.get_lock():
+                    env.triallelic_counter.value += 1
+                continue
+            # valid line found, get variant info
+            try:
+                maf = float(self.vcf.GetInfo(data.af_info))
+            except Exception as e:
+                raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
+                                 format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
+            # for each family assign member genotype if the site is non-trivial to the family
+            for k in data.families:
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    # this variant is found in the family
+                    data.famvaridx[k].append(varIdx)
+                    data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
+                    for person, g in zip(data.families[k], gs):
+                        data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
+            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            varIdx += 1
+        return varIdx
+
+    def extract_vcf_with_anno(self,data):
+        '''extract variants and annotation by region'''
+        if str(data.anno.Chr[0])!=self.chrom:
+            return 0
+        anno_idx = (data.anno.Start>=self.startpos) & (data.anno.Start<self.endpos)
+        if anno_idx.any()==False:
+            return 0
+        varmafs = data.anno[anno_idx]
+        varIdx = 0
+        i = -1
+        # for each variant site
+        while (self.vcf.Next()):
+            i += 1
+            # check if the line's sample number matches the entire VCF sample number
+            if not self.vcf.CountSampleGenotypes() == self.vcf.sampleCount:
+                raise ValueError('Genotype and sample mismatch for region {}: {:,d} vs {:,d}'.\
+                             format(self.name, self.vcf.CountSampleGenotypes(), self.vcf.sampleCount))
+            # skip tri-allelic sites
+            if not self.vcf.IsBiAllelic():
+                with env.triallelic_counter.get_lock():
+                    env.triallelic_counter.value += 1
+                continue
+            # valid line found, get variant info
+            try:
+                mafs=varmafs.loc[self.vcf.GetVariantID()][2:]
+            except:
+                print(self.vcf.GetVariantID(), 'is not in annotation')
+                continue
+            if mafs.any()==False:
+                continue
+            # for each family assign member genotype if the site is non-trivial to the family
+            for k in data.families:
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    maf = mafs[data.fam_pop[k]]
+                    if maf:
+                        # this variant is found in the family
+                        data.famvaridx[k].append(varIdx)
+                        data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
+                        for person, g in zip(data.families[k], gs):
+                            data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
+            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
+            varIdx += 1
+        return varIdx
+
+    def reverse_genotypes(self,g):
+        ''' 11->22,12,21,22->11 '''
+        if g=='11':
+            g='22'
+        elif g=='22':
+            g='11'
+        return g
 
     def getRegion(self, region):
         self.chrom, self.startpos, self.endpos, self.name = region[:4]
@@ -224,7 +300,7 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None):
+    def __init__(self, wsize, maf_cutoff = None, recomb=False):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
         self.haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
@@ -235,140 +311,89 @@ class MarkerMaker:
         self.coder = cstatgen.HaplotypeCoder(wsize)
         self.maf_cutoff = maf_cutoff
         self.rsq = 0.0
+        self.recomb = recomb
     def getRegion(self, region):
         self.name = region[3]
-        env.dtest[self.name] = {'dregions':[],'dvariants':[],'dfamvaridx':[],'dgeno':[],'gss':[],'hapimp':{},'ld':[],'coder':{},'format':[]}
-        env.dtest[self.name]['dregions'].append(region) #test line
-        env.dtest[self.name] = OrderedDict(env.dtest[self.name])
+        self.dtest = {}
+        self.dtest[self.name] = {}
+        self.dtest[self.name]['predata']={}
+
 
     def apply(self, data):
-        # temp raw haplotype, maf and variant names data
-        haplotypes = OrderedDict()
-        mafs = {}
-        varnames = {}
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        env.dtest[self.name]['gss'].append(deepcopy(data.gss))
-        env.dtest[self.name]['dvariants'].append(data.variants)
-        env.dtest[self.name]['dfamvaridx'].append(deepcopy(data.famvaridx))
-        #print('data',data)
-        env.dtest[self.name]['dgeno'].append(data.copy())
-        self.__Haplotype(data, haplotypes, mafs, varnames)
-        if len(varnames):
-            if not any ([len(varnames[x]) - 1 for x in varnames]):
-                # all families have only one variant
-                self.__AssignSNVHaplotypes(data, haplotypes, mafs, varnames)
-            else:
-                # calculate LD clusters using founder haplotypes
-                #clusters = self.__ClusterByLD(data, haplotypes, varnames)
-                clusters=[]
-                #print('clusters:',clusters)
-                # recoding the genotype of the region
-                env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
-                self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
-                env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
+        varnames,mafs,haplotypes=self.__Haplotype(data)
+        if len(varnames)==0:
+            return -1
+        if not any([len(varnames[x]) - 1 for x in varnames]):
+            # all families have only one variant
+            self.__AssignSNVHaplotypes(data, haplotypes, mafs, varnames)
+        else:
+            # calculate LD clusters using founder haplotypes
+            clusters = self.__ClusterByLD(data, haplotypes, varnames)
+            # recoding the genotype of the region
+            #env.dtest[self.name]['coder']['input'] = [data.copy(), haplotypes, mafs, varnames, clusters]
+            self.__CodeHaplotypes(data, haplotypes, mafs, varnames, clusters)
+            self.dtest[self.name]['maf']=data.maf
+            self.dtest[self.name]['hap']=self.haps
+            #env.dtest[self.name]['coder']['output'] = [self.coder.GetHaplotypes(),data.copy(),data.superMarkerCount,deepcopy(data.maf)]
         #except Exception as e:
         #    return -1
         self.__FormatHaplotypes(data)
-        env.dtest[self.name]['format'] = data.copy()
+        #env.dtest[self.name]['format'] = data.copy()
         return 0
 
-    def __Haplotype(self, data, haplotypes, mafs, varnames):
+    def __Haplotype(self, data):
         '''genetic haplotyping. haplotypes stores per family data'''
         # FIXME: it is SWIG's (2.0.12) fault not to properly destroy the object "Pedigree" in "Execute()"
         # So there is a memory leak here which I tried to partially handle on C++
         #
         # Per family haplotyping
         #
-        self.markers = ["V{}-{}".format(idx, item[1]) for idx, item in enumerate(data.variants)]
-        print('in Haplotype')
+        varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
         for item in data.families:
-            print('running family',item)
-            varnames[item], positions, vcf_mafs = data.getFamVariants(item, style = "map")
-            env.dtest[self.name]['hapimp'][item] = [item,varnames[item], positions, vcf_mafs] #test line
-            if len(varnames[item]) == 0:
+            item_varnames, positions, item_mafs = data.getFamVariants(item, style = "map")
+            #env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
+            if len(item_varnames) == 0:  #no variants in the family
                 for person in data.families[item]:
                     data[person] = self.missings
                 continue
+            if self.maf_cutoff is not None:
+                keep_idx = item_mafs<self.maf_cutoff
+                if not keep_idx.any():
+                    for person in data.families[item]:
+                        data[person] = self.missings
+                    continue
             if env.debug:
                 with env.lock:
                     sys.stderr.write('\n'.join(['\t'.join(x) for x in data.getFamSamples(item)]) + '\n\n')
             # haplotyping
             with env.lock:
                 if not env.prephased:
-                    #with stdoutRedirect(to = env.tmp_log + str(os.getpid()) + '.log'):
-                    #    haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item],
-                    #                                           sorted(positions), data.getFamSamples(item))[0]
                     tmp_log_output=env.tmp_log + str(os.getpid()) + '.log'
-                    if isnotebook():
-                        haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
-                                                                       data.getFamSamples(item), self.rsq, tmp_log_output)[0]
-                    else:
-                        with stdoutRedirect(to = tmp_log_output):
-                            haplotypes[item] = self.haplotyper.Execute(data.chrom, varnames[item], sorted(positions),
-                                                                       data.getFamSamples(item), self.rsq, tmp_log_output)[0]
-
+                    item_haplotypes = self.haplotyper.Execute(data.chrom, item_varnames, positions, data.getFamSamples(item), self.rsq, tmp_log_output)[0]
                 else:
-                    haplotypes[item] = self.__PedToHaplotype(data.getFamSamples(item))
-            env.dtest[self.name]['hapimp'][item].append(haplotypes[item]) #test line
-            if len(haplotypes[item]) == 0:
+                    item_haplotypes = self.__PedToHaplotype(data.getFamSamples(item))
+                item_haplotypes = np.array(item_haplotypes)
+            #env.dtest[self.name]['hapimp'][item].append(item_haplotypes)#test line
+            if len(item_haplotypes) == 0:
                 # C++ haplotyping implementation failed
                 with env.chperror_counter.get_lock():
                     env.chperror_counter.value += 1
-            # either use privided MAF or computer MAF
-            if all(vcf_mafs):
-                for idx, v in enumerate(varnames[item]):
-                    if v not in mafs:
-                        mafs[v] = vcf_mafs[idx]
-            else:
-                # count founder alleles
-                print('count founder alleles')
-                for hap in haplotypes[item]:
-                    if not data.tfam.is_founder(hap[1]):
-                        continue
-                    for idxv, v in enumerate(varnames[item]):
-                        if v not in mafs:
-                            # [#alt, #haplotypes]
-                            mafs[v] = [0, 0]
-                        gt = hap[2 + idxv][1] if hap[2 + idxv][0].isupper() else hap[2 + idxv][0]
-                        if not gt == "?":
-                            mafs[v][0] += self.gtconv[gt]
-                            mafs[v][1] += 1.0
-        env.dtest[self.name]['hapimp'][item].append(mafs) #test line
-        #
-        # Compute founder MAFs
-        #
-        for v in mafs:
-            if type(mafs[v]) is not list:
-                continue
-            mafs[v] = mafs[v][0] / mafs[v][1] if mafs[v][1] > 0 else 0.0
-        if env.debug:
-            with env.lock:
-                print("variant mafs = ", mafs, "\n", file = sys.stderr)
-        #
-        # Drop some variants if maf is greater than given threshold
-        #
-        if self.maf_cutoff is not None:
-            exclude_vars = []
-            for v in mafs.keys():
-                if mafs[v] > self.maf_cutoff:
-                    exclude_vars.append(v)
-            for i in haplotypes.keys():
-                haplotypes[i] = listit(haplotypes[i])
-                for j in range(len(haplotypes[i])):
-                    haplotypes[i][j] = haplotypes[i][j][:2] + \
-                      [x for idx, x in enumerate(haplotypes[i][j][2:]) if varnames[i][idx] not in exclude_vars]
-                varnames[i] = [x for x in varnames[i] if x not in exclude_vars]
-                # handle trivial data
-                if len(varnames[i]) == 0:
-                    for person in data.families[i]:
-                        data[person] = self.missings
-                    del varnames[i]
-                    del haplotypes[i]
-            # count how many variants are removed
-            with env.commonvar_counter.get_lock():
-                env.commonvar_counter.value += len(exclude_vars)
+                    env.log('{} family failed to phase haplotypes.'.format(item))
+                for person in data.families[item]:
+                    data[person] = self.missings
+                    continue
+            self.dtest[self.name]['predata'][item]=[item_varnames,item_mafs,item_haplotypes]
+            # Drop some variants if maf is greater than given threshold
+            if self.maf_cutoff is not None:
+                item_mafs = item_mafs[keep_idx]
+                item_varnames = item_varnames[keep_idx]
+                item_haplotypes = item_haplotypes[:,np.concatenate(([True,True],keep_idx))]
+            varnames[item],mafs[item],haplotypes[item]= item_varnames,item_mafs,item_haplotypes
+        return varnames,mafs,haplotypes
+
 
 
     def __ClusterByLD(self, data, haplotypes, varnames):
@@ -381,7 +406,7 @@ class MarkerMaker:
             for ihap, hap in enumerate(haplotypes[item]):
                 if not data.tfam.is_founder(hap[1]):
                     continue
-                gt = [hap[2 + varnames[item].index(v)] if v in varnames[item] else '?' for v in markers]
+                gt = [hap[2 + list(varnames[item]).index(v)] if v in varnames[item] else '?' for v in markers]
                 founder_haplotypes.append(("{}-{}".format(hap[1], ihap % 2), "".join([x[1] if x[0].isupper() else x[0] for x in gt])))
         # calculate LD blocks, use r2 measure
         blocks = []
@@ -411,7 +436,7 @@ class MarkerMaker:
                     blocks.append(block)
         # get LD clusters
         clusters = [[markers[idx] for idx in item] for item in list(connected_components(blocks))]
-        env.dtest[self.name]['ld'] = [ld,blocks,clusters]
+        #env.dtest[self.name]['ld'] = [ld,blocks,clusters]
         if env.debug:
             with env.lock:
                 print("LD blocks: ", blocks, file = sys.stderr)
@@ -422,22 +447,24 @@ class MarkerMaker:
     def __CodeHaplotypes(self, data, haplotypes, mafs, varnames, clusters):
         # apply CHP coding
         if clusters is not None:
-            clusters_idx = [[[varnames[item].index(x) for x in y] for y in clusters] for item in haplotypes]
+            clusters_idx = [[[list(varnames[item]).index(x) for x in y if x in varnames[item]] for y in clusters] for item in haplotypes]
         else:
             clusters_idx = [[[]] for item in haplotypes]
-        self.coder.Execute(list(haplotypes.values()), [[mafs[v] for v in varnames[item]] for item in haplotypes], clusters_idx)
+        self.coder.Execute(list(haplotypes.values()), [mafs[item] for item in haplotypes], clusters_idx,self.recomb)
         if env.debug:
             with env.lock:
                 if clusters:
                     print("Family LD clusters: ", clusters_idx, "\n", file = sys.stderr)
                 self.coder.Print()
         # line: [fid, sid, hap1, hap2]
+        self.haps = {}
         for line in self.coder.GetHaplotypes():
             #if not line[1] in data:
                 # this sample is not in VCF file. Every variant site should be missing
                 # they have to be skipped for now
             #    continue
             data[line[1]] = (line[2].split(','), line[4].split(','))
+            self.haps[line[0]] = self.haps.get(line[0], line)
             if len(data[line[1]][0]) > data.superMarkerCount:
                 data.superMarkerCount = len(data[line[1]][0])
         # get MAF
@@ -451,6 +478,7 @@ class MarkerMaker:
 
 
     def __AssignSNVHaplotypes(self, data, haplotypes, mafs, varnames):
+        print('SNVHap',self.name)
         for item in haplotypes:
             # each person's haplotype
             token = ''
@@ -460,7 +488,7 @@ class MarkerMaker:
                 else:
                     data[line[1]] = (token, line[2][1] if line[2][0].isupper() else line[2][0])
             # get maf
-            data.maf[item] = [(1 - mafs[varnames[item][0]], mafs[varnames[item][0]])]
+            data.maf[item] = [(1 - mafs[item][0], mafs[item][0])]
             data.maf[item] = tuple(tuple(np.array(v) / np.sum(v)) if np.sum(v) else v
                               for v in data.maf[item])
         if env.debug:
@@ -512,7 +540,7 @@ class LinkageWriter:
         position = str(data.getMidPosition())
         if data.superMarkerCount <= 1:
             # genotypes
-            gs = [data[s][0] for s in data.samples]
+            gs = [data[s][0] for s in data.tfam.samples]
             if len(set(gs)) == 1:
                 # everyone's genotype is the same (most likely missing or monomorphic)
                 return 2
@@ -523,7 +551,7 @@ class LinkageWriter:
                 self.freq += env.delimiter.join([k, self.name] + list(map(str, data.maf[k][0]))) + "\n"
         else:
             # have to expand each region into mutiple chunks to account for different recomb points
-            gs = list(zip(*[data[s] for s in data.samples]))
+            gs = list(zip(*[data[s] for s in data.tfam.samples]))
             # sub-chunk id
             cid = 0
             skipped_chunk = []
@@ -579,7 +607,6 @@ class LinkageWriter:
         self.name, self.distance_avg, self.distance_m, self.distance_f = region[3:]
         self.distance = ";".join([self.distance_avg, self.distance_m, self.distance_f])
 
-
 class EncoderWorker(Process):
     def __init__(self, queue, length, data, extractor, coder, writer):
         Process.__init__(self)
@@ -597,7 +624,7 @@ class EncoderWorker(Process):
     def run(self):
         while True:
             try:
-                region = self.queue.get()
+                region = self.queue.pop(0) if isinstance(self.queue, list) else self.queue.get()
                 if region is None:
                     self.writer.commit()
                     self.report()
@@ -612,8 +639,8 @@ class EncoderWorker(Process):
                     with env.total_counter.get_lock():
                         env.total_counter.value += 1
                     self.extractor.getRegion(region)
-                    self.maker.getRegion(region)
                     self.writer.getRegion(region)
+                    self.maker.getRegion(region)
                     isSuccess = True
                     for m in [self.extractor, self.maker, self.writer]:
                         status = m.apply(self.data)
@@ -637,3 +664,35 @@ class EncoderWorker(Process):
                         self.report()
             except KeyboardInterrupt:
                 break
+
+# Cell
+def run_each_region(regions,data,extractor,maker,writer):
+    results = {}
+    for region in regions:
+        extractor.getRegion(region)
+        maker.getRegion(region)
+        writer.getRegion(region)
+        isSuccess = True
+        for m in [extractor, maker, writer]:
+            status = m.apply(data)
+            if status == -1:
+                with env.chperror_counter.get_lock():
+                    # previous module failed
+                    env.chperror_counter.value += 1
+            if status == 1:
+                with env.null_counter.get_lock():
+                    env.null_counter.value += 1
+            if status == 2:
+                with env.trivial_counter.get_lock():
+                    env.trivial_counter.value += 1
+            if status != 0:
+                isSuccess = False
+                break
+        if isSuccess:
+            with env.success_counter.get_lock():
+                env.success_counter.value += 1
+            results[region[3]]=maker.dtest[region[3]]
+    env.log('write to pickle')
+    import pickle
+    with open(os.path.join(env.tmp_cache,env.output+'.pickle'), 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)

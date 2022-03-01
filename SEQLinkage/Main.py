@@ -28,16 +28,15 @@ class Args:
     def __init__(self):
         self.parser = ArgumentParser(
         description = '''\t{}, linkage analysis using sequence data\n\t[{}]'''.\
-        format(env.proj, env.version),
+        format("SEQLinkage", VERSION),
         formatter_class = RawDescriptionHelpFormatter,
-        prog = env.prog,
+        prog = 'seqlink',
         fromfile_prefix_chars = '@', add_help = False,
         epilog = '''\tCopyright (c) 2013 - 2014 Gao Wang <wang.gao@columbia.edu>\n\tDistributed under GNU General Public License\n\tHome page: {}'''.format(HOMEPAGE))
         self.getEncoderArguments(self.parser)
         self.getIOArguments(self.parser)
         self.getLinkageArguments(self.parser)
         self.getRuntimeArguments(self.parser)
-        self.parser.set_defaults(func=main)
 
     def isalnum(self, string):
         if not os.path.basename(string).isalnum():
@@ -49,10 +48,10 @@ class Args:
 
     def getEncoderArguments(self, parser):
         vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
-        vargs.add_argument('--bin', metavar = "FLOAT", default = 0.8, type = float,
+        vargs.add_argument('--bin', metavar = "FLOAT", default = 0, type = float,
                            help='''Defines theme to collapse variants. Set to 0 for "complete collapsing",
         1 for "no collapsing", r2 value between 0 and 1 for "LD based collapsing" and other integer values for customized
-        collapsing bin sizes. Default to 0.8 (variants having r2 >= 0.8 will be collapsed).''')
+        collapsing bin sizes. Default to 0 (all variants will be collapsed).''')
         vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
                            help='''Blueprint file that defines regional marker
         (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
@@ -65,6 +64,8 @@ class Args:
         vargs.add_argument('--fam', metavar='FILE', required=True, dest = "tfam",
                            help='''Input pedigree and phenotype information in FAM format.''')
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
+        vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
+        vargs.add_argument('--pop', metavar='FILE', required=False, help='''Input two columns file, first column is family ID, second column population information.''')
         vargs.add_argument('--build', metavar='STRING', default='hg19', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
         vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
         vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
@@ -88,7 +89,7 @@ class Args:
     def getRuntimeArguments(self, parser):
         vargs = parser.add_argument_group('Runtime arguments')
         vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
-        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 32), 1),
+        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 8), 1),
                            help='''Number of CPUs to use.''')
         vargs.add_argument('--tempdir', metavar='PATH',
                            help='''Temporary directory to use.''')
@@ -123,6 +124,7 @@ class Args:
 # Cell
 def checkParams(args):
     '''set default arguments or make warnings'''
+    env.setoutput(args.output)
     env.debug = args.debug
     env.quiet = args.quiet
     env.prephased = args.prephased
@@ -131,12 +133,6 @@ def checkParams(args):
     for item in [args.vcf, args.tfam]:
         if not os.path.exists(item):
             env.error("Cannot find file [{}]!".format(item), exit = True)
-    if args.output:
-        env.outdir = args.output
-        env.output = os.path.split(args.output)[-1]
-        env.cache_dir = os.path.join(os.path.dirname(args.output), 'cache')
-        env.tmp_log = os.path.join(env.tmp_dir, env.output + ".STDOUT")
-    #
     if len([x for x in set(getColumn(args.tfam, 6)) if x.lower() not in env.ped_missing]) > 2:
         env.trait = 'quantitative'
     env.log('{} trait detected in [{}]'.format(env.trait.capitalize(), args.tfam))
@@ -152,8 +148,9 @@ def checkParams(args):
     return True
 
 # Cell
-def main(args):
+def main():
     '''the main encoder function'''
+    args = Args().get()
     checkParams(args)
     download_dir = 'http://bioinformatics.org/spower/download/.private'
     downloadResources([('{}/genemap.{}.txt'.format(download_dir, args.build), env.resource_dir),
@@ -174,8 +171,7 @@ def main(args):
         env.batch = 10
     else:
         # load data
-        data = RData(args.vcf, args.tfam)
-        vs = data.vs
+        data = RData(args.vcf, args.tfam,args.anno,args.pop,allele_freq_info=args.freq)
         samples_vcf = data.samples_vcf
 
         if len(samples_vcf) == 0:
@@ -193,7 +189,7 @@ def main(args):
                        data.tfam.samples, list(data.samples.keys()) + samples_not_vcf)
         if args.single_markers:
             regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
-                       for x in vs.GetGenomeCoordinates()]
+                       for x in data.vs.GetGenomeCoordinates()]
             args.blueprint = None
         else:
             # load blueprint
@@ -206,23 +202,29 @@ def main(args):
         env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
-        regions.extend([None] * env.jobs)
-        queue = Queue()
+        env.log('Phasing haplotypes log file: [{}]'.format(env.tmp_log + str(os.getpid()) + '.log'))
         try:
-            faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
-            for i in regions:
-                queue.put(i)
-            jobs = [EncoderWorker(
-                queue, len(regions), data,
-                RegionExtractor(args.vcf, chr_prefix = args.chr_prefix, allele_freq_info = args.freq),
-                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
-                LinkageWriter(len(samples_not_vcf))
-                ) for i in range(env.jobs)]
-            for j in jobs:
-                j.start()
-            for j in jobs:
-                j.join()
-            faulthandler.disable()
+            if env.jobs>1:
+                regions.extend([None] * env.jobs)
+                queue = Queue()
+                faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
+                for i in regions:
+                    queue.put(i)
+                jobs = [EncoderWorker(
+                    queue, len(regions), data,
+                    RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                    LinkageWriter(len(samples_not_vcf)),
+                    ) for i in range(env.jobs)]
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                faulthandler.disable()
+            else:
+                run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                    LinkageWriter(len(samples_not_vcf)))
         except KeyboardInterrupt:
             # FIXME: need to properly close all jobs
             raise ValueError("Use 'killall {}' to properly terminate all processes!".format(env.prog))
@@ -263,7 +265,7 @@ def main(args):
     for fmt in args.format:
         print(fmt.lower())
         cache.setID(fmt.lower())
-        if not args.vanilla and cache.check():
+        if not args.vanilla and cache.check(path=os.path.join(env.outdir,fmt.upper())):
             env.log('Loading {} data from archive ...'.format(fmt.upper()))
             cache.load(target_dir = env.tmp_dir, names = [fmt.upper()])
         else:
@@ -272,21 +274,19 @@ def main(args):
             format(tpeds, os.path.join(env.tmp_cache, "{}.tfam".format(env.output)),
                    args.prevalence, args.wild_pen, args.muta_pen, fmt,
                    args.inherit_mode, args.theta_max, args.theta_inc)
-            env.log('{:,d} units successfully converted to {} format\n'.\
-                    format(env.format_counter.value, fmt.upper()), flush = True)
+            env.log('{:,d} units successfully converted to {} format\n'.format(env.format_counter.value, fmt.upper()), flush = True)
             if env.skipped_counter.value:
                 # FIXME: perhaps we need to rephrase this message?
-                env.log('{} region - family pairs skipped'.\
-                        format(env.skipped_counter.value))
+                env.log('{} region - family pairs skipped'.format(env.skipped_counter.value))
             env.log('Archiving {} format to directory [{}]'.format(fmt.upper(), env.cache_dir))
             cache.write(arcroot = fmt.upper(),
                         source_dir = os.path.join(env.tmp_dir, fmt.upper()), mode = 'a')
-    mkpath(env.outdir)
+
     if args.run_linkage:
         cache.setID('analysis')
-        if not args.vanilla and cache.check():
+        if not args.vanilla and cache.check(path=os.path.join(env.outdir,'heatmap')):
             env.log('Loading linkage analysis result from archive ...'.format(fmt.upper()))
-            cache.load(target_dir = env.output, names = ['heatmap'])
+            cache.load(target_dir = env.outdir, names = ['heatmap'])
         else:
             env.log('Running linkage analysis ...'.format(fmt.upper()))
             run_linkage(args.blueprint, args.theta_inc, args.theta_max, args.output_limit)
@@ -300,8 +300,11 @@ def main(args):
                 env.log('{} "unknown" runtime errors occurred'.format(env.unknown_counter.value))
             if env.mlink_counter.value:
                 env.log('{} "mlink" runtime errors occurred'.format(env.mlink_counter.value))
-            cache.write(arcroot = 'heatmap', source_dir = os.path.join(env.output, 'heatmap'), mode = 'a')
+            cache.write(arcroot = 'heatmap', source_dir = os.path.join(env.outdir, 'heatmap'), mode = 'a')
         html(args.theta_inc, args.theta_max, args.output_limit)
     else:
-        env.log('Saving data to [{}]'.format(os.path.abspath(env.output)))
-        cache.load(target_dir = env.output)
+        env.log('Saving data to [{}]'.format(os.path.abspath(env.outdir)))
+        cache.load(target_dir = env.outdir)
+
+if __name__ == '__main__':
+    main()
