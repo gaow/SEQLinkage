@@ -49,6 +49,25 @@ nb_path: "nbs/05_ADFam.ipynb"
 </div>
 </div>
 
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_text output_error">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ModuleNotFoundError</span>                       Traceback (most recent call last)
+<span class="ansi-green-fg">/tmp/2206534.1.plot.q/ipykernel_11876/3829950798.py</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
+<span class="ansi-green-fg">----&gt; 1</span><span class="ansi-red-fg"> </span><span class="ansi-green-fg">from</span> SEQLinkage<span class="ansi-blue-fg">.</span>Plot <span class="ansi-green-fg">import</span> plotped
+
+<span class="ansi-red-fg">ModuleNotFoundError</span>: No module named &#39;SEQLinkage&#39;</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
     {% endraw %}
 
@@ -11944,6 +11963,12 @@ Name: ad, dtype: int64</pre>
 </div>
     {% endraw %}
 
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="3.2-Explore-trimmed-pedigrees">3.2 Explore trimmed pedigrees<a class="anchor-link" href="#3.2-Explore-trimmed-pedigrees"> </a></h3>
+</div>
+</div>
+</div>
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -11951,7 +11976,328 @@ Name: ad, dtype: int64</pre>
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">new_trim_ped</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">new_trim_ped</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;../data/new_trim_ped.csv&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span> <span class="o">=</span> <span class="n">new_trim_ped</span><span class="o">.</span><span class="n">fid</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">famless17</span> <span class="o">=</span> <span class="n">new_trim_ped</span><span class="p">[</span><span class="n">new_trim_ped</span><span class="o">.</span><span class="n">fid</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">tmp</span><span class="o">&lt;</span><span class="mi">17</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">famless17</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;fid&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;../data/new_trim_ped_famless17.fam&#39;</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;0&#39;</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">famless17</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span> <span class="o">=</span> <span class="n">famless17</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span><span class="o">.</span><span class="n">fid</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">fid</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/home/yh3455/miniconda3/envs/seqpy3v0/lib/python3.9/site-packages/pandas/core/generic.py:5516: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  self[name] = value
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;fid&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;../data/new_trim_ped_famless17_no:xx.fam&#39;</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">famless17</span><span class="o">.</span><span class="n">fid</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>411:0        16
+199:0        16
+3593:0       16
+264:0        16
+10R_R54:0    16
+             ..
+25_80:0       4
+7_113:0       4
+1317:0        4
+26_EL:0       4
+990:0         4
+Name: fid, Length: 479, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span> <span class="o">=</span> <span class="n">new_trim_ped</span><span class="o">.</span><span class="n">fathid</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tmp</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0                  1820
+10R_R114_2           15
+530_1                12
+10J_128_1            11
+285_1                11
+                   ... 
+26_PBO_PBO03413       1
+4_557_10              1
+4_557_8               1
+4_557_15              1
+1007_40               1
+Name: fathid, Length: 1198, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">new_trim_ped</span><span class="o">.</span><span class="n">mothid</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0                  1820
+10R_R114_3           15
+530_2                12
+10J_128_2            11
+10R_R57_3            10
+                   ... 
+4_558_38              1
+4_558_72              1
+26_HTB_HTB24426       1
+4_558_33              1
+1007_4                1
+Name: mothid, Length: 1201, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">new_trim_ped</span><span class="p">[</span><span class="n">new_trim_ped</span><span class="o">.</span><span class="n">fid</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s1">&#39;10R_R114:0&#39;</span><span class="p">])]</span>
 </pre></div>
 
     </div>
@@ -11997,151 +12343,228 @@ Name: ad, dtype: int64</pre>
   </thead>
   <tbody>
     <tr>
-      <th>1007_39</th>
-      <td>1007:0</td>
-      <td>1007_39</td>
-      <td>1007_40</td>
-      <td>1007_4</td>
-      <td>1</td>
-      <td>1</td>
-      <td>True</td>
-      <td>3</td>
-      <td>False</td>
-      <td>1007:0</td>
-    </tr>
-    <tr>
-      <th>1007_99</th>
-      <td>1007:0</td>
-      <td>1007_99</td>
-      <td>1007_1</td>
-      <td>1007_2</td>
+      <th>154</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_1</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
       <td>2</td>
       <td>2</td>
       <td>True</td>
       <td>2</td>
       <td>False</td>
-      <td>1007:0</td>
+      <td>10R_R114:0</td>
     </tr>
     <tr>
-      <th>1007_3</th>
-      <td>1007:0</td>
-      <td>1007_3</td>
-      <td>1007_1</td>
-      <td>1007_2</td>
-      <td>1</td>
+      <th>155</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_4</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
       <td>2</td>
-      <td>True</td>
-      <td>2</td>
-      <td>False</td>
-      <td>1007:0</td>
-    </tr>
-    <tr>
-      <th>1007_5</th>
-      <td>1007:0</td>
-      <td>1007_5</td>
-      <td>1007_1</td>
-      <td>1007_2</td>
-      <td>2</td>
-      <td>2</td>
-      <td>True</td>
-      <td>2</td>
-      <td>False</td>
-      <td>1007:0</td>
-    </tr>
-    <tr>
-      <th>1007_40</th>
-      <td>1007:0</td>
-      <td>1007_40</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>-9</td>
-      <td>False</td>
       <td>1</td>
       <td>True</td>
-      <td>1007:0</td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-    </tr>
-    <tr>
-      <th>989_30</th>
-      <td>989:0</td>
-      <td>989_30</td>
-      <td>989_6</td>
-      <td>989_29</td>
-      <td>2</td>
       <td>2</td>
       <td>False</td>
-      <td>3</td>
-      <td>False</td>
-      <td>989:0</td>
+      <td>10R_R114:0</td>
     </tr>
     <tr>
-      <th>990_12</th>
-      <td>990:0</td>
-      <td>990_12</td>
-      <td>990_1</td>
-      <td>990_2</td>
-      <td>2</td>
-      <td>2</td>
-      <td>True</td>
-      <td>2</td>
-      <td>False</td>
-      <td>990:0</td>
-    </tr>
-    <tr>
-      <th>990_99</th>
-      <td>990:0</td>
-      <td>990_99</td>
-      <td>990_1</td>
-      <td>990_2</td>
-      <td>2</td>
-      <td>2</td>
-      <td>True</td>
-      <td>2</td>
-      <td>False</td>
-      <td>990:0</td>
-    </tr>
-    <tr>
-      <th>990_2</th>
-      <td>990:0</td>
-      <td>990_2</td>
-      <td>0</td>
-      <td>0</td>
+      <th>156</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_9</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
       <td>2</td>
       <td>-9</td>
+      <td>True</td>
+      <td>2</td>
       <td>False</td>
-      <td>1</td>
-      <td>False</td>
-      <td>990:0</td>
+      <td>10R_R114:0</td>
     </tr>
     <tr>
-      <th>990_1</th>
-      <td>990:0</td>
-      <td>990_1</td>
+      <th>157</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_12</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>158</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_14</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>159</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_15</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>1</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>160</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_18</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>161</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_42</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>162</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_5</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>163</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_20</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>-9</td>
+      <td>True</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>164</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_10</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>2</td>
+      <td>False</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_11</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>2</td>
+      <td>False</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>166</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_6</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>2</td>
+      <td>False</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>167</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_8</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
+      <td>2</td>
+      <td>2</td>
+      <td>False</td>
+      <td>2</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>168</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_2</td>
       <td>0</td>
       <td>0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>False</td>
+      <td>1</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>169</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>2</td>
+      <td>2</td>
+      <td>False</td>
+      <td>1</td>
+      <td>False</td>
+      <td>10R_R114:0</td>
+    </tr>
+    <tr>
+      <th>170</th>
+      <td>10R_R114:0</td>
+      <td>10R_R114_16</td>
+      <td>10R_R114_2</td>
+      <td>10R_R114_3</td>
       <td>1</td>
       <td>-9</td>
+      <td>True</td>
+      <td>2</td>
       <td>False</td>
-      <td>1</td>
-      <td>False</td>
-      <td>990:0</td>
+      <td>10R_R114:0</td>
     </tr>
   </tbody>
 </table>
-<p>5390 rows × 10 columns</p>
 </div>
 </div>
 
@@ -12164,6 +12587,25 @@ Name: ad, dtype: int64</pre>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_text output_error">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-green-fg">/tmp/2206534.1.plot.q/ipykernel_11876/2044668595.py</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
+<span class="ansi-green-fg">----&gt; 1</span><span class="ansi-red-fg"> </span>tmp <span class="ansi-blue-fg">=</span> trim_ped<span class="ansi-blue-fg">.</span>copy<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
+
+<span class="ansi-red-fg">NameError</span>: name &#39;trim_ped&#39; is not defined</pre>
+</div>
+</div>
+
 </div>
 </div>
 
@@ -12201,19 +12643,26 @@ Name: ad, dtype: int64</pre>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-
-<div class="output_text output_subarea output_execute_result">
-<pre>15</pre>
 </div>
+    {% endraw %}
 
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="3.3-Plot-trimmed-pedigrees">3.3 Plot trimmed pedigrees<a class="anchor-link" href="#3.3-Plot-trimmed-pedigrees"> </a></h3>
 </div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
 
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">shutil</span>
+</pre></div>
+
+    </div>
 </div>
 </div>
 
@@ -12227,7 +12676,7 @@ Name: ad, dtype: int64</pre>
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">shutil</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 </pre></div>
 
     </div>
@@ -12324,6 +12773,30 @@ data/multiple_subtrees/ADfam_223.svg
 </div>
 </div>
 
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">copyfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;../data/multiple_subtrees/&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">223</span><span class="p">,</span><span class="mi">597</span><span class="p">,</span><span class="mi">508</span><span class="p">,</span><span class="mi">3324</span><span class="p">,</span><span class="mi">197</span><span class="p">,</span><span class="mi">1317</span><span class="p">,</span><span class="s1">&#39;4_680&#39;</span><span class="p">,</span><span class="mi">3761</span><span class="p">,</span><span class="s1">&#39;4_393&#39;</span><span class="p">,</span><span class="mi">546</span><span class="p">,</span><span class="mi">359</span><span class="p">,</span><span class="mi">216</span><span class="p">,</span><span class="mi">591</span><span class="p">,</span><span class="s1">&#39;4_162&#39;</span><span class="p">,</span><span class="mi">215</span><span class="p">]:</span>
+    <span class="n">copyfile</span><span class="p">(</span><span class="s1">&#39;../data/new_ADfam_depthless4/ADfam_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+    <span class="n">copyfile</span><span class="p">(</span><span class="s1">&#39;../data/new_ADfam_trimmore4/ADfam_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+    <span class="n">copyfile</span><span class="p">(</span><span class="s1">&#39;../data/new_ADfam_trimless4/ADfam_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
 </div>
 </div>
 

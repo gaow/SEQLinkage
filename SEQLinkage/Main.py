@@ -65,7 +65,7 @@ class Args:
                            help='''Input pedigree and phenotype information in FAM format.''')
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
         vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
-        vargs.add_argument('--pop', metavar='FILE', required=False, help='''Input two columns file, first column is family ID,second column population information.''')
+        vargs.add_argument('--pop', metavar='FILE', required=False, help='''Input two columns file, first column is family ID, second column population information.''')
         vargs.add_argument('--build', metavar='STRING', default='hg19', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
         vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
         vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
@@ -152,7 +152,6 @@ def main():
     '''the main encoder function'''
     args = Args().get()
     checkParams(args)
-    print(env.version,'env')
     download_dir = 'http://bioinformatics.org/spower/download/.private'
     downloadResources([('{}/genemap.{}.txt'.format(download_dir, args.build), env.resource_dir),
                        ('{}/{}/mlink'.format(download_dir, platform.system().lower()), env.resource_bin),
@@ -204,23 +203,28 @@ def main():
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
         env.log('Phasing haplotypes log file: [{}]'.format(env.tmp_log + str(os.getpid()) + '.log'))
-        regions.extend([None] * env.jobs)
-        queue = Queue()
         try:
-            faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
-            for i in regions:
-                queue.put(i)
-            jobs = [EncoderWorker(
-                queue, len(regions), data,
-                RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
-                MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
-                LinkageWriter(len(samples_not_vcf))
-                ) for i in range(env.jobs)]
-            for j in jobs:
-                j.start()
-            for j in jobs:
-                j.join()
-            faulthandler.disable()
+            if env.jobs>1:
+                regions.extend([None] * env.jobs)
+                queue = Queue()
+                faulthandler.enable(file=open(env.tmp_log + '.SEGV', 'w'))
+                for i in regions:
+                    queue.put(i)
+                jobs = [EncoderWorker(
+                    queue, len(regions), data,
+                    RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                    LinkageWriter(len(samples_not_vcf)),
+                    ) for i in range(env.jobs)]
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                faulthandler.disable()
+            else:
+                run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                    LinkageWriter(len(samples_not_vcf)))
         except KeyboardInterrupt:
             # FIXME: need to properly close all jobs
             raise ValueError("Use 'killall {}' to properly terminate all processes!".format(env.prog))
@@ -258,7 +262,6 @@ def main():
     env.jobs = args.jobs
     # STEP 2: write to PLINK or mega2 format
     tpeds = [os.path.join(env.tmp_cache, item) for item in os.listdir(env.tmp_cache) if item.startswith(env.output) and item.endswith('.tped')]
-    print(tpeds) #testing line
     for fmt in args.format:
         print(fmt.lower())
         cache.setID(fmt.lower())
