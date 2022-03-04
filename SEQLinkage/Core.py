@@ -17,6 +17,7 @@ from copy import deepcopy
 import sys, faulthandler, platform
 import numpy as np
 import pandas as pd
+import pickle
 import os
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
@@ -668,6 +669,7 @@ class EncoderWorker(Process):
 # Cell
 def run_each_region(regions,data,extractor,maker,writer):
     results = {}
+    i=0
     for region in regions:
         extractor.getRegion(region)
         maker.getRegion(region)
@@ -692,7 +694,12 @@ def run_each_region(regions,data,extractor,maker,writer):
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
             results[region[3]]=maker.dtest[region[3]]
+            if len(results.keys())==100:
+                env.log('write to pickle')
+                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                results = {}
+                i +=1
     env.log('write to pickle')
-    import pickle
-    with open(os.path.join(env.tmp_cache,env.output+'.pickle'), 'wb') as handle:
+    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
