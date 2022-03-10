@@ -34,7 +34,7 @@ def format(tpeds, tfam, prev = None, wild_pen = None, muta_pen = None, out_forma
         parmap(lambda x: format_mega2(x, tfam), tpeds)
     elif out_format == 'merlin':
         mkpath(os.path.join(env.outdir, 'MERLIN'))
-        parmap(lambda x: format_merlin(x, tfam), tpeds)
+        parmap(lambda x: format_merlin(x, tfam), tpeds, env.jobs)
     elif out_format == 'linkage':
         mkpath(os.path.join(env.outdir, 'LINKAGE'))
         parmap(lambda x: format_linkage(x, tfam, prev, wild_pen, muta_pen, inherit_mode, theta_max, theta_inc), tpeds)

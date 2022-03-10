@@ -263,7 +263,6 @@ def main():
     # STEP 2: write to PLINK or mega2 format
     tpeds = [os.path.join(env.tmp_cache, item) for item in os.listdir(env.tmp_cache) if item.startswith(env.output) and item.endswith('.tped')]
     for fmt in args.format:
-        print(fmt.lower())
         cache.setID(fmt.lower())
         if not args.vanilla and cache.check(path=os.path.join(env.outdir,fmt.upper())):
             env.log('Loading {} data from archive ...'.format(fmt.upper()))

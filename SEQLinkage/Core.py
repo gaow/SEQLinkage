@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import os
+import time
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
     from cstatgen.egglib import Align
@@ -670,6 +671,7 @@ class EncoderWorker(Process):
 def run_each_region(regions,data,extractor,maker,writer):
     results = {}
     i=0
+    start = time.perf_counter()
     for region in regions:
         extractor.getRegion(region)
         maker.getRegion(region)
@@ -695,11 +697,14 @@ def run_each_region(regions,data,extractor,maker,writer):
                 env.success_counter.value += 1
             results[region[3]]=maker.dtest[region[3]]
             if len(results.keys())==100:
-                env.log('write to pickle')
+                env.log('write to pickle',os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'))
+                print('Time per 100 gene',time.perf_counter()-start)
                 with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
                     pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 results = {}
                 i +=1
-    env.log('write to pickle')
+    env.log('write to pickle',os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'))
+    print('Time per 100 gene',time.perf_counter()-start)
     with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        result = {}

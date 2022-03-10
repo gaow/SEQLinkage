@@ -120,7 +120,8 @@ class Environment:
                     remove_tree(os.path.join(where, fn))
                 except:
                     pass
-        tmp = LockedTempDir(tempfile.mkdtemp(prefix='{}_tmp_'.format(self.proj), dir = where))
+        #tmp = LockedTempDir(tempfile.mkdtemp(prefix='{}_tmp_'.format(self.proj), dir = where))
+        tmp = where
         mkpath(os.path.join(tmp, 'CACHE'))
         return tmp
 
