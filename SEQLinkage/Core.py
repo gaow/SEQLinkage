@@ -145,7 +145,7 @@ class RData(dict):
             names = []
             pos = []
             for idx in self.famvaridx[fam]:
-                names.append("V{}-{}".format(idx, self.variants[idx][1]))
+                names.append(self.variants[idx][0])
                 pos.append(self.variants[idx][1])
             mafs = self.famvarmafs[fam]
             return np.array(names), pos, np.array(mafs)  #pos can't be array -> TypeError: in method 'HaplotypingEngine_Execute'
@@ -226,7 +226,7 @@ class RegionExtractor:
                     data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                     for person, g in zip(data.families[k], gs):
                         data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         return varIdx
 
@@ -274,7 +274,7 @@ class RegionExtractor:
                         data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                         for person, g in zip(data.families[k], gs):
                             data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
         return varIdx
