@@ -21,7 +21,7 @@ import pandas as pd
 import pickle
 import os
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from itertools import repeat
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
@@ -323,11 +323,11 @@ class MarkerMaker:
         self.dtest[self.name] = {}
         self.dtest[self.name]['predata']={}
 
-    def apply(self, data,inputs):
+    def apply(self, data):
         #try:
             # haplotyping plus collect found allele counts
             # and computer founder MAFS
-        varnames,mafs,haplotypes=self.__Haplotype(data,inputs)
+        varnames,mafs,haplotypes=self.__Haplotype(data)
         if len(varnames)==0:
             return -1
         if not any([len(varnames[x]) - 1 for x in varnames]):
@@ -348,13 +348,17 @@ class MarkerMaker:
         #env.dtest[self.name]['format'] = data.copy()
         return 0
 
-    def __Haplotype(self, data,inputs):
+    def __Haplotype(self, data):
         '''genetic haplotyping. haplotypes stores per family data'''
         # FIXME: it is SWIG's (2.0.12) fault not to properly destroy the object "Pedigree" in "Execute()"
         # So there is a memory leak here which I tried to partially handle on C++
         #
         # Per family haplotyping
         #
+        items = get_family_with_var(data)
+        with ProcessPoolExecutor(max_workers = 8) as executor:
+            inputs = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
+
         varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
         for item,item_varnames,item_mafs,item_haplotypes in inputs:
             if len(item_haplotypes) == 0:
@@ -663,8 +667,11 @@ def get_family_with_var(data):
 haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
 def phasing_haps(chrom,item,fvar,fgeno):
     item_varnames, positions, item_mafs = fvar
-    tmp_log_output=env.tmp_log + str(os.getpid()) + '.log'
-    item_haplotypes = haplotyper.Execute(chrom, item_varnames, positions, fgeno, 0, tmp_log_output)[0]
+    try:
+        item_haplotypes = haplotyper.Execute(chrom, item_varnames, positions, fgeno)[0]
+    except:
+        print(item,"fail to phase haplotypes")
+        item_haplotypes = []
     item_haplotypes = np.array(item_haplotypes)
     return item,item_varnames,item_mafs,item_haplotypes
 
@@ -677,9 +684,15 @@ def test(region,data,extractor,maker,writer):
         with env.null_counter.get_lock():
             env.null_counter.value += 1
     items = get_family_with_var(data)
-    print("parallel")
+    print("Process parallel")
     start = time.perf_counter()
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers = 5) as executor:
+        maker_input = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
+    print(time.perf_counter()-start)
+
+    print("Thread parallel")
+    start = time.perf_counter()
+    with ThreadPoolExecutor() as executor:
         maker_input = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
     print(time.perf_counter()-start)
 
@@ -691,35 +704,33 @@ def run_each_region(regions,data,extractor,maker,writer):
         extractor.getRegion(region)
         maker.getRegion(region)
         writer.getRegion(region)
-        status = extractor.apply(data)
-        if status == 1:
-            with env.null_counter.get_lock():
-                env.null_counter.value += 1
-            continue
-        items = get_family_with_var(data)
-        with ProcessPoolExecutor() as executor:
-            maker_inputs = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
-        status = maker.apply(data,maker_inputs)
-        if status == -1:
-            with env.chperror_counter.get_lock():
-                # previous module failed
-                env.chperror_counter.value += 1
-            continue
-        status = writer.apply(data)
-        if status == 2:
-            with env.trivial_counter.get_lock():
-                env.trivial_counter.value += 1
-            continue
-        with env.success_counter.get_lock():
-            env.success_counter.value += 1
-        results[region[3]]=maker.dtest[region[3]]
-        if len(results.keys())==100:
-            env.log('write to pickle',os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'))
-            print('Time per 100 gene',time.perf_counter()-start)
-            with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
-                pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            results = {}
-            i +=1
+        isSuccess = True
+        for m in [extractor, maker, writer]:
+            status = m.apply(data)
+            if status == -1:
+                with env.chperror_counter.get_lock():
+                    # previous module failed
+                    env.chperror_counter.value += 1
+            if status == 1:
+                with env.null_counter.get_lock():
+                    env.null_counter.value += 1
+            if status == 2:
+                with env.trivial_counter.get_lock():
+                    env.trivial_counter.value += 1
+            if status != 0:
+                isSuccess = False
+                break
+        if isSuccess:
+            with env.success_counter.get_lock():
+                env.success_counter.value += 1
+            results[region[3]]=maker.dtest[region[3]]
+            if len(results.keys())==100:
+                env.log('write to pickle',os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'))
+                print('Time per 100 gene',time.perf_counter()-start)
+                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                results = {}
+                i +=1
     env.log('write to pickle',os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'))
     print('Time per 100 gene',time.perf_counter()-start)
     with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:

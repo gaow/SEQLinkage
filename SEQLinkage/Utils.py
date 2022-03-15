@@ -835,8 +835,6 @@ class TFAMParser:
             self.__update_graph(graph, item)
         return fams, samples, graph
 
-
-
 # Cell
 def isnotebook():
     try:
