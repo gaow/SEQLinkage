@@ -2,11 +2,6 @@ from pkg_resources import parse_version
 from configparser import ConfigParser
 import setuptools,re,sys
 assert parse_version(setuptools.__version__)>=parse_version('36.2')
-#adding for SEQLinkage
-try:
-    __import__('cstatgen')
-except ImportError:
-    raise Exception("Cstatgen (https://github.com/statgenetics/cstatgen/archive/master.tar.gz) is not installed.")
 
 # note: all settings are in settings.ini; edit there, not here
 config = ConfigParser(delimiters=['='])
