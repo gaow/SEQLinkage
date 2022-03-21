@@ -66,13 +66,24 @@ index = {"RData": "00_Core.ipynb",
          "checkParams": "04_Main.ipynb",
          "main": "04_Main.ipynb",
          "update_attributes": "07_plotped.ipynb",
-         "plotped": "07_plotped.ipynb"}
+         "plotped": "07_plotped.ipynb",
+         "paramlink2": "linkage_analysis.ipynb",
+         "pedprobr": "linkage_analysis.ipynb",
+         "pedtools": "linkage_analysis.ipynb",
+         "get_allele": "linkage_analysis.ipynb",
+         "name_haps": "linkage_analysis.ipynb",
+         "get_fam_hap": "linkage_analysis.ipynb",
+         "format_haps_bunch": "linkage_analysis.ipynb",
+         "calculate_ped_lod": "linkage_analysis.ipynb",
+         "parallel_lods": "linkage_analysis.ipynb",
+         "sum_variant_lods": "linkage_analysis.ipynb"}
 
 modules = ["Core.py",
            "Runner.py",
            "Utils.py",
            "Main.py",
-           "Plot.py"]
+           "Plot.py",
+           "linkage.py"]
 
 doc_url = "https://changebio.github.io/SEQLinkage/"
 
