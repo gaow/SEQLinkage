@@ -7,6 +7,7 @@ __all__ = ['paramlink2', 'pedprobr', 'pedtools', 'get_allele', 'name_haps', 'get
 import numpy as np
 import pandas as pd
 import pickle
+from itertools import repeat
 
 #Import necessary packages
 import rpy2.robjects as robjects
@@ -81,10 +82,10 @@ def calculate_ped_lod(ped,rho=0,model = "AD",chrom = "AUTOSOMAL",penetrances = [
         res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
     return res
 
-def parallel_lods(haps):
+def parallel_lods(haps,rho=0):
     start = time.perf_counter()
     with ProcessPoolExecutor(max_workers = 10) as executor:
-        results = executor.map(calculate_ped_lod,haps)
+        results = executor.map(calculate_ped_lod,haps,repeat(rho))
     print(time.perf_counter()-start)
     return results
 
