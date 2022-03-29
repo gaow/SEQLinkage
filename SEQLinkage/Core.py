@@ -219,16 +219,14 @@ class RegionExtractor:
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
-                gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
-                    # skip monomorphic gs
-                    continue
-                else:
-                    # this variant is found in the family
-                    data.famvaridx[k].append(varIdx)
-                    data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
-                    for person, g in zip(data.families[k], gs):
-                        data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
+                if maf and maf<self.cutoff or maf>(1-self.cutoff):
+                    gs =[g if maf<0.5 else self.reverse_genotypes(g) for g in self.vcf.GetGenotypes(data.famsampidx[k])]
+                    if self.check_gs(gs):
+                        # this variant is found in the family
+                        data.famvaridx[k].append(varIdx)
+                        data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
+                        for person, g in zip(data.families[k], gs):
+                            data[person].append(g)
             data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         return varIdx
@@ -265,22 +263,33 @@ class RegionExtractor:
                 continue
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
-                gs = self.vcf.GetGenotypes(data.famsampidx[k])
-                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
-                    # skip monomorphic gs
-                    continue
-                else:
-                    maf = mafs[data.fam_pop[k]]
-                    if maf:
+                maf = mafs[data.fam_pop[k]]
+                if maf and maf<self.cutoff or maf>(1-self.cutoff):
+                    gs =[g if maf<0.5 else self.reverse_genotypes(g) for g in self.vcf.GetGenotypes(data.famsampidx[k])]
+                    if self.check_gs(gs):
                         # this variant is found in the family
                         data.famvaridx[k].append(varIdx)
                         data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                         for person, g in zip(data.families[k], gs):
-                            data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
+                            data[person].append(g)
             data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
         return varIdx
+
+    def check_gs(self,gs):
+        '''skip monomorphic variants and signton variants in a family'''
+        cg={'00':0,'11':0, '12':0, '22':0}
+        for i in gs:
+            cg[i]+=1
+        not00 = cg['11']+cg['12']+cg['22']
+        if cg['11']==not00 or cg['12']==not00 or cg['22']==not00:
+            #skip monomorphic variants
+            return False
+        if cg['12']+cg['22']<=1:
+            #skip sington variants
+            return False
+        return True
 
     def reverse_genotypes(self,g):
         ''' 11->22,12,21,22->11 '''
