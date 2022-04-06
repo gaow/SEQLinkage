@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pickle
 from itertools import repeat
+import numbers
 
 #Import necessary packages
 import rpy2.robjects as robjects
@@ -77,7 +78,21 @@ def calculate_ped_lod(ped,rho=0,model = "AD",chrom = "AUTOSOMAL",penetrances = [
     aff=ped.iloc[:,5]
     mped = pedtools.as_ped(ped.drop(ped.columns[5], axis=1),famid_col = 1,id_col = 2,fid_col = 3,mid_col = 4,sex_col = 5)
     modAD = paramlink2.diseaseModel(model,chrom,pd.Series(penetrances),dfreq)
-    res = paramlink2.lod(mped, aff = aff, model = modAD,rho=rho)
+    if isinstance(rho,numbers.Number):
+        res = _calculate_ped_lod(mped, aff = aff, model = modAD,rho=rho)
+    else:
+        res=None
+        for r in rho:
+            tmp = _calculate_ped_lod(mped, aff = aff, model = modAD,rho=r)
+            if res is None:
+                res=tmp
+                res.columns = ['MARKER','LOD'+str(round(r,2))]
+            else:
+                res['LOD'+str(round(r,2))]=tmp.LOD
+    return res
+
+def _calculate_ped_lod(mped, aff, model,rho):
+    res = paramlink2.lod(mped, aff, model,rho)
     try:
         res = pd.DataFrame(res)[['MARKER','LOD']]
     except:
