@@ -106,7 +106,7 @@ def parallel_lods(haps,rho=0):
     with ProcessPoolExecutor(max_workers = 10) as executor:
         results = executor.map(calculate_ped_lod,haps,repeat(rho))
     print(time.perf_counter()-start)
-    return results
+    return list(results)
 
 def sum_variant_lods(lods):
     variants = {}
