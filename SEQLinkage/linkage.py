@@ -23,7 +23,7 @@ pedprobr=importr('pedprobr')
 pedtools = importr('pedtools')
 
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 
 # Cell
 def get_allele(s):
@@ -89,6 +89,8 @@ def calculate_ped_lod(ped,rho=0,model = "AD",chrom = "AUTOSOMAL",penetrances = [
                 res.columns = ['MARKER','LOD'+str(round(r,2))]
             else:
                 res['LOD'+str(round(r,2))]=tmp.LOD
+        res.index=list(res.MARKER)
+        res=res.iloc[:,1:]
     return res
 
 def _calculate_ped_lod(mped, aff, model,rho):
