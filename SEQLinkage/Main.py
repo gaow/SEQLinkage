@@ -137,7 +137,10 @@ def checkParams(args):
         env.trait = 'quantitative'
     env.log('{} trait detected in [{}]'.format(env.trait.capitalize(), args.tfam))
     if not args.blueprint:
-        args.blueprint = os.path.join(env.resource_dir, 'genemap.{}.txt'.format(args.build))
+        if not args.anno:
+            args.blueprint = os.path.join(env.resource_dir, 'genemap.{}.txt'.format(args.build))
+        else:
+            env.log('Generate regions by annotation')
     args.format = [x.lower() for x in set(args.format)]
     if args.run_linkage and "linkage" not in args.format:
         args.format.append('linkage')
@@ -191,7 +194,7 @@ def main():
             regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
                        for x in data.vs.GetGenomeCoordinates()]
             args.blueprint = None
-        else:
+        elif not args.blueprint:
             # load blueprint
             try:
                 env.log('Loading marker map from [{}] ...'.format(args.blueprint))
@@ -199,6 +202,8 @@ def main():
                     regions = [x.strip().split() for x in f.readlines()]
             except IOError:
                 env.error("Cannot load regional marker blueprint [{}]. ".format(args.blueprint), exit = True)
+        else:
+            regions=data.get_regions(step=1000) #separate each region to 1000 variants.
         env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
@@ -222,7 +227,7 @@ def main():
                     j.join()
                 faulthandler.disable()
             else:
-                run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                run_each_region_genotypes(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
                     MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
                     LinkageWriter(len(samples_not_vcf)))
         except KeyboardInterrupt:

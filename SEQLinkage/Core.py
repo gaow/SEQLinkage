@@ -5,7 +5,7 @@ from __future__ import print_function
 
 
 __all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'get_family_with_var',
-           'phasing_haps', 'test', 'run_each_region', 'haplotyper']
+           'phasing_haps', 'test', 'run_each_region', 'run_each_region_genotypes', 'haplotyper']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -113,6 +113,23 @@ class RData(dict):
     def load_ind_samples(self,ind_sample_file):
         pass
 
+    def get_regions(self,step=1000):
+        regions=[]
+        chrom=self.anno.Chr.unique()[0]
+        for i,s in enumerate(self.anno.Start):
+            if i==0:
+                pre=None
+                cur=s
+            elif i%step==0:
+                pre=cur
+                cur=s
+                regions.append([chrom,pre,cur,'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+        if cur!=s:
+            pre=cur
+            cur=s
+            regions.append([1,pre,cur,'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+        return regions
+
     def reset(self):
         for item in self.tfam.samples: #for all samples in fam ( with or without vcfs)
             self[item] = []
@@ -217,16 +234,19 @@ class RegionExtractor:
             except Exception as e:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
+
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
-                if maf and maf<self.cutoff or maf>(1-self.cutoff):
-                    gs =[g if maf<0.5 else self.reverse_genotypes(g) for g in self.vcf.GetGenotypes(data.famsampidx[k])]
-                    if self.check_gs(gs):
-                        # this variant is found in the family
-                        data.famvaridx[k].append(varIdx)
-                        data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
-                        for person, g in zip(data.families[k], gs):
-                            data[person].append(g)
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    # this variant is found in the family
+                    data.famvaridx[k].append(varIdx)
+                    data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
+                    for person, g in zip(data.families[k], gs):
+                        data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
             data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         return varIdx
@@ -261,17 +281,21 @@ class RegionExtractor:
                 continue
             if mafs.any()==False:
                 continue
+
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
-                maf = mafs[data.fam_pop[k]]
-                if maf and maf<self.cutoff or maf>(1-self.cutoff):
-                    gs =[g if maf<0.5 else self.reverse_genotypes(g) for g in self.vcf.GetGenotypes(data.famsampidx[k])]
-                    if self.check_gs(gs):
+                gs = self.vcf.GetGenotypes(data.famsampidx[k])
+                if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
+                    # skip monomorphic gs
+                    continue
+                else:
+                    maf = mafs[data.fam_pop[k]]
+                    if maf:
                         # this variant is found in the family
                         data.famvaridx[k].append(varIdx)
                         data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                         for person, g in zip(data.families[k], gs):
-                            data[person].append(g)
+                            data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
             data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
@@ -733,6 +757,53 @@ def run_each_region(regions,data,extractor,maker,writer):
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
             results[region[3]]=maker.dtest[region[3]]
+            if len(results)==25:
+                env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+                start = time.perf_counter()
+                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                results = {}
+                i +=1
+    env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        results = {}
+
+def run_each_region_genotypes(regions,data,extractor,maker,writer):
+    results = {}
+    i=0
+    start = time.perf_counter()
+    for region in regions:
+        extractor.getRegion(region)
+        maker.getRegion(region)
+        writer.getRegion(region)
+        isSuccess = True
+        for m in [extractor]:
+            status = m.apply(data)
+            if status == -1:
+                with env.chperror_counter.get_lock():
+                    # previous module failed
+                    env.chperror_counter.value += 1
+            if status == 1:
+                with env.null_counter.get_lock():
+                    env.null_counter.value += 1
+            if status == 2:
+                with env.trivial_counter.get_lock():
+                    env.trivial_counter.value += 1
+            if status != 0:
+                isSuccess = False
+                break
+        if isSuccess:
+            with env.success_counter.get_lock():
+                env.success_counter.value += 1
+            #{'gene':{'predata':{'fam':[snp_ids,freq,genos]}}}
+            items = get_family_with_var(data)
+            predata={}
+            for item in items:
+                fvar=data.getFamVariants(item, style = "map")
+                fgeno=np.array(data.getFamSamples(item))
+                predata[item]=[fvar[0],fvar[2],fgeno]
+            results[region[3]]={'predata':predata}
             if len(results)==25:
                 env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
                 start = time.perf_counter()
