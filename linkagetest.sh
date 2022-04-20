@@ -42,4 +42,4 @@ cd ~/Github/linkage/SEQpy3
 #sos run nbs/seqlink_sos.ipynb makehap --cwd data/wg20220316 --fam_path data/new_trim_ped_famless17_no:xx.fam --chrom 12 -j 1
 #sos run nbs/seqlink_sos.ipynb makehap --cwd data/wg20220316 --fam_path data/new_trim_ped_famless17_no:xx.fam --chrom 13 -j 1
 #sos run nbs/seqlink_sos.ipynb makehap --cwd data/wg20220316 --fam_path data/new_trim_ped_famless17_no:xx.fam --chrom 14 15 16 17 -j 4
-sos run nbs/seqlink_sos.ipynb lods --cwd data/wg20220316 --fam_path data/new_trim_ped_famless17_no:xx.fam --fam_vcf data/wg20220316/fam17_vcf.pickle --chrom 4 7 9 -j 3
+sos run nbs/seqlink_sos.ipynb lods --cwd data/wg20220316 --fam_path data/new_trim_ped_famless17_no:xx.fam --fam_vcf data/wg20220316/fam17_vcf.pickle --chrom 11 17 19 -j 3
