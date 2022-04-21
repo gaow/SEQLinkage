@@ -5,7 +5,7 @@ from __future__ import print_function
 
 
 __all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'get_family_with_var',
-           'phasing_haps', 'test', 'run_each_region', 'run_each_region_genotypes', 'haplotyper']
+           'phasing_haps', 'run_each_region', 'run_each_region_genotypes', 'haplotyper']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -114,6 +114,7 @@ class RData(dict):
         pass
 
     def get_regions(self,step=1000):
+        '''separate chromosome to regions'''
         regions=[]
         chrom=self.anno.Chr.unique()[0]
         for i,s in enumerate(self.anno.Start):
@@ -123,11 +124,11 @@ class RData(dict):
             elif i%step==0:
                 pre=cur
                 cur=s
-                regions.append([chrom,pre,cur,'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+                regions.append([str(chrom),str(pre),str(cur),'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
         if cur!=s:
             pre=cur
             cur=s
-            regions.append([1,pre,cur,'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+            regions.append([str(chrom),str(pre),str(cur),'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
         return regions
 
     def reset(self):
@@ -302,7 +303,7 @@ class RegionExtractor:
         return varIdx
 
     def check_gs(self,gs):
-        '''skip monomorphic variants and signton variants in a family'''
+        '''skip monomorphic variants and singleton variants in a family'''
         cg={'00':0,'11':0, '12':0, '22':0}
         for i in gs:
             cg[i]+=1
@@ -703,33 +704,13 @@ def phasing_haps(chrom,item,fvar,fgeno):
     try:
         item_haplotypes = haplotyper.Execute(chrom, item_varnames, positions, fgeno)[0]
     except:
-        print(item,"fail to phase haplotypes")
+        env.log("{} fail to phase haplotypes".format(item))
         item_haplotypes = []
     item_haplotypes = np.array(item_haplotypes)
     return item,item_varnames,item_mafs,item_haplotypes
 
-def test(region,data,extractor,maker,writer):
-    extractor.getRegion(region)
-    maker.getRegion(region)
-    writer.getRegion(region)
-    status = extractor.apply(data)
-    if status == 1:
-        with env.null_counter.get_lock():
-            env.null_counter.value += 1
-    items = get_family_with_var(data)
-    print("Process parallel")
-    start = time.perf_counter()
-    with ProcessPoolExecutor(max_workers = 5) as executor:
-        maker_input = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
-    print(time.perf_counter()-start)
-
-    print("Thread parallel")
-    start = time.perf_counter()
-    with ThreadPoolExecutor() as executor:
-        maker_input = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
-    print(time.perf_counter()-start)
-
 def run_each_region(regions,data,extractor,maker,writer):
+    '''get the haplotypes and allele frequency of variants in each region'''
     results = {}
     i=0
     start = time.perf_counter()
@@ -770,6 +751,7 @@ def run_each_region(regions,data,extractor,maker,writer):
         results = {}
 
 def run_each_region_genotypes(regions,data,extractor,maker,writer):
+    '''get the genotypes and allele frequency of variants in each region'''
     results = {}
     i=0
     start = time.perf_counter()

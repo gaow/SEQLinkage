@@ -102,9 +102,9 @@ def format_haps_bunch(dhaps,fam,vcfs=None,cutoff=None,haplotype=True):
         haps = dhaps[g]['predata']
         with ProcessPoolExecutor(max_workers = 10) as executor:
             if haplotype:
-                results = executor.map(get_fam_hap,[haps[k][2] for k in haps.keys()],[haps[k][0] for k in haps.keys()],[vcfs[k] for k in haps.keys()])
+                results = executor.map(get_fam_hap,[haps[k][2] for k in haps.keys()],[haps[k][0] for k in haps.keys()],[vcfs[k] if vcfs else None for k in haps.keys()])
             else:
-                results = executor.map(get_fam_geno,[haps[k][2] for k in haps.keys()],[haps[k][0] for k in haps.keys()],[vcfs[k] for k in haps.keys()])
+                results = executor.map(get_fam_geno,[haps[k][2] for k in haps.keys()],[haps[k][0] for k in haps.keys()],[vcfs[k] if vcfs else None for k in haps.keys()])
         for f,hap in  zip(haps.keys(),results):
             if hap is None: #remove only have 1 or 2 variants
                 continue

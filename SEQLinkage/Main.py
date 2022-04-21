@@ -194,7 +194,7 @@ def main():
             regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
                        for x in data.vs.GetGenomeCoordinates()]
             args.blueprint = None
-        elif not args.blueprint:
+        elif args.blueprint is not None:
             # load blueprint
             try:
                 env.log('Loading marker map from [{}] ...'.format(args.blueprint))
@@ -203,7 +203,8 @@ def main():
             except IOError:
                 env.error("Cannot load regional marker blueprint [{}]. ".format(args.blueprint), exit = True)
         else:
-            regions=data.get_regions(step=1000) #separate each region to 1000 variants.
+            env.log('separate chromosome to regions')
+            regions=data.get_regions(step=1000)
         env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
                 format(len(data.families), len(data.samples), len(regions)))
         env.jobs = max(min(args.jobs, len(regions)), 1)
