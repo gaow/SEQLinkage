@@ -164,12 +164,12 @@ def parallel_lods(haps,afreqs=None,rho=0):
     start = time.perf_counter()
     if afreqs is None:
         with ProcessPoolExecutor(max_workers = 10) as executor:
-            results = executor.map(calculate_ped_lod,haps,repeat(rho))
+            results = executor.map(calculate_ped_lod,haps.values(),repeat(rho))
     else:
         with ProcessPoolExecutor(max_workers = 10) as executor:
-            results = executor.map(calculate_ped_lod,haps,afreqs,repeat(rho))
+            results = executor.map(calculate_ped_lod,haps.values(),afreqs,repeat(rho))
     print(time.perf_counter()-start)
-    return list(results)
+    return {k:res for k,res in zip(haps.keys(),results)}
 
 def sum_variant_lods(lods):
     variants = {}
