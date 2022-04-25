@@ -738,7 +738,7 @@ def run_each_region(regions,data,extractor,maker,writer):
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
             results[region[3]]=maker.dtest[region[3]]
-            if len(results)==25:
+            if len(results)==env.cache_size:
                 env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
                 start = time.perf_counter()
                 with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:

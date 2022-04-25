@@ -78,6 +78,7 @@ class Environment:
         self.mlink_counter = Value('i',0)
         self.dtest = {}  #test line
         self.jobs = None
+        self.cache_size = 25
 
     def setoutput(self,outdir):
         # Input & output options
