@@ -78,6 +78,7 @@ class Environment:
         self.mlink_counter = Value('i',0)
         self.dtest = {}  #test line
         self.jobs = None
+        self.cache_size = 25
 
     def setoutput(self,outdir):
         # Input & output options
@@ -120,7 +121,8 @@ class Environment:
                     remove_tree(os.path.join(where, fn))
                 except:
                     pass
-        tmp = LockedTempDir(tempfile.mkdtemp(prefix='{}_tmp_'.format(self.proj), dir = where))
+        #tmp = LockedTempDir(tempfile.mkdtemp(prefix='{}_tmp_'.format(self.proj), dir = where))
+        tmp = where
         mkpath(os.path.join(tmp, 'CACHE'))
         return tmp
 
@@ -833,8 +835,6 @@ class TFAMParser:
         for item in samples.values():
             self.__update_graph(graph, item)
         return fams, samples, graph
-
-
 
 # Cell
 def isnotebook():

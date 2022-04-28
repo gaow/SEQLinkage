@@ -4,7 +4,8 @@
 from __future__ import print_function
 
 
-__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'run_each_region']
+__all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'get_family_with_var',
+           'phasing_haps', 'run_each_region', 'run_each_region_genotypes', 'haplotyper']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -17,7 +18,11 @@ from copy import deepcopy
 import sys, faulthandler, platform
 import numpy as np
 import pandas as pd
+import pickle
 import os
+import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from itertools import repeat
 if sys.version_info.major == 2:
     from cstatgen import cstatgen_py2 as cstatgen
     from cstatgen.egglib import Align
@@ -108,6 +113,24 @@ class RData(dict):
     def load_ind_samples(self,ind_sample_file):
         pass
 
+    def get_regions(self,step=1000):
+        '''separate chromosome to regions'''
+        regions=[]
+        chrom=self.anno.Chr.unique()[0]
+        for i,s in enumerate(self.anno.Start):
+            if i==0:
+                pre=None
+                cur=s
+            elif i%step==0:
+                pre=cur
+                cur=s
+                regions.append([str(chrom),str(pre),str(cur),'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+        if cur!=s:
+            pre=cur
+            cur=s
+            regions.append([str(chrom),str(pre),str(cur),'R'+str(pre)+'_'+str(cur),'.', '.', '.'])
+        return regions
+
     def reset(self):
         for item in self.tfam.samples: #for all samples in fam ( with or without vcfs)
             self[item] = []
@@ -143,7 +166,7 @@ class RData(dict):
             names = []
             pos = []
             for idx in self.famvaridx[fam]:
-                names.append("V{}-{}".format(idx, self.variants[idx][1]))
+                names.append(self.variants[idx][0])
                 pos.append(self.variants[idx][1])
             mafs = self.famvarmafs[fam]
             return np.array(names), pos, np.array(mafs)  #pos can't be array -> TypeError: in method 'HaplotypingEngine_Execute'
@@ -212,6 +235,7 @@ class RegionExtractor:
             except Exception as e:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
+
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
@@ -224,7 +248,7 @@ class RegionExtractor:
                     data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                     for person, g in zip(data.families[k], gs):
                         data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             varIdx += 1
         return varIdx
 
@@ -258,6 +282,7 @@ class RegionExtractor:
                 continue
             if mafs.any()==False:
                 continue
+
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
@@ -272,10 +297,24 @@ class RegionExtractor:
                         data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
                         for person, g in zip(data.families[k], gs):
                             data[person].append(g if maf<0.5 else self.reverse_genotypes(g))
-            data.variants.append([self.vcf.GetChrom(), self.vcf.GetPosition(), self.name]) #remove maf
+            data.variants.append([self.vcf.GetVariantID(), self.vcf.GetPosition(), self.name]) #remove maf
             #print(i,varmafs.shape,self.chrom, self.startpos, self.endpos, self.name,self.vcf.GetPosition())
             varIdx += 1
         return varIdx
+
+    def check_gs(self,gs):
+        '''skip monomorphic variants and singleton variants in a family'''
+        cg={'00':0,'11':0, '12':0, '22':0}
+        for i in gs:
+            cg[i]+=1
+        not00 = cg['11']+cg['12']+cg['22']
+        if cg['11']==not00 or cg['12']==not00 or cg['22']==not00:
+            #skip monomorphic variants
+            return False
+        if cg['12']+cg['22']<=1:
+            #skip sington variants
+            return False
+        return True
 
     def reverse_genotypes(self,g):
         ''' 11->22,12,21,22->11 '''
@@ -318,7 +357,6 @@ class MarkerMaker:
         self.dtest[self.name] = {}
         self.dtest[self.name]['predata']={}
 
-
     def apply(self, data):
         #try:
             # haplotyping plus collect found allele counts
@@ -351,32 +389,12 @@ class MarkerMaker:
         #
         # Per family haplotyping
         #
+        items = get_family_with_var(data)
+        with ProcessPoolExecutor(max_workers = 8) as executor:
+            inputs = executor.map(phasing_haps,repeat(data.chrom),items,[data.getFamVariants(item, style = "map") for item in items],[data.getFamSamples(item) for item in items])
+
         varnames,mafs,haplotypes = OrderedDict(),OrderedDict(),OrderedDict()
-        for item in data.families:
-            item_varnames, positions, item_mafs = data.getFamVariants(item, style = "map")
-            #env.dtest[self.name]['hapimp'][item] = [item,item_varnames, positions, item_mafs] #test line
-            if len(item_varnames) == 0:  #no variants in the family
-                for person in data.families[item]:
-                    data[person] = self.missings
-                continue
-            if self.maf_cutoff is not None:
-                keep_idx = item_mafs<self.maf_cutoff
-                if not keep_idx.any():
-                    for person in data.families[item]:
-                        data[person] = self.missings
-                    continue
-            if env.debug:
-                with env.lock:
-                    sys.stderr.write('\n'.join(['\t'.join(x) for x in data.getFamSamples(item)]) + '\n\n')
-            # haplotyping
-            with env.lock:
-                if not env.prephased:
-                    tmp_log_output=env.tmp_log + str(os.getpid()) + '.log'
-                    item_haplotypes = self.haplotyper.Execute(data.chrom, item_varnames, positions, data.getFamSamples(item), self.rsq, tmp_log_output)[0]
-                else:
-                    item_haplotypes = self.__PedToHaplotype(data.getFamSamples(item))
-                item_haplotypes = np.array(item_haplotypes)
-            #env.dtest[self.name]['hapimp'][item].append(item_haplotypes)#test line
+        for item,item_varnames,item_mafs,item_haplotypes in inputs:
             if len(item_haplotypes) == 0:
                 # C++ haplotyping implementation failed
                 with env.chperror_counter.get_lock():
@@ -388,12 +406,16 @@ class MarkerMaker:
             self.dtest[self.name]['predata'][item]=[item_varnames,item_mafs,item_haplotypes]
             # Drop some variants if maf is greater than given threshold
             if self.maf_cutoff is not None:
+                keep_idx = item_mafs<self.maf_cutoff
+                if not keep_idx.any():
+                    for person in data.families[item]:
+                        data[person] = self.missings
+                    continue
                 item_mafs = item_mafs[keep_idx]
                 item_varnames = item_varnames[keep_idx]
                 item_haplotypes = item_haplotypes[:,np.concatenate(([True,True],keep_idx))]
             varnames[item],mafs[item],haplotypes[item]= item_varnames,item_mafs,item_haplotypes
         return varnames,mafs,haplotypes
-
 
 
     def __ClusterByLD(self, data, haplotypes, varnames):
@@ -666,8 +688,32 @@ class EncoderWorker(Process):
                 break
 
 # Cell
+def get_family_with_var(data):
+    items = []
+    for item,item_vars in data.famvaridx.items():
+        if len(item_vars) == 0:  #no variants in the family
+            for person in data.families[item]:
+                data[person] = ("0", "0")
+        else:
+            items.append(item)
+    return items
+
+haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
+def phasing_haps(chrom,item,fvar,fgeno):
+    item_varnames, positions, item_mafs = fvar
+    try:
+        item_haplotypes = haplotyper.Execute(chrom, item_varnames, positions, fgeno)[0]
+    except:
+        env.log("{} fail to phase haplotypes".format(item))
+        item_haplotypes = []
+    item_haplotypes = np.array(item_haplotypes)
+    return item,item_varnames,item_mafs,item_haplotypes
+
 def run_each_region(regions,data,extractor,maker,writer):
+    '''get the haplotypes and allele frequency of variants in each region'''
     results = {}
+    i=0
+    start = time.perf_counter()
     for region in regions:
         extractor.getRegion(region)
         maker.getRegion(region)
@@ -692,7 +738,62 @@ def run_each_region(regions,data,extractor,maker,writer):
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
             results[region[3]]=maker.dtest[region[3]]
-    env.log('write to pickle')
-    import pickle
-    with open(os.path.join(env.tmp_cache,env.output+'.pickle'), 'wb') as handle:
+            if len(results)==env.cache_size:
+                env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+                start = time.perf_counter()
+                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                results = {}
+                i +=1
+    env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        results = {}
+
+def run_each_region_genotypes(regions,data,extractor,maker,writer):
+    '''get the genotypes and allele frequency of variants in each region'''
+    results = {}
+    i=0
+    start = time.perf_counter()
+    for region in regions:
+        extractor.getRegion(region)
+        maker.getRegion(region)
+        writer.getRegion(region)
+        isSuccess = True
+        for m in [extractor]:
+            status = m.apply(data)
+            if status == -1:
+                with env.chperror_counter.get_lock():
+                    # previous module failed
+                    env.chperror_counter.value += 1
+            if status == 1:
+                with env.null_counter.get_lock():
+                    env.null_counter.value += 1
+            if status == 2:
+                with env.trivial_counter.get_lock():
+                    env.trivial_counter.value += 1
+            if status != 0:
+                isSuccess = False
+                break
+        if isSuccess:
+            with env.success_counter.get_lock():
+                env.success_counter.value += 1
+            #{'gene':{'predata':{'fam':[snp_ids,freq,genos]}}}
+            items = get_family_with_var(data)
+            predata={}
+            for item in items:
+                fvar=data.getFamVariants(item, style = "map")
+                fgeno=np.array(data.getFamSamples(item))
+                predata[item]=[fvar[0],fvar[2],fgeno]
+            results[region[3]]={'predata':predata}
+            if len(results)==25:
+                env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+                start = time.perf_counter()
+                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                results = {}
+                i +=1
+    env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        results = {}

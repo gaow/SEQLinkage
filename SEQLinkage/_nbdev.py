@@ -7,7 +7,11 @@ index = {"RData": "00_Core.ipynb",
          "MarkerMaker": "00_Core.ipynb",
          "LinkageWriter": "00_Core.ipynb",
          "EncoderWorker": "00_Core.ipynb",
+         "get_family_with_var": "00_Core.ipynb",
+         "phasing_haps": "00_Core.ipynb",
          "run_each_region": "00_Core.ipynb",
+         "run_each_region_genotypes": "00_Core.ipynb",
+         "haplotyper": "00_Core.ipynb",
          "format": "01_Runner.ipynb",
          "format_plink": "01_Runner.ipynb",
          "format_mega2": "01_Runner.ipynb",
@@ -62,13 +66,26 @@ index = {"RData": "00_Core.ipynb",
          "checkParams": "04_Main.ipynb",
          "main": "04_Main.ipynb",
          "update_attributes": "07_plotped.ipynb",
-         "plotped": "07_plotped.ipynb"}
+         "plotped": "07_plotped.ipynb",
+         "base": "12_linkage.ipynb",
+         "paramlink2": "12_linkage.ipynb",
+         "pedprobr": "12_linkage.ipynb",
+         "pedtools": "12_linkage.ipynb",
+         "get_allele": "12_linkage.ipynb",
+         "name_haps": "12_linkage.ipynb",
+         "get_fam_hap": "12_linkage.ipynb",
+         "get_fam_geno": "12_linkage.ipynb",
+         "format_haps_bunch": "12_linkage.ipynb",
+         "calculate_ped_lod": "12_linkage.ipynb",
+         "parallel_lods": "12_linkage.ipynb",
+         "sum_variant_lods": "12_linkage.ipynb"}
 
 modules = ["Core.py",
            "Runner.py",
            "Utils.py",
            "Main.py",
-           "Plot.py"]
+           "Plot.py",
+           "linkage.py"]
 
 doc_url = "https://changebio.github.io/SEQLinkage/"
 
