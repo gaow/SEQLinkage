@@ -132,6 +132,13 @@ def format_haps_bunch(dhaps,fam,vcfs=None,cutoff=None,haplotype=True):
 
 
 def calculate_ped_lod(ped,afreq=None,rho=0,model = "AD",chrom = "AUTOSOMAL",penetrances = [0.01,0.9,0.9],dfreq=0.001):
+    def _calculate_ped_lod(mped, aff, model,rho):
+        res = paramlink2.lod(mped, aff, model,rho)
+        try:
+            res = pd.DataFrame(res)[['MARKER','LOD']]
+        except:
+            res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
+        return res
     aff=ped.iloc[:,5]
     mped = pedtools.as_ped(ped.drop(ped.columns[5], axis=1),famid_col = 1,id_col = 2,fid_col = 3,mid_col = 4,sex_col = 5)
     if afreq is not None:
@@ -150,14 +157,6 @@ def calculate_ped_lod(ped,afreq=None,rho=0,model = "AD",chrom = "AUTOSOMAL",pene
                 res['LOD'+str(round(r,2))]=tmp.LOD
         res.index=list(res.MARKER)
         res=res.iloc[:,1:]
-    return res
-
-def _calculate_ped_lod(mped, aff, model,rho):
-    res = paramlink2.lod(mped, aff, model,rho)
-    try:
-        res = pd.DataFrame(res)[['MARKER','LOD']]
-    except:
-        res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
     return res
 
 def parallel_lods(haps,afreqs=None,rho=0):
