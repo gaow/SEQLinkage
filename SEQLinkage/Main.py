@@ -55,9 +55,8 @@ class Args:
         vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
                            help='''Blueprint file that defines regional marker
         (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
-        vargs.add_argument('--single-markers', action='store_true', dest = "single_markers",
-                           help='''Use single variant markers. This switch will overwrite
-        "--bin" and "--blueprint" arguments.''')
+        vargs.add_argument('--chp-markers', action='store_true', dest = "chp_markers",
+                           help='''Use chp markers if True else single variants.''')
 
     def getIOArguments(self, parser):
         vargs = parser.add_argument_group('Input / output options')
@@ -66,18 +65,19 @@ class Args:
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
         vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
         vargs.add_argument('--pop', metavar='FILE', required=False, help='''Input two columns file, first column is family ID, second column population information.''')
-        vargs.add_argument('--build', metavar='STRING', default='hg19', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
-        vargs.add_argument('--prephased', action='store_true', help=SUPPRESS)
-        vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
-        vargs.add_argument('--freq_by_fam', metavar='INFO', help='''Per family info field name for allele frequency in VCF file.''')
-        vargs.add_argument('--mle', action='store_true', help='''Estimate allele frequency using MERLIN's MLE method.''')
-        vargs.add_argument('--rvhaplo', action='store_true', help='''Only using rare variants for haplotyping''')
-        vargs.add_argument('--recomb_max', metavar='INT', default = 1, type = int, help='''Maximum recombination events allowed per region.''')
-        vargs.add_argument('--recomb_cross_fam', action='store_true', help='''Code sub-regions with cross family recombination events; otherwise sub-regions are generated on per family basis.''')
-        vargs.add_argument('--rsq', metavar='R', default=0.0,type=float, help=SUPPRESS)
-        vargs.add_argument('--include_vars', metavar='FILE', help='''Variants to be included in CHP construction''')
+        vargs.add_argument('--included-vars', metavar='FILE', dest='included_vars',default=None, help='''Variants to be included for linkage analysis, if None, the analysis won't filter any variants. But you can still set AF cutoff by -c argment.''')
         vargs.add_argument('-c', '--maf-cutoff', metavar='P', default=1.0, type=float, dest = "maf_cutoff",
-                           help='''MAF cutoff to define "common" variants to be excluded from analyses.''')
+                           help='''MAF cutoff to define variants to be excluded from analyses. this is useful, if you need to analyse multiple population together.''')
+
+        vargs.add_argument('--build', metavar='STRING', default='hg38', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
+        vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
+        #vargs.add_argument('--freq_by_fam', metavar='INFO', help='''Per family info field name for allele frequency in VCF file.''')
+        #vargs.add_argument('--mle', action='store_true', help='''Estimate allele frequency using MERLIN's MLE method.''')
+        #vargs.add_argument('--rvhaplo', action='store_true', help='''Only using rare variants for haplotyping''')
+        #vargs.add_argument('--recomb_max', metavar='INT', default = 1, type = int, help='''Maximum recombination events allowed per region.''')
+        #vargs.add_argument('--recomb_cross_fam', action='store_true', help='''Code sub-regions with cross family recombination events; otherwise sub-regions are generated on per family basis.''')
+        #vargs.add_argument('--rsq', metavar='R', default=0.0,type=float, help=SUPPRESS)
+
         vargs.add_argument('--chrom-prefix', metavar='STRING', dest = 'chr_prefix',
                            help='''Prefix to chromosome name in VCF file if applicable, e.g. "chr".''')
         vargs.add_argument('-o', '--output', metavar='Name', type = self.isalnum,
@@ -127,7 +127,6 @@ def checkParams(args):
     env.setoutput(args.output)
     env.debug = args.debug
     env.quiet = args.quiet
-    env.prephased = args.prephased
     args.vcf = os.path.abspath(os.path.expanduser(args.vcf))
     args.tfam = os.path.abspath(os.path.expanduser(args.tfam))
     for item in [args.vcf, args.tfam]:
@@ -174,7 +173,7 @@ def main():
         env.batch = 10
     else:
         # load data
-        data = RData(args.vcf, args.tfam,args.anno,args.pop,allele_freq_info=args.freq)
+        data = RData(args.vcf, args.tfam,args.anno,args.pop,allele_freq_info=args.freq,included_variant_file=args.included_vars)
         samples_vcf = data.samples_vcf
 
         if len(samples_vcf) == 0:
@@ -190,11 +189,8 @@ def main():
                       'Samples have to be in families, and present in both TFAM and VCF files.', exit = True)
         rewriteFamfile(os.path.join(env.tmp_cache, '{}.tfam'.format(env.output)),
                        data.tfam.samples, list(data.samples.keys()) + samples_not_vcf)
-        if args.single_markers:
-            regions = [(x[0], x[1], x[1], "{}:{}".format(x[0], x[1]), '.', '.', '.')
-                       for x in data.vs.GetGenomeCoordinates()]
-            args.blueprint = None
-        elif args.blueprint is not None:
+
+        if args.blueprint is not None:
             # load blueprint
             try:
                 env.log('Loading marker map from [{}] ...'.format(args.blueprint))
@@ -228,9 +224,9 @@ def main():
                     j.join()
                 faulthandler.disable()
             else:
-                run_each_region_genotypes(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
+                run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
                     MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
-                    LinkageWriter(len(samples_not_vcf)))
+                    LinkageWriter(len(samples_not_vcf)),args.phase)
         except KeyboardInterrupt:
             # FIXME: need to properly close all jobs
             raise ValueError("Use 'killall {}' to properly terminate all processes!".format(env.prog))

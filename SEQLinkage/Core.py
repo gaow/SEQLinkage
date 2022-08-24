@@ -5,7 +5,7 @@ from __future__ import print_function
 
 
 __all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderWorker', 'get_family_with_var',
-           'phasing_haps', 'run_each_region', 'run_each_region_genotypes', 'haplotyper']
+           'phasing_haps', 'run_each_region', 'haplotyper']
 
 # Cell
 #nbdev_comment from __future__ import print_function
@@ -33,7 +33,7 @@ else:
 
 # Cell
 class RData(dict):
-    def __init__(self, vcf, tfam,anno_file=None,fam_pop_file=None,ind_sample_file=None,allele_freq_info = None):
+    def __init__(self, vcf, tfam,anno_file=None,fam_pop_file=None,ind_sample_file=None,allele_freq_info = None,included_variant_file=None):
         # tfam.samples: a dict of {sid:[fid, pid, mid, sex, trait], ...}
         # tfam.families: a dict of {fid:[s1, s2 ...], ...}
         self.tfam = TFAMParser(tfam)
@@ -41,7 +41,7 @@ class RData(dict):
         self.af_info = allele_freq_info
         self.vs = self.load_vcf(vcf)
         self.fam_pop = self.load_fam_info(fam_pop_file)
-        self.anno = self.load_anno(anno_file)
+        self.anno = self.load_anno(anno_file,included_variant_file)
         self.samples_vcf = self.vs.GetSampleNames()
         self.samples_not_vcf = checkSamples(self.samples_vcf, self.tfam.samples.keys())[1]
         # samples have to be in both vcf and tfam data
@@ -86,17 +86,20 @@ class RData(dict):
     def load_vcf(self,vcf):
         # load VCF file header
         return cstatgen.VCFstream(vcf)
-    def load_anno(self,anno_file):
+    def load_anno(self,anno_file,included_variant_file=None):
         if anno_file is None:
             return None
         anno = pd.read_csv(anno_file)
         anno.index = list(anno.Otherinfo1)
         anno = anno[~anno.index.duplicated()]
+        if included_variant_file:
+            included_variants= pd.read_csv(included_variant_file)
+            anno = anno.loc[included_variants,:]
         tmp = anno[list(set(self.fam_pop.values()))]
-        tmp = tmp.replace('.',np.nan)  #Fixme: missing mafs
+        tmp = tmp.replace('.',np.nan)
         tmp = tmp.replace(0,np.nan)
         anno = pd.concat([anno[['Chr','Start']],tmp.astype(np.float64)],axis=1)
-        print('anno',anno.shape)
+        anno = anno.dropna()
         return anno
     def load_fam_info(self,fam_pop_file):
         if fam_pop_file is None:
@@ -232,6 +235,8 @@ class RegionExtractor:
             # valid line found, get variant info
             try:
                 maf = float(self.vcf.GetInfo(data.af_info))
+                if maf>0.5: #skip variants with af>0.5
+                    continue
             except Exception as e:
                 raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
@@ -284,14 +289,16 @@ class RegionExtractor:
                 continue
 
             # for each family assign member genotype if the site is non-trivial to the family
+            fam_mafs=[]
             for k in data.families:
                 gs = self.vcf.GetGenotypes(data.famsampidx[k])
                 if len(set(''.join([x for x in gs if x != "00"]))) <= 1:
                     # skip monomorphic gs
                     continue
                 else:
-                    maf = mafs[data.fam_pop[k]]
-                    if maf:
+                    maf=mafs[data.fam_pop[k]]
+                    fam_mafs.append(maf)
+                    if maf and maf<0.5: #skip variants with af>0.5
                         # this variant is found in the family
                         data.famvaridx[k].append(varIdx)
                         data.famvarmafs[k].append(maf if maf < 0.5 else 1-maf)
@@ -709,7 +716,7 @@ def phasing_haps(chrom,item,fvar,fgeno):
     item_haplotypes = np.array(item_haplotypes)
     return item,item_varnames,item_mafs,item_haplotypes
 
-def run_each_region(regions,data,extractor,maker,writer):
+def run_each_region(regions,data,extractor,maker,writer,genotype=True):
     '''get the haplotypes and allele frequency of variants in each region'''
     results = {}
     i=0
@@ -719,7 +726,7 @@ def run_each_region(regions,data,extractor,maker,writer):
         maker.getRegion(region)
         writer.getRegion(region)
         isSuccess = True
-        for m in [extractor, maker, writer]:
+        for m in [extractor] if genotype else [extractor, maker, writer]:
             status = m.apply(data)
             if status == -1:
                 with env.chperror_counter.get_lock():
@@ -737,7 +744,17 @@ def run_each_region(regions,data,extractor,maker,writer):
         if isSuccess:
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
-            results[region[3]]=maker.dtest[region[3]]
+            if genotype:
+                #{'gene':{'predata':{'fam':[snp_ids,freq,genos]}}}
+                items = get_family_with_var(data)
+                predata={}
+                for item in items:
+                    fvar=data.getFamVariants(item, style = "map")
+                    fgeno=np.array(data.getFamSamples(item))
+                    predata[item]=[fvar[0],fvar[2],fgeno]
+                results[region[3]]={'predata':predata}
+            else:
+                results[region[3]]=maker.dtest[region[3]]
             if len(results)==env.cache_size:
                 env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
                 start = time.perf_counter()
@@ -745,55 +762,10 @@ def run_each_region(regions,data,extractor,maker,writer):
                     pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 results = {}
                 i +=1
-    env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
-    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
-        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                #add linkage analysis
+    if len(results)>0:
+        env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
+        with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+            pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
         results = {}
-
-def run_each_region_genotypes(regions,data,extractor,maker,writer):
-    '''get the genotypes and allele frequency of variants in each region'''
-    results = {}
-    i=0
-    start = time.perf_counter()
-    for region in regions:
-        extractor.getRegion(region)
-        maker.getRegion(region)
-        writer.getRegion(region)
-        isSuccess = True
-        for m in [extractor]:
-            status = m.apply(data)
-            if status == -1:
-                with env.chperror_counter.get_lock():
-                    # previous module failed
-                    env.chperror_counter.value += 1
-            if status == 1:
-                with env.null_counter.get_lock():
-                    env.null_counter.value += 1
-            if status == 2:
-                with env.trivial_counter.get_lock():
-                    env.trivial_counter.value += 1
-            if status != 0:
-                isSuccess = False
-                break
-        if isSuccess:
-            with env.success_counter.get_lock():
-                env.success_counter.value += 1
-            #{'gene':{'predata':{'fam':[snp_ids,freq,genos]}}}
-            items = get_family_with_var(data)
-            predata={}
-            for item in items:
-                fvar=data.getFamVariants(item, style = "map")
-                fgeno=np.array(data.getFamSamples(item))
-                predata[item]=[fvar[0],fvar[2],fgeno]
-            results[region[3]]={'predata':predata}
-            if len(results)==25:
-                env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
-                start = time.perf_counter()
-                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
-                    pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                results = {}
-                i +=1
-    env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
-    with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
-        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        results = {}
+        #add linkage analysis
