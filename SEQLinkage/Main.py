@@ -48,15 +48,11 @@ class Args:
 
     def getEncoderArguments(self, parser):
         vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
-        vargs.add_argument('--bin', metavar = "FLOAT", default = 0, type = float,
-                           help='''Defines theme to collapse variants. Set to 0 for "complete collapsing",
-        1 for "no collapsing", r2 value between 0 and 1 for "LD based collapsing" and other integer values for customized
-        collapsing bin sizes. Default to 0 (all variants will be collapsed).''')
+        vargs.add_argument('--chp', action='store_true', help='''Use CHP markers if True else single variants.''')
         vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
                            help='''Blueprint file that defines regional marker
         (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
-        vargs.add_argument('--chp-markers', action='store_true', dest = "chp_markers",
-                           help='''Use chp markers if True else single variants.''')
+
 
     def getIOArguments(self, parser):
         vargs = parser.add_argument_group('Input / output options')
@@ -68,20 +64,12 @@ class Args:
         vargs.add_argument('--included-vars', metavar='FILE', dest='included_vars',default=None, help='''Variants to be included for linkage analysis, if None, the analysis won't filter any variants. But you can still set AF cutoff by -c argment.''')
         vargs.add_argument('-c', '--maf-cutoff', metavar='P', default=1.0, type=float, dest = "maf_cutoff",
                            help='''MAF cutoff to define variants to be excluded from analyses. this is useful, if you need to analyse multiple population together.''')
+        vargs.add_argument('-o', '--output', metavar='Name', default='data/linkage_analysis/', help='''Output name prefix.''')
 
         vargs.add_argument('--build', metavar='STRING', default='hg38', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
-        vargs.add_argument('--freq', metavar='INFO', default = None,help='''Info field name for allele frequency in VCF file.''')
-        #vargs.add_argument('--freq_by_fam', metavar='INFO', help='''Per family info field name for allele frequency in VCF file.''')
-        #vargs.add_argument('--mle', action='store_true', help='''Estimate allele frequency using MERLIN's MLE method.''')
-        #vargs.add_argument('--rvhaplo', action='store_true', help='''Only using rare variants for haplotyping''')
-        #vargs.add_argument('--recomb_max', metavar='INT', default = 1, type = int, help='''Maximum recombination events allowed per region.''')
-        #vargs.add_argument('--recomb_cross_fam', action='store_true', help='''Code sub-regions with cross family recombination events; otherwise sub-regions are generated on per family basis.''')
-        #vargs.add_argument('--rsq', metavar='R', default=0.0,type=float, help=SUPPRESS)
-
+        vargs.add_argument('--freq', metavar='INFO', default = 'AF',help='''Info field name for allele frequency in VCF file.''')
         vargs.add_argument('--chrom-prefix', metavar='STRING', dest = 'chr_prefix',
                            help='''Prefix to chromosome name in VCF file if applicable, e.g. "chr".''')
-        vargs.add_argument('-o', '--output', metavar='Name', type = self.isalnum,
-                           help='''Output name prefix.''')
         vargs.add_argument('-f', '--format', metavar = 'FORMAT', nargs='+',
                            choices = ["LINKAGE", "MERLIN", "MEGA2", "PLINK"], default=['LINKAGE'],
                            help='''Output format. Default to LINKAGE.''')
@@ -89,7 +77,7 @@ class Args:
     def getRuntimeArguments(self, parser):
         vargs = parser.add_argument_group('Runtime arguments')
         vargs.add_argument("-h", "--help", action="help", help="Show help message and exit.")
-        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = max(min(int(cpu_count() / 2), 8), 1),
+        vargs.add_argument('-j', '--jobs', metavar='N', type = int, default = 1,
                            help='''Number of CPUs to use.''')
         vargs.add_argument('--tempdir', metavar='PATH',
                            help='''Temporary directory to use.''')
@@ -215,7 +203,7 @@ def main():
                 jobs = [EncoderWorker(
                     queue, len(regions), data,
                     RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
-                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
+                    MarkerMaker(maf_cutoff = args.maf_cutoff),
                     LinkageWriter(len(samples_not_vcf)),
                     ) for i in range(env.jobs)]
                 for j in jobs:
@@ -225,8 +213,8 @@ def main():
                 faulthandler.disable()
             else:
                 run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),
-                    MarkerMaker(args.bin, maf_cutoff = args.maf_cutoff),
-                    LinkageWriter(len(samples_not_vcf)),args.phase)
+                    MarkerMaker(maf_cutoff = args.maf_cutoff),
+                    LinkageWriter(len(samples_not_vcf)),args.chp)
         except KeyboardInterrupt:
             # FIXME: need to properly close all jobs
             raise ValueError("Use 'killall {}' to properly terminate all processes!".format(env.prog))

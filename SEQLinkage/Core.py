@@ -11,6 +11,7 @@ __all__ = ['RData', 'RegionExtractor', 'MarkerMaker', 'LinkageWriter', 'EncoderW
 #nbdev_comment from __future__ import print_function
 from .Utils import *
 from .Runner import *
+from .linkage import *
 from multiprocessing import Process, Queue
 from collections import OrderedDict
 import itertools
@@ -33,7 +34,7 @@ else:
 
 # Cell
 class RData(dict):
-    def __init__(self, vcf, tfam,anno_file=None,fam_pop_file=None,ind_sample_file=None,allele_freq_info = None,included_variant_file=None):
+    def __init__(self, vcf, tfam,anno_file=None,fam_pop_file=None,allele_freq_info = None,included_variant_file=None):
         # tfam.samples: a dict of {sid:[fid, pid, mid, sex, trait], ...}
         # tfam.families: a dict of {fid:[s1, s2 ...], ...}
         self.tfam = TFAMParser(tfam)
@@ -44,6 +45,7 @@ class RData(dict):
         self.anno = self.load_anno(anno_file,included_variant_file)
         self.samples_vcf = self.vs.GetSampleNames()
         self.samples_not_vcf = checkSamples(self.samples_vcf, self.tfam.samples.keys())[1]
+        self.fam,self.fam_vcf=self.load_fam(tfam)
         # samples have to be in both vcf and tfam data
         self.samples = OrderedDict([(k, self.tfam.samples[k]) for k in self.samples_vcf if k in self.tfam.samples])
         # a dict of {fid:[member names], ...}
@@ -113,8 +115,18 @@ class RData(dict):
                 else:
                     fam_pop[key] = value
         return fam_pop
-    def load_ind_samples(self,ind_sample_file):
-        pass
+    def load_fam(self,fam_path):
+        fam = pd.read_csv(fam_path,delim_whitespace=True,header=None,names=['fid','iid','fathid','mothid','sex','trait'])
+        fam.index = list(fam.iid)
+        fam['vcf']=False
+        fam['vcf'][fam.index.isin(self.samples_vcf)]=True
+        fam_d,fam_vcf ={},{}
+        for i in fam.fid.unique():
+            x=fam[fam.fid==i]
+            fam_d[i]=x.iloc[:,:6]
+            fam_vcf[i]=x['vcf']
+        return fam_d,fam_vcf
+
 
     def get_regions(self,step=1000):
         '''separate chromosome to regions'''
@@ -346,7 +358,7 @@ class RegionExtractor:
 
 
 class MarkerMaker:
-    def __init__(self, wsize, maf_cutoff = None, recomb=False):
+    def __init__(self, wsize=1, maf_cutoff = None, recomb=False):
         self.missings = ("0", "0")
         self.gtconv = {'1':0, '2':1}
         self.haplotyper = cstatgen.HaplotypingEngine(verbose = env.debug)
@@ -716,7 +728,7 @@ def phasing_haps(chrom,item,fvar,fgeno):
     item_haplotypes = np.array(item_haplotypes)
     return item,item_varnames,item_mafs,item_haplotypes
 
-def run_each_region(regions,data,extractor,maker,writer,genotype=True):
+def run_each_region(regions,data,extractor,maker,writer,cutoff,chp=True,rho=np.arange(0,0.5,0.05),model = "AD",chrom = "AUTOSOMAL",penetrances = [0.01,0.9,0.9],dfreq=0.001):
     '''get the haplotypes and allele frequency of variants in each region'''
     results = {}
     i=0
@@ -726,7 +738,7 @@ def run_each_region(regions,data,extractor,maker,writer,genotype=True):
         maker.getRegion(region)
         writer.getRegion(region)
         isSuccess = True
-        for m in [extractor] if genotype else [extractor, maker, writer]:
+        for m in [extractor, maker, writer] if chp else [extractor]:
             status = m.apply(data)
             if status == -1:
                 with env.chperror_counter.get_lock():
@@ -744,7 +756,9 @@ def run_each_region(regions,data,extractor,maker,writer,genotype=True):
         if isSuccess:
             with env.success_counter.get_lock():
                 env.success_counter.value += 1
-            if genotype:
+            if chp:
+                results[region[3]]=maker.dtest[region[3]]
+            else:
                 #{'gene':{'predata':{'fam':[snp_ids,freq,genos]}}}
                 items = get_family_with_var(data)
                 predata={}
@@ -753,19 +767,23 @@ def run_each_region(regions,data,extractor,maker,writer,genotype=True):
                     fgeno=np.array(data.getFamSamples(item))
                     predata[item]=[fvar[0],fvar[2],fgeno]
                 results[region[3]]={'predata':predata}
-            else:
-                results[region[3]]=maker.dtest[region[3]]
+
             if len(results)==env.cache_size:
                 env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
                 start = time.perf_counter()
-                with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+                gene_genotype_file=os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')
+                with open(gene_genotype_file, 'wb') as handle:
                     pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 results = {}
                 i +=1
                 #add linkage analysis
+                linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
     if len(results)>0:
         env.log('write to pickle: '+os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')+',Gene number:'+str(len(results))+',Time:'+str((time.perf_counter()-start)/3600))
-        with open(os.path.join(env.tmp_cache,env.output+str(i)+'.pickle'), 'wb') as handle:
+        gene_genotype_file=os.path.join(env.tmp_cache,env.output+str(i)+'.pickle')
+        with open(gene_genotype_file, 'wb') as handle:
             pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
         results = {}
         #add linkage analysis
+        linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
+        summarize_lods(input_lod,output_prefix,regions,phase=chp)
