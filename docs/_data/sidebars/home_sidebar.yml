@@ -10,23 +10,20 @@ entries:
       title: Overview
       url: /
     - output: web,pdf
+      title: Main module
+      url: Main.html
+    - output: web,pdf
       title: Core module
       url: Core.html
     - output: web,pdf
-      title: Runner module
-      url: Runner.html
+      title: Linkage analysis pipeline
+      url: Linkage.html
     - output: web,pdf
       title: utils module
       url: Utils.html
     - output: web,pdf
-      title: Main module
-      url: Main.html
-    - output: web,pdf
-      title: Title
-      url: debug_info.html
-    - output: web,pdf
-      title: 1.read fam
-      url: Create_MWE.html
+      title: Runner module
+      url: Runner.html
     output: web
     title: SEQLinkage
   output: web
