@@ -104,26 +104,11 @@ install.packages("paramlink2")
     [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
     [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
     [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
-    True True
-    chr1:13080:G:C is not in annotation
-    chr1:13115:G:T is not in annotation
-    chr1:13080:G:C is not in annotation
-    chr1:13115:G:T is not in annotation
-    chr1:14662:T:C is not in annotation
-    chr1:14861:G:A is not in annotation
-    chr1:15837:T:C is not in annotation
-    chr1:16074:G:A is not in annotation
-    chr1:16225:C:G is not in annotation
-    chr1:16360:C:T is not in annotation
-    chr1:16734:TGGG:* is not in annotation
-    chr1:17147:G:* is not in annotation
-    chr1:17793:A:G is not in annotation
-    chr1:17843:A:* is not in annotation
     SNVHap MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
-    [1;40;32mMESSAGE: write to pickle: data/test_chp/chr1result/chr1result0.pickle,Gene number:4,Time:0.00016164010390639304[0m
+    [1;40;32mMESSAGE: write to pickle: data/test_chp/chr1result/chr1result0.pickle,Gene number:4,Time:0.00012452216405007575[0m
     create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.input
     create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.lods
-    0.448735611513257
+    0.3767304867506027
     create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
     [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
 
@@ -141,25 +126,10 @@ install.packages("paramlink2")
     [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
     [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
     [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
-    True False
-    chr1:13080:G:C is not in annotation
-    chr1:13115:G:T is not in annotation
-    chr1:13080:G:C is not in annotation
-    chr1:13115:G:T is not in annotation
-    chr1:14662:T:C is not in annotation
-    chr1:14861:G:A is not in annotation
-    chr1:15837:T:C is not in annotation
-    chr1:16074:G:A is not in annotation
-    chr1:16225:C:G is not in annotation
-    chr1:16360:C:T is not in annotation
-    chr1:16734:TGGG:* is not in annotation
-    chr1:17147:G:* is not in annotation
-    chr1:17793:A:G is not in annotation
-    chr1:17843:A:* is not in annotation
-    [1;40;32mMESSAGE: write to pickle: data/test_var/chr1result/chr1result0.pickle,Gene number:4,Time:3.215630900942617e-05[0m
+    [1;40;32mMESSAGE: write to pickle: data/test_var/chr1result/chr1result0.pickle,Gene number:4,Time:3.229235919813315e-05[0m
     create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.input
     create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.lods
-    0.5998611375689507
+    0.6164871137589216
     create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
     [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
 
@@ -172,18 +142,18 @@ install.packages("paramlink2")
 ```
 
     [1;40;32mMESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam][0m
-    [1;40;32mMESSAGE: Namespace(chp=False, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno=None, pop=None, included_vars=None, blueprint='testdata/test_blueprint_ext.txt', maf_cutoff=0.05, output='data/test_var', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
+    [1;40;32mMESSAGE: Namespace(chp=True, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno=None, pop=None, included_vars=None, blueprint='testdata/test_blueprint_ext.txt', maf_cutoff=0.05, output='data/test_chp_na', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
     [1;40;32mMESSAGE: 18 samples found in FAM file but not in VCF file:[0m
     
     [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
     [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
     [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
-    True False
-    [1;40;32mMESSAGE: write to pickle: data/test_var/chrallresult/chrallresult0.pickle,Gene number:4,Time:8.800002332362863e-06[0m
-    create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.input
-    create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.lods
-    0.5967844482511282
-    create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.besthlod
+    SNVHap MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
+    [1;40;32mMESSAGE: write to pickle: data/test_chp_na/chrallresult/chrallresult0.pickle,Gene number:4,Time:6.505574979301956e-05[0m
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.input
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.lods
+    0.3394373469054699
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.besthlod
     [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
 
 
@@ -202,192 +172,17 @@ install.packages("paramlink2")
     [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
     [1;40;32mMESSAGE: separate chromosome to regions[0m
     [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 1 pre-defined units[0m
-    True True
-    chr1:10146:ACC:* is not in annotation
-    chr1:10206:ACCCTAACCCTAACCCTAACCCTAAC:A is not in annotation
-    chr1:10231:CCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAA:* is not in annotation
-    chr1:10250:ACCCTAAAC:* is not in annotation
-    chr1:10397:CCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTCAG:* is not in annotation
-    chr1:10403:A:ACCCTAACCCTAACCCTAACCCTAACCCTAAC is not in annotation
-    chr1:10403:ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC:* is not in annotation
-    chr1:10421:ACCCTAACCCTAACCCTAAC:* is not in annotation
-    chr1:10422:CCCTAACCCTAACCCTAA:* is not in annotation
-    chr1:10427:ACCCTAACCCTAACCCCT:* is not in annotation
-    chr1:10428:CCCTAACCCTAACCCCTAA:* is not in annotation
-    chr1:10431:TAACCC:* is not in annotation
-    chr1:10432:AACCCTAACC:* is not in annotation
-    chr1:10433:ACCCTAACC:* is not in annotation
-    chr1:10436:CTAACCCCT:* is not in annotation
-    chr1:10437:TAACCCCTAACC:* is not in annotation
-    chr1:10438:AAC:* is not in annotation
-    chr1:10439:ACCCCT:* is not in annotation
-    chr1:10440:C:CCCTAACCCAACCCTAACCCTAACCCTAACCCTAA is not in annotation
-    chr1:10440:CCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTCAG:* is not in annotation
-    chr1:10442:CCT:* is not in annotation
-    chr1:10443:CTAACCCTAACCCTAACCCT:* is not in annotation
-    chr1:10444:TAACCC:* is not in annotation
-    chr1:10446:ACCCT:* is not in annotation
-    chr1:10449:CTAA:* is not in annotation
-    chr1:10450:TAACCC:* is not in annotation
-    chr1:10451:AACCCT:* is not in annotation
-    chr1:10452:AC:* is not in annotation
-    chr1:10453:CCCTAA:* is not in annotation
-    chr1:10455:C:* is not in annotation
-    chr1:10464:A:AC is not in annotation
-    chr1:13080:G:C is not in annotation
-    chr1:13115:G:T is not in annotation
-    chr1:14662:T:C is not in annotation
-    chr1:14861:G:A is not in annotation
-    chr1:15837:T:C is not in annotation
-    chr1:16074:G:A is not in annotation
-    chr1:16225:C:G is not in annotation
-    chr1:16360:C:T is not in annotation
-    chr1:16734:TGGG:* is not in annotation
-    chr1:17147:G:* is not in annotation
-    chr1:17793:A:G is not in annotation
-    chr1:17843:A:* is not in annotation
-    chr1:30845:G:A is not in annotation
-    chr1:30921:TCG:* is not in annotation
-    chr1:30928:CTCATT:* is not in annotation
-    chr1:31719:G:GA is not in annotation
-    chr1:31719:GA:G is not in annotation
-    chr1:40893:G:GA is not in annotation
-    chr1:47840:CT:C is not in annotation
-    chr1:48173:C:G is not in annotation
-    chr1:49513:AAG:* is not in annotation
-    chr1:49515:G:* is not in annotation
-    chr1:51375:A:C is not in annotation
-    chr1:52278:TTC:T is not in annotation
-    chr1:54342:A:G is not in annotation
-    chr1:54597:C:G is not in annotation
-    chr1:54713:T:* is not in annotation
-    chr1:54715:TCTTTC:* is not in annotation
-    chr1:54716:C:* is not in annotation
-    chr1:54717:TTTCTTTCTTTC:* is not in annotation
-    chr1:54718:TTCTTTCTTTCTTTCTTTCTTTC:* is not in annotation
-    chr1:54719:TC:* is not in annotation
-    chr1:54722:T:* is not in annotation
-    chr1:54723:TC:* is not in annotation
-    chr1:54726:T:* is not in annotation
-    chr1:54727:TC:* is not in annotation
-    chr1:54727:TC:T is not in annotation
-    chr1:54729:TTTC:* is not in annotation
-    chr1:54729:TTTC:T is not in annotation
-    chr1:54730:T:* is not in annotation
-    chr1:54731:TC:* is not in annotation
-    chr1:54732:CTT:* is not in annotation
-    chr1:54735:TC:* is not in annotation
-    chr1:54736:CTTTCTTTCTTTCTTTCTTTCTT:* is not in annotation
-    chr1:54737:TTTCTTTCTTTCTTTCTTTC:* is not in annotation
-    chr1:54749:TTTCTTTC:* is not in annotation
-    chr1:54755:TCTTTCTTTCTTTCTTTCTTC:* is not in annotation
-    chr1:54757:TTTCTTTCTTTCTTTCTTCC:* is not in annotation
-    chr1:54763:TCTTTCTTTCTTC:* is not in annotation
-    chr1:54768:CTTTCTTCCTCCT:* is not in annotation
-    chr1:54768:CTTTCTTCCTCCT:C is not in annotation
-    chr1:54773:TTCCTCC:* is not in annotation
-    chr1:55294:C:T is not in annotation
-    chr1:55414:T:A is not in annotation
-    chr1:55569:T:A is not in annotation
-    chr1:55920:G:A is not in annotation
-    chr1:57118:G:C is not in annotation
-    chr1:57356:T:C is not in annotation
-    chr1:57877:A:G is not in annotation
-    chr1:58493:C:T is not in annotation
-    chr1:58703:AG:A is not in annotation
-    chr1:58716:T:C is not in annotation
-    chr1:59311:T:C is not in annotation
-    chr1:59387:CA:C is not in annotation
-    chr1:59622:CT:C is not in annotation
-    chr1:60312:A:G is not in annotation
-    chr1:60590:C:T is not in annotation
-    chr1:61720:A:C is not in annotation
-    chr1:62101:T:TCCAC is not in annotation
-    chr1:62160:C:G is not in annotation
-    chr1:62681:G:C is not in annotation
-    chr1:62865:CTT:* is not in annotation
-    chr1:63089:C:A is not in annotation
-    chr1:63695:G:GA is not in annotation
-    chr1:64619:G:A is not in annotation
-    chr1:66214:ATATAATATATAT:* is not in annotation
-    chr1:66217:TAA:* is not in annotation
-    chr1:66218:AATATATATTATATAATAT:* is not in annotation
-    chr1:66219:A:* is not in annotation
-    chr1:66221:ATATATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
-    chr1:66222:TATATTATATAATA:* is not in annotation
-    chr1:66223:ATATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
-    chr1:66224:TATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
-    chr1:66225:AT:* is not in annotation
-    chr1:66226:TTATATAATATATATTATATTATATAATATATAATATA:* is not in annotation
-    chr1:66227:TATATAATATATATTATATTATATAATATATAATATAA:* is not in annotation
-    chr1:66231:TAATATATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
-    chr1:66235:ATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
-    chr1:66236:TATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
-    chr1:66238:TATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
-    chr1:66240:TTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
-    chr1:66244:ATTATATAATATATAATATAAATATAATATAAATTATAT:* is not in annotation
-    chr1:66250:TAATATATAATATAA:* is not in annotation
-    chr1:66253:TATATAATATAAATATAATATAAATTATATTATATA:* is not in annotation
-    chr1:66257:TAATATAAATATAATATAA:* is not in annotation
-    chr1:66258:AATATAAATATAATATAAATTATATTATATAATATATAATATAAATATAATATAAATT:* is not in annotation
-    chr1:66260:TATAAATATAATATAAATTATATTATATAATATATA:* is not in annotation
-    chr1:66262:TAAATATAATATAA:* is not in annotation
-    chr1:66263:A:* is not in annotation
-    chr1:66264:A:* is not in annotation
-    chr1:66273:TAA:* is not in annotation
-    chr1:66275:AATTAT:* is not in annotation
-    chr1:66278:TATATTATATAATATATAATATAAATATAATATAAATTATATAA:* is not in annotation
-    chr1:66281:AT:* is not in annotation
-    chr1:66282:T:* is not in annotation
-    chr1:66283:TATATAATATATAATATAAATATA:* is not in annotation
-    chr1:66288:AAT:* is not in annotation
-    chr1:66295:A:* is not in annotation
-    chr1:66299:TAA:* is not in annotation
-    chr1:66305:TAATATAAATTATATAAATATAATATATATTTTATTATATAATATAATATATATTATATAAATATAATATATAAATTATATAATATAATATATATTATATAATATAATATATTTTATTATATA:* is not in annotation
-    chr1:66308:TATAAATTATATAAATATA:* is not in annotation
-    chr1:66310:TAA:* is not in annotation
-    chr1:66312:AAT:* is not in annotation
-    chr1:66331:ATATTT:* is not in annotation
-    chr1:66333:ATTTTATT:* is not in annotation
-    chr1:66349:TA:* is not in annotation
-    chr1:66350:AATATATATTATATAAATATAATATATAAATTATATAATATAAT:* is not in annotation
-    chr1:66352:TA:* is not in annotation
-    chr1:66369:TA:* is not in annotation
-    chr1:66370:AAT:* is not in annotation
-    chr1:66374:TATAAATTATATAATATAATA:* is not in annotation
-    chr1:66376:TAAA:* is not in annotation
-    chr1:66377:A:* is not in annotation
-    chr1:66378:AATTAT:* is not in annotation
-    chr1:66385:TA:* is not in annotation
-    chr1:66387:ATATAATATAT:* is not in annotation
-    chr1:66390:TA:* is not in annotation
-    chr1:66391:A:* is not in annotation
-    chr1:66400:TATATA:* is not in annotation
-    chr1:66404:TAATA:* is not in annotation
-    chr1:66414:T:* is not in annotation
-    chr1:66424:T:* is not in annotation
-    chr1:66426:TAAATATATA:* is not in annotation
-    chr1:66431:ATATAT:* is not in annotation
-    chr1:66432:T:* is not in annotation
-    chr1:66435:ATTATATTAT:* is not in annotation
-    chr1:66447:AATATATATTTTATT:* is not in annotation
-    chr1:66457:TTA:* is not in annotation
-    chr1:66461:T:* is not in annotation
-    chr1:66466:A:* is not in annotation
-    chr1:66479:TATTTATAG:* is not in annotation
-    chr1:66480:ATTT:* is not in annotation
-    chr1:66481:TTTATAGA:* is not in annotation
-    [1;40;32mMESSAGE: write to pickle: data/test_chp_wg/chr1result/chr1result0.pickle,Gene number:1,Time:0.00011989794775015778[0m
+    [1;40;32mMESSAGE: write to pickle: data/test_chp_wg/chr1result/chr1result0.pickle,Gene number:1,Time:0.00011511449753824207[0m
     create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.input
     create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.lods
-    0.31306900456547737
+    0.23506776429712772
     create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
     [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
 
 
 ### Input format
 
-- 1. `--fam`, Fam file (required, format: "fid iid fathid mothid sex trait[1 control, 2 case, -9 or 0 missing]")
+- `--fam`, Fam file (required, format: "fid iid fathid mothid sex trait[1 control, 2 case, -9 or 0 missing]")
 
 ```python
 %%writefile testdata/test_ped.fam
@@ -432,14 +227,14 @@ install.packages("paramlink2")
     Overwriting ../testdata/test_ped.fam
 
 
-- 2. `--vcf`, VCF file (required, vcf.gz with vcf.gz.tbi)
+- `--vcf`, VCF file (required, vcf.gz with vcf.gz.tbi)
 ```
 bgzip -c file.vcf > file.vcf.gz
 tabix -p vcf file.vcf.gz
 ```
 
 
-- 3. `--anno`, Annotation file from `ANNOVAR`, It must contains the allele frequency for population in the file of family population information. For example in here, The annotation file must have AF_amr, AF_afr, AF_nfe columns.
+- `--anno`, Annotation file from `ANNOVAR`, It must contains the allele frequency for population in the file of family population information. For example in here, The annotation file must have AF_amr, AF_afr, AF_nfe columns.
 
 ```python
 anno=pd.read_csv('testdata/test_chr1_anno.csv')
@@ -884,7 +679,7 @@ chr1:10247:TAAACCCTA:T	1	10247	0.2222	0.2089	0.1429	0.4211
 ```
 The index must match with the ID in vcf file.
 
-- 4. `--pop`, The file of family population information
+- `--pop`, The file of family population information
 
 ```python
 %%writefile testdata/test_fam_pop.txt
@@ -899,7 +694,7 @@ The index must match with the ID in vcf file.
     Writing ../testdata/test_fam_pop.txt
 
 
-- 5. `--included-vars`, The file with one column of variants
+- `--included-vars`, The file with one column of variants
 For example:
 ```
 chr1:10140:ACCCTAAC:A
@@ -909,7 +704,7 @@ chr1:10236:AACCCT:A
 chr1:10261:T:TA
 chr1:10262:AACCCT:A
 ```
-- 6. `--blueprint`, The blueprint file that defines regional marker (format: "chr startpos endpos name avg.distance male.distance female.distance"). The first four columns are required.
+- `--blueprint`, The blueprint file that defines regional marker (format: "chr startpos endpos name avg.distance male.distance female.distance"). The first four columns are required.
 
 ```python
 %%writefile testdata/test_blueprint_ext.txt
