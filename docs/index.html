@@ -2,7 +2,6 @@
 
 title: SEQLinkage
 
-
 keywords: fastai
 sidebar: home_sidebar
 
@@ -31,7 +30,12 @@ nb_path: "nbs/index.ipynb"
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Features">Features<a class="anchor-link" href="#Features"> </a></h3><h2 id="-">-<a class="anchor-link" href="#-"> </a></h2><h2 id="-">-<a class="anchor-link" href="#-"> </a></h2>
+<h3 id="Features">Features<a class="anchor-link" href="#Features"> </a></h3><ul>
+<li>It can do linkage analysis on single variants and CHP markers.</li>
+<li>It can deal with families from different population.</li>
+<li>It can handle large-scale whole-genome linkage analysis.</li>
+</ul>
+
 </div>
 </div>
 </div>
@@ -94,26 +98,55 @@ install.packages("paramlink2")</code></pre>
 <div class="output_area">
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Traceback (most recent call last):
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/bin/seqlink&#34;, line 33, in &lt;module&gt;
-    sys.exit(load_entry_point(&#39;SEQLinkage&#39;, &#39;console_scripts&#39;, &#39;seqlink&#39;)())
-  File &#34;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/SEQLinkage/Main.py&#34;, line 135, in main
-    args = Args().get()
-  File &#34;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/SEQLinkage/Main.py&#34;, line 33, in __init__
-    self.getRuntimeArguments(self.parser)
-  File &#34;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/SEQLinkage/Main.py&#34;, line 72, in getRuntimeArguments
-    vargs.add_argument(&#34;-h&#34;, &#34;--help&#34;, action=&#34;help&#34;, help=&#34;Show help message and exit.&#34;)
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/lib/python3.10/argparse.py&#34;, line 1440, in add_argument
-    return self._add_action(action)
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/lib/python3.10/argparse.py&#34;, line 1642, in _add_action
-    action = super(_ArgumentGroup, self)._add_action(action)
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/lib/python3.10/argparse.py&#34;, line 1454, in _add_action
-    self._check_conflict(action)
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/lib/python3.10/argparse.py&#34;, line 1591, in _check_conflict
-    conflict_handler(action, confl_optionals)
-  File &#34;/home/yh3455/miniconda3/envs/rpy2/lib/python3.10/argparse.py&#34;, line 1600, in _handle_conflict_error
-    raise ArgumentError(action, message % conflict_string)
-argparse.ArgumentError: argument -h/--help: conflicting option strings: -h, --help
+<pre>usage: seqlink [-h] [--chp] --fam FILE --vcf FILE [--anno FILE] [--pop FILE]
+               [--included-vars FILE] [-b FILE] [-c P] [-o Name]
+               [--build STRING] [--freq INFO] [--chrom-prefix STRING]
+               [--run-linkage] [-K FLOAT] [--moi STRING] [-W FLOAT] [-M FLOAT]
+               [--theta-max FLOAT] [--theta-inc FLOAT]
+
+SEQLinkage V2, linkage analysis using sequence data
+
+options:
+  -h, --help            show this help message and exit
+
+Collapsed haplotype pattern method arguments:
+  --chp                 Generate CHP markers.
+  --fam FILE            Input pedigree and phenotype information in FAM
+                        format.
+  --vcf FILE            Input VCF file, bgzipped.
+  --anno FILE           Input annotation file from annovar.
+  --pop FILE            Input two columns file, first column is family ID,
+                        second column population information.
+  --included-vars FILE  Variants to be included for linkage analysis, if None,
+                        the analysis won&#39;t filter any variants. But you can
+                        still set AF cutoff by -c argment.
+  -b FILE, --blueprint FILE
+                        Blueprint file that defines regional marker (format:
+                        &#34;chr startpos endpos name avg.distance male.distance
+                        female.distance&#34;).
+  -c P, --maf-cutoff P  MAF cutoff to define variants to be excluded from
+                        analyses. this is useful, if you need to analyse
+                        multiple population together.
+  -o Name, --output Name
+                        Output name prefix.
+  --build STRING        Reference genome version for VCF file.
+  --freq INFO           Info field name for allele frequency in VCF file.
+  --chrom-prefix STRING
+                        Prefix to chromosome name in VCF file if applicable,
+                        e.g. &#34;chr&#34;.
+
+LINKAGE options:
+  --run-linkage         Perform Linkage analysis.
+  -K FLOAT, --prevalence FLOAT
+                        Disease prevalence. Default to 0.001.
+  --moi STRING          Mode of inheritance, AD/AR: autosomal
+                        dominant/recessive. Default to AD.
+  -W FLOAT, --wt-pen FLOAT
+                        Penetrance for wild type. Default to 0.01.
+  -M FLOAT, --mut-pen FLOAT
+                        Penetrance for mutation. Default to 0.9.
+  --theta-max FLOAT     Theta upper bound. Default to 0.5.
+  --theta-inc FLOAT     Theta increment. Default to 0.05.
 </pre>
 </div>
 </div>
@@ -126,13 +159,1203 @@ argparse.ArgumentError: argument -h/--help: conflicting option strings: -h, --he
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="1.run-seqlink-on-CHP-marker">1.run seqlink on CHP marker<a class="anchor-link" href="#1.run-seqlink-on-CHP-marker"> </a></h4>
+<h3 id="Linkage-analysis-on-specific-regions">Linkage analysis on specific regions<a class="anchor-link" href="#Linkage-analysis-on-specific-regions"> </a></h3><blockquote><p>Normally, the regions are gene regions. you can also use self-defined regions, such as promoter regions, enhancer regions.</p>
+</blockquote>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="1.run-seqlink-on-CHP-marker">1.run seqlink on CHP marker<a class="anchor-link" href="#1.run-seqlink-on-CHP-marker"> </a></h4>
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt --blueprint testdata/test_blueprint_ext.txt -c <span class="m">0</span>.05 -o data/test_chp --chp --run-linkage
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Namespace(chp=True, tfam=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam&#39;, vcf=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz&#39;, anno=&#39;testdata/test_chr1_anno.csv&#39;, pop=&#39;testdata/test_fam_pop.txt&#39;, included_vars=None, blueprint=&#39;testdata/test_blueprint_ext.txt&#39;, maf_cutoff=0.05, output=&#39;data/test_chp&#39;, build=&#39;hg38&#39;, freq=&#39;AF&#39;, chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode=&#39;AD&#39;, wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in FAM file but not in VCF file:</span>
+
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units</span>
+True True
+chr1:13080:G:C is not in annotation
+chr1:13115:G:T is not in annotation
+chr1:13080:G:C is not in annotation
+chr1:13115:G:T is not in annotation
+chr1:14662:T:C is not in annotation
+chr1:14861:G:A is not in annotation
+chr1:15837:T:C is not in annotation
+chr1:16074:G:A is not in annotation
+chr1:16225:C:G is not in annotation
+chr1:16360:C:T is not in annotation
+chr1:16734:TGGG:* is not in annotation
+chr1:17147:G:* is not in annotation
+chr1:17793:A:G is not in annotation
+chr1:17843:A:* is not in annotation
+SNVHap MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: write to pickle: data/test_chp/chr1result/chr1result0.pickle,Gene number:4,Time:0.00016164010390639304</span>
+create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.input
+create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+0.448735611513257
+create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: ============= Finish analysis ==============</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="2.run-seqlink-on-variants">2.run seqlink on variants<a class="anchor-link" href="#2.run-seqlink-on-variants"> </a></h4>
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt --blueprint testdata/test_blueprint_ext.txt -c <span class="m">0</span>.05 -o data/test_var --run-linkage
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Namespace(chp=False, tfam=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam&#39;, vcf=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz&#39;, anno=&#39;testdata/test_chr1_anno.csv&#39;, pop=&#39;testdata/test_fam_pop.txt&#39;, included_vars=None, blueprint=&#39;testdata/test_blueprint_ext.txt&#39;, maf_cutoff=0.05, output=&#39;data/test_var&#39;, build=&#39;hg38&#39;, freq=&#39;AF&#39;, chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode=&#39;AD&#39;, wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in FAM file but not in VCF file:</span>
+
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units</span>
+True False
+chr1:13080:G:C is not in annotation
+chr1:13115:G:T is not in annotation
+chr1:13080:G:C is not in annotation
+chr1:13115:G:T is not in annotation
+chr1:14662:T:C is not in annotation
+chr1:14861:G:A is not in annotation
+chr1:15837:T:C is not in annotation
+chr1:16074:G:A is not in annotation
+chr1:16225:C:G is not in annotation
+chr1:16360:C:T is not in annotation
+chr1:16734:TGGG:* is not in annotation
+chr1:17147:G:* is not in annotation
+chr1:17793:A:G is not in annotation
+chr1:17843:A:* is not in annotation
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: write to pickle: data/test_var/chr1result/chr1result0.pickle,Gene number:4,Time:3.215630900942617e-05</span>
+create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.input
+create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+0.5998611375689507
+create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: ============= Finish analysis ==============</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="No-annotation">No annotation<a class="anchor-link" href="#No-annotation"> </a></h4><blockquote><p>If you don't have the annotation file. there is no need to add <code>--pop</code>. And <code>--freq</code> should be setted based on the <code>INFO</code> column in vcf file.</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --freq<span class="o">=</span><span class="s1">&#39;AF&#39;</span> --blueprint testdata/test_blueprint_ext.txt -c <span class="m">0</span>.05 -o data/test_chp_na --chp --run-linkage
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Namespace(chp=False, tfam=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam&#39;, vcf=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz&#39;, anno=None, pop=None, included_vars=None, blueprint=&#39;testdata/test_blueprint_ext.txt&#39;, maf_cutoff=0.05, output=&#39;data/test_var&#39;, build=&#39;hg38&#39;, freq=&#39;AF&#39;, chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode=&#39;AD&#39;, wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in FAM file but not in VCF file:</span>
+
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units</span>
+True False
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: write to pickle: data/test_var/chrallresult/chrallresult0.pickle,Gene number:4,Time:8.800002332362863e-06</span>
+create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.input
+create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.lods
+0.5967844482511282
+create data/test_var/chrallresult/chrallresult0_AFcutoff0.05_linkage.besthlod
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: ============= Finish analysis ==============</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Whole-genome-linkage-analysis">Whole-genome linkage analysis<a class="anchor-link" href="#Whole-genome-linkage-analysis"> </a></h3><blockquote><p>if <code>--blueprint</code> is not provided, the genomic region will be seperated to pseudogenes with 1000 variants.</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt -c <span class="m">0</span>.05 -o data/test_chp_wg --chp --run-linkage
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Generate regions by annotation</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: Namespace(chp=True, tfam=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam&#39;, vcf=&#39;/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz&#39;, anno=&#39;testdata/test_chr1_anno.csv&#39;, pop=&#39;testdata/test_fam_pop.txt&#39;, included_vars=None, blueprint=None, maf_cutoff=0.05, output=&#39;data/test_chp_wg&#39;, build=&#39;hg38&#39;, freq=&#39;AF&#39;, chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode=&#39;AD&#39;, wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in FAM file but not in VCF file:</span>
+
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz]</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: separate chromosome to regions</span>
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: 6 families with a total of 18 samples will be scanned for 1 pre-defined units</span>
+True True
+chr1:10146:ACC:* is not in annotation
+chr1:10206:ACCCTAACCCTAACCCTAACCCTAAC:A is not in annotation
+chr1:10231:CCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAA:* is not in annotation
+chr1:10250:ACCCTAAAC:* is not in annotation
+chr1:10397:CCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTCAG:* is not in annotation
+chr1:10403:A:ACCCTAACCCTAACCCTAACCCTAACCCTAAC is not in annotation
+chr1:10403:ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC:* is not in annotation
+chr1:10421:ACCCTAACCCTAACCCTAAC:* is not in annotation
+chr1:10422:CCCTAACCCTAACCCTAA:* is not in annotation
+chr1:10427:ACCCTAACCCTAACCCCT:* is not in annotation
+chr1:10428:CCCTAACCCTAACCCCTAA:* is not in annotation
+chr1:10431:TAACCC:* is not in annotation
+chr1:10432:AACCCTAACC:* is not in annotation
+chr1:10433:ACCCTAACC:* is not in annotation
+chr1:10436:CTAACCCCT:* is not in annotation
+chr1:10437:TAACCCCTAACC:* is not in annotation
+chr1:10438:AAC:* is not in annotation
+chr1:10439:ACCCCT:* is not in annotation
+chr1:10440:C:CCCTAACCCAACCCTAACCCTAACCCTAACCCTAA is not in annotation
+chr1:10440:CCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTCAG:* is not in annotation
+chr1:10442:CCT:* is not in annotation
+chr1:10443:CTAACCCTAACCCTAACCCT:* is not in annotation
+chr1:10444:TAACCC:* is not in annotation
+chr1:10446:ACCCT:* is not in annotation
+chr1:10449:CTAA:* is not in annotation
+chr1:10450:TAACCC:* is not in annotation
+chr1:10451:AACCCT:* is not in annotation
+chr1:10452:AC:* is not in annotation
+chr1:10453:CCCTAA:* is not in annotation
+chr1:10455:C:* is not in annotation
+chr1:10464:A:AC is not in annotation
+chr1:13080:G:C is not in annotation
+chr1:13115:G:T is not in annotation
+chr1:14662:T:C is not in annotation
+chr1:14861:G:A is not in annotation
+chr1:15837:T:C is not in annotation
+chr1:16074:G:A is not in annotation
+chr1:16225:C:G is not in annotation
+chr1:16360:C:T is not in annotation
+chr1:16734:TGGG:* is not in annotation
+chr1:17147:G:* is not in annotation
+chr1:17793:A:G is not in annotation
+chr1:17843:A:* is not in annotation
+chr1:30845:G:A is not in annotation
+chr1:30921:TCG:* is not in annotation
+chr1:30928:CTCATT:* is not in annotation
+chr1:31719:G:GA is not in annotation
+chr1:31719:GA:G is not in annotation
+chr1:40893:G:GA is not in annotation
+chr1:47840:CT:C is not in annotation
+chr1:48173:C:G is not in annotation
+chr1:49513:AAG:* is not in annotation
+chr1:49515:G:* is not in annotation
+chr1:51375:A:C is not in annotation
+chr1:52278:TTC:T is not in annotation
+chr1:54342:A:G is not in annotation
+chr1:54597:C:G is not in annotation
+chr1:54713:T:* is not in annotation
+chr1:54715:TCTTTC:* is not in annotation
+chr1:54716:C:* is not in annotation
+chr1:54717:TTTCTTTCTTTC:* is not in annotation
+chr1:54718:TTCTTTCTTTCTTTCTTTCTTTC:* is not in annotation
+chr1:54719:TC:* is not in annotation
+chr1:54722:T:* is not in annotation
+chr1:54723:TC:* is not in annotation
+chr1:54726:T:* is not in annotation
+chr1:54727:TC:* is not in annotation
+chr1:54727:TC:T is not in annotation
+chr1:54729:TTTC:* is not in annotation
+chr1:54729:TTTC:T is not in annotation
+chr1:54730:T:* is not in annotation
+chr1:54731:TC:* is not in annotation
+chr1:54732:CTT:* is not in annotation
+chr1:54735:TC:* is not in annotation
+chr1:54736:CTTTCTTTCTTTCTTTCTTTCTT:* is not in annotation
+chr1:54737:TTTCTTTCTTTCTTTCTTTC:* is not in annotation
+chr1:54749:TTTCTTTC:* is not in annotation
+chr1:54755:TCTTTCTTTCTTTCTTTCTTC:* is not in annotation
+chr1:54757:TTTCTTTCTTTCTTTCTTCC:* is not in annotation
+chr1:54763:TCTTTCTTTCTTC:* is not in annotation
+chr1:54768:CTTTCTTCCTCCT:* is not in annotation
+chr1:54768:CTTTCTTCCTCCT:C is not in annotation
+chr1:54773:TTCCTCC:* is not in annotation
+chr1:55294:C:T is not in annotation
+chr1:55414:T:A is not in annotation
+chr1:55569:T:A is not in annotation
+chr1:55920:G:A is not in annotation
+chr1:57118:G:C is not in annotation
+chr1:57356:T:C is not in annotation
+chr1:57877:A:G is not in annotation
+chr1:58493:C:T is not in annotation
+chr1:58703:AG:A is not in annotation
+chr1:58716:T:C is not in annotation
+chr1:59311:T:C is not in annotation
+chr1:59387:CA:C is not in annotation
+chr1:59622:CT:C is not in annotation
+chr1:60312:A:G is not in annotation
+chr1:60590:C:T is not in annotation
+chr1:61720:A:C is not in annotation
+chr1:62101:T:TCCAC is not in annotation
+chr1:62160:C:G is not in annotation
+chr1:62681:G:C is not in annotation
+chr1:62865:CTT:* is not in annotation
+chr1:63089:C:A is not in annotation
+chr1:63695:G:GA is not in annotation
+chr1:64619:G:A is not in annotation
+chr1:66214:ATATAATATATAT:* is not in annotation
+chr1:66217:TAA:* is not in annotation
+chr1:66218:AATATATATTATATAATAT:* is not in annotation
+chr1:66219:A:* is not in annotation
+chr1:66221:ATATATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
+chr1:66222:TATATTATATAATA:* is not in annotation
+chr1:66223:ATATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
+chr1:66224:TATTATATAATATATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
+chr1:66225:AT:* is not in annotation
+chr1:66226:TTATATAATATATATTATATTATATAATATATAATATA:* is not in annotation
+chr1:66227:TATATAATATATATTATATTATATAATATATAATATAA:* is not in annotation
+chr1:66231:TAATATATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
+chr1:66235:ATATATTATATTATATAATATATAATATAAATATAATATAAAT:* is not in annotation
+chr1:66236:TATATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
+chr1:66238:TATTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
+chr1:66240:TTATATTATATAATATATAATATAAATATAATATAA:* is not in annotation
+chr1:66244:ATTATATAATATATAATATAAATATAATATAAATTATAT:* is not in annotation
+chr1:66250:TAATATATAATATAA:* is not in annotation
+chr1:66253:TATATAATATAAATATAATATAAATTATATTATATA:* is not in annotation
+chr1:66257:TAATATAAATATAATATAA:* is not in annotation
+chr1:66258:AATATAAATATAATATAAATTATATTATATAATATATAATATAAATATAATATAAATT:* is not in annotation
+chr1:66260:TATAAATATAATATAAATTATATTATATAATATATA:* is not in annotation
+chr1:66262:TAAATATAATATAA:* is not in annotation
+chr1:66263:A:* is not in annotation
+chr1:66264:A:* is not in annotation
+chr1:66273:TAA:* is not in annotation
+chr1:66275:AATTAT:* is not in annotation
+chr1:66278:TATATTATATAATATATAATATAAATATAATATAAATTATATAA:* is not in annotation
+chr1:66281:AT:* is not in annotation
+chr1:66282:T:* is not in annotation
+chr1:66283:TATATAATATATAATATAAATATA:* is not in annotation
+chr1:66288:AAT:* is not in annotation
+chr1:66295:A:* is not in annotation
+chr1:66299:TAA:* is not in annotation
+chr1:66305:TAATATAAATTATATAAATATAATATATATTTTATTATATAATATAATATATATTATATAAATATAATATATAAATTATATAATATAATATATATTATATAATATAATATATTTTATTATATA:* is not in annotation
+chr1:66308:TATAAATTATATAAATATA:* is not in annotation
+chr1:66310:TAA:* is not in annotation
+chr1:66312:AAT:* is not in annotation
+chr1:66331:ATATTT:* is not in annotation
+chr1:66333:ATTTTATT:* is not in annotation
+chr1:66349:TA:* is not in annotation
+chr1:66350:AATATATATTATATAAATATAATATATAAATTATATAATATAAT:* is not in annotation
+chr1:66352:TA:* is not in annotation
+chr1:66369:TA:* is not in annotation
+chr1:66370:AAT:* is not in annotation
+chr1:66374:TATAAATTATATAATATAATA:* is not in annotation
+chr1:66376:TAAA:* is not in annotation
+chr1:66377:A:* is not in annotation
+chr1:66378:AATTAT:* is not in annotation
+chr1:66385:TA:* is not in annotation
+chr1:66387:ATATAATATAT:* is not in annotation
+chr1:66390:TA:* is not in annotation
+chr1:66391:A:* is not in annotation
+chr1:66400:TATATA:* is not in annotation
+chr1:66404:TAATA:* is not in annotation
+chr1:66414:T:* is not in annotation
+chr1:66424:T:* is not in annotation
+chr1:66426:TAAATATATA:* is not in annotation
+chr1:66431:ATATAT:* is not in annotation
+chr1:66432:T:* is not in annotation
+chr1:66435:ATTATATTAT:* is not in annotation
+chr1:66447:AATATATATTTTATT:* is not in annotation
+chr1:66457:TTA:* is not in annotation
+chr1:66461:T:* is not in annotation
+chr1:66466:A:* is not in annotation
+chr1:66479:TATTTATAG:* is not in annotation
+chr1:66480:ATTT:* is not in annotation
+chr1:66481:TTTATAGA:* is not in annotation
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: write to pickle: data/test_chp_wg/chr1result/chr1result0.pickle,Gene number:1,Time:0.00011989794775015778</span>
+create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.input
+create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+0.31306900456547737
+create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+<span class="ansi-green-intense-fg ansi-black-bg ansi-bold">MESSAGE: ============= Finish analysis ==============</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="How-to-use-with-the-Docker">How to use with the Docker<a class="anchor-link" href="#How-to-use-with-the-Docker"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Input-format">Input format<a class="anchor-link" href="#Input-format"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><ol>
+<li><code>--fam</code>, Fam file (required, format: "fid iid fathid mothid sex trait[1 control, 2 case, -9 or 0 missing]")</li>
+</ol>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> testdata/test_ped.fam
+<span class="mi">1033</span>    <span class="mi">1033_2</span>  <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">1033</span>    <span class="mi">1033_1</span>  <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">1033</span>    <span class="mi">1033_99</span> <span class="mi">1033_1</span>  <span class="mi">1033_2</span>  <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">1033</span>    <span class="mi">1033_9</span>  <span class="mi">1033_1</span>  <span class="mi">1033_2</span>  <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">1033</span>    <span class="mi">1033_3</span>  <span class="mi">1033_1</span>  <span class="mi">1033_2</span>  <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">1036</span>    <span class="mi">1036_99</span> <span class="mi">1036_1</span>  <span class="mi">1036_2</span>  <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">1036</span>    <span class="mi">1036_6</span>  <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">1036</span>    <span class="mi">1036_1</span>  <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">1036</span>    <span class="mi">1036_3</span>  <span class="mi">1036_6</span>  <span class="mi">1036_99</span> <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">1036</span>    <span class="mi">1036_4</span>  <span class="mi">1036_6</span>  <span class="mi">1036_99</span> <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">1036</span>    <span class="mi">1036_2</span>  <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">1036</span>    <span class="mi">1036_5</span>  <span class="mi">1036_6</span>  <span class="mi">1036_99</span> <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="mi">10</span><span class="n">J_103_10</span>      <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="mi">10</span><span class="n">J_103_4</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="mi">10</span><span class="n">J_103_3</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="mi">10</span><span class="n">J_103_2</span>       <span class="mi">10</span><span class="n">J_103_4</span>       <span class="mi">10</span><span class="n">J_103_3</span>       <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="mi">10</span><span class="n">J_103_1</span>       <span class="mi">10</span><span class="n">J_103_10</span>      <span class="mi">10</span><span class="n">J_103_3</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_2</span>       <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_3</span>       <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_4</span>       <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="o">-</span><span class="mi">9</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_1</span>       <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="mi">10</span><span class="n">J_109_7</span>       <span class="mi">10</span><span class="n">J_109_6</span>       <span class="mi">10</span><span class="n">J_109_5</span>       <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="mi">10</span><span class="n">J_112_3</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="mi">10</span><span class="n">J_112_5</span>       <span class="mi">10</span><span class="n">J_112_3</span>       <span class="mi">10</span><span class="n">J_112_2</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="mi">10</span><span class="n">J_112_1</span>       <span class="mi">10</span><span class="n">J_112_3</span>       <span class="mi">10</span><span class="n">J_112_2</span>       <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="mi">10</span><span class="n">J_112_7</span>       <span class="mi">10</span><span class="n">J_112_3</span>       <span class="mi">10</span><span class="n">J_112_2</span>       <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="mi">10</span><span class="n">J_112_2</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_2</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_5</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">2</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_4</span>       <span class="mi">0</span>       <span class="mi">0</span>       <span class="mi">1</span>       <span class="mi">1</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_6</span>       <span class="mi">10</span><span class="n">J_119_4</span>       <span class="mi">10</span><span class="n">J_119_5</span>       <span class="mi">1</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_7</span>       <span class="mi">10</span><span class="n">J_119_4</span>       <span class="mi">10</span><span class="n">J_119_5</span>       <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_1</span>       <span class="mi">10</span><span class="n">J_119_4</span>       <span class="mi">10</span><span class="n">J_119_5</span>       <span class="mi">2</span>       <span class="mi">2</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="mi">10</span><span class="n">J_119_3</span>       <span class="mi">10</span><span class="n">J_119_2</span>       <span class="mi">10</span><span class="n">J_119_1</span>       <span class="mi">1</span>       <span class="mi">1</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Overwriting ../testdata/test_ped.fam
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><ol>
+<li><code>--vcf</code>, VCF file (required, vcf.gz with vcf.gz.tbi)
+<pre><code>bgzip -c file.vcf &gt; file.vcf.gz
+tabix -p vcf file.vcf.gz</code></pre>
+</li>
+</ol>
+</li>
+</ul>
+<ul>
+<li><ol>
+<li><code>--anno</code>, Annotation file from <code>ANNOVAR</code>, It must contains the allele frequency for population in the file of family population information. For example in here, The annotation file must have AF_amr, AF_afr, AF_nfe columns.</li>
+</ol>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">anno</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;testdata/test_chr1_anno.csv&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">anno</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Chr</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Ref</th>
+      <th>Alt</th>
+      <th>Func.refGene</th>
+      <th>Gene.refGene</th>
+      <th>GeneDetail.refGene</th>
+      <th>ExonicFunc.refGene</th>
+      <th>AAChange.refGene</th>
+      <th>...</th>
+      <th>CLNDISDB</th>
+      <th>CLNREVSTAT</th>
+      <th>CLNSIG</th>
+      <th>DN ID</th>
+      <th>Patient ID</th>
+      <th>Phenotype</th>
+      <th>Platform</th>
+      <th>Study</th>
+      <th>Pubmed ID</th>
+      <th>Otherinfo1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>10140</td>
+      <td>10147</td>
+      <td>ACCCTAAC</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1727</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10140:ACCCTAAC:A</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>10146</td>
+      <td>10147</td>
+      <td>AC</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1727</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10146:AC:A</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>10146</td>
+      <td>10148</td>
+      <td>ACC</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10146:ACC:*</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>10150</td>
+      <td>10151</td>
+      <td>CT</td>
+      <td>C</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1723</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10150:CT:C</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>10172</td>
+      <td>10177</td>
+      <td>CCCTAA</td>
+      <td>C</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1697</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10172:CCCTAA:C</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>995</th>
+      <td>1</td>
+      <td>66479</td>
+      <td>66487</td>
+      <td>TATTTATAG</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66479:TATTTATAG:*</td>
+    </tr>
+    <tr>
+      <th>996</th>
+      <td>1</td>
+      <td>66480</td>
+      <td>66481</td>
+      <td>AT</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>FAM138A;OR4F5</td>
+      <td>dist=30399;dist=2610</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66480:AT:A</td>
+    </tr>
+    <tr>
+      <th>997</th>
+      <td>1</td>
+      <td>66480</td>
+      <td>66483</td>
+      <td>ATTT</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66480:ATTT:*</td>
+    </tr>
+    <tr>
+      <th>998</th>
+      <td>1</td>
+      <td>66481</td>
+      <td>66488</td>
+      <td>TTTATAGA</td>
+      <td>T</td>
+      <td>intergenic</td>
+      <td>FAM138A;OR4F5</td>
+      <td>dist=30400;dist=2603</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66481:TTTATAGA:T</td>
+    </tr>
+    <tr>
+      <th>999</th>
+      <td>1</td>
+      <td>66481</td>
+      <td>66488</td>
+      <td>TTTATAGA</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66481:TTTATAGA:*</td>
+    </tr>
+  </tbody>
+</table>
+<p>1000 rows × 152 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">anno</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,[</span><span class="s1">&#39;AF_amr&#39;</span><span class="p">,</span> <span class="s1">&#39;AF_afr&#39;</span><span class="p">,</span> <span class="s1">&#39;AF_nfe&#39;</span><span class="p">]]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>AF_amr</th>
+      <th>AF_afr</th>
+      <th>AF_nfe</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.0006</td>
+      <td>0.0008</td>
+      <td>0.0007</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.6380</td>
+      <td>0.6300</td>
+      <td>0.6413</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0357</td>
+      <td>0.0426</td>
+      <td>0.0370</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0086</td>
+      <td>0.0097</td>
+      <td>0.0084</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>995</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+    </tr>
+    <tr>
+      <th>996</th>
+      <td>0.0039</td>
+      <td>0.0036</td>
+      <td>0.0076</td>
+    </tr>
+    <tr>
+      <th>997</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+    </tr>
+    <tr>
+      <th>998</th>
+      <td>0.0163</td>
+      <td>0.0410</td>
+      <td>0.0279</td>
+    </tr>
+    <tr>
+      <th>999</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+    </tr>
+  </tbody>
+</table>
+<p>1000 rows × 3 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Or, create a self-defined annotation file like this:</p>
+
+<pre><code>    Chr Start   AF_amr  AF  AF_nfe  AF_afr
+chr1:10140:ACCCTAAC:A   1   10140   0.0006  0.0007  0.0007  0.0008
+chr1:10146:AC:A 1   10146   0.638   0.6328  0.6413  0.63
+chr1:10150:CT:C 1   10150   0.0357  0.0375  0.037   0.0426
+chr1:10172:CCCTAA:C 1   10172   0.0086  0.0082  0.0084  0.0097
+chr1:10178:CCTAA:C  1   10178   0.5 0.3333  0.2955  0.4375
+chr1:10198:TAACCC:T 1   10198   0.0 0.0 0.0 0.0
+chr1:10231:C:A  1   10231   0.2 0.0366  0.0 0.05
+chr1:10236:AACCCT:A 1   10236   0.0 0.0 0.0 0.0
+chr1:10247:TAAACCCTA:T  1   10247   0.2222  0.2089  0.1429  0.4211</code></pre>
+<p>The index must match with the ID in vcf file.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><ol>
+<li><code>--pop</code>, The file of family population information</li>
+</ol>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> testdata/test_fam_pop.txt
+<span class="mi">1033</span> <span class="n">AF_amr</span>
+<span class="mi">1036</span> <span class="n">AF_amr</span>
+<span class="mi">10</span><span class="n">J_103</span> <span class="n">AF_afr</span>
+<span class="mi">10</span><span class="n">J_109</span> <span class="n">AF_nfe</span>
+<span class="mi">10</span><span class="n">J_112</span> <span class="n">AF_nfe</span>
+<span class="mi">10</span><span class="n">J_119</span> <span class="n">AF_nfe</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing ../testdata/test_fam_pop.txt
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><ol>
+<li><code>--included-vars</code>, The file with one column of variants
+For example:
+<pre><code>chr1:10140:ACCCTAAC:A
+chr1:10172:CCCTAA:C
+chr1:10198:TAACCC:T
+chr1:10236:AACCCT:A
+chr1:10261:T:TA
+chr1:10262:AACCCT:A</code></pre>
+</li>
+</ol>
+</li>
+<li><ol>
+<li><code>--blueprint</code>, The blueprint file that defines regional marker (format: "chr startpos endpos name avg.distance male.distance female.distance"). The first four columns are required.</li>
+</ol>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> testdata/test_blueprint_ext.txt
+<span class="mi">1</span>       <span class="mi">11868</span>   <span class="mi">14362</span>   <span class="n">LOC102725121</span><span class="o">@</span><span class="mi">1</span>  <span class="mf">9.177127474362311e-07</span>   <span class="mf">1.1657192989882668e-06</span>  <span class="mf">6.814189157634088e-07</span>
+<span class="mi">1</span>       <span class="mi">11873</span>   <span class="mi">14409</span>   <span class="n">DDX11L1</span> <span class="mf">9.195320788455595e-07</span>   <span class="mf">1.1680302941673515e-06</span>  <span class="mf">6.82769803434766e-07</span>
+<span class="mi">1</span>       <span class="mi">14361</span>   <span class="mi">29370</span>   <span class="n">WASH7P</span>  <span class="mf">1.5299877409602128e-06</span>  <span class="mf">1.94345806118021e-06</span>    <span class="mf">1.136044574393209e-06</span>
+<span class="mi">1</span>       <span class="mi">17368</span>   <span class="mi">17436</span>   <span class="n">MIR6859</span><span class="o">-</span><span class="mi">1</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">2</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">3</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">4</span><span class="o">@</span><span class="mi">1</span> <span class="mf">1.217692507120495e-06</span>   <span class="mf">1.5467668502473368e-06</span>  <span class="mf">9.041595098829462e-07</span>
+<span class="mi">1</span>       <span class="mi">30365</span>   <span class="mi">30503</span>   <span class="n">MIR1302</span><span class="o">-</span><span class="mi">10</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">11</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">2</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">9</span><span class="o">@</span><span class="mi">1</span>       <span class="mf">2.1295973889038703e-06</span>  <span class="mf">2.705108741548526e-06</span>   <span class="mf">1.5812659765416382e-06</span>
+<span class="mi">1</span>       <span class="mi">34610</span>   <span class="mi">36081</span>   <span class="n">FAM138A</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">FAM138C</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">FAM138F</span><span class="o">@</span><span class="mi">1</span>   <span class="mf">2.4732411024120156e-06</span>  <span class="mf">3.1416201771056266e-06</span>  <span class="mf">1.8364278747737466e-06</span>
+<span class="mi">1</span>       <span class="mi">69090</span>   <span class="mi">70008</span>   <span class="n">OR4F5</span>   <span class="mf">4.866641545668504e-06</span>   <span class="mf">6.181823219621424e-06</span>   <span class="mf">3.6135725636621673e-06</span>
+<span class="mi">1</span>       <span class="mi">134772</span>  <span class="mi">140566</span>  <span class="n">LOC729737</span>       <span class="mf">9.633289838108921e-06</span>   <span class="mf">1.2236630588823159e-05</span>  <span class="mf">7.152898262617822e-06</span>
+<span class="mi">1</span>       <span class="mi">490755</span>  <span class="mi">495445</span>  <span class="n">LOC100132062</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">LOC100132287</span><span class="o">@</span><span class="mi">1</span>   <span class="mf">2.2828130832833112e-05</span>  <span class="mf">2.8997300893994373e-05</span>  <span class="mf">1.6950315013571593e-05</span>
+<span class="mi">1</span>       <span class="mi">450739</span>  <span class="mi">451678</span>  <span class="n">OR4F16</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">OR4F29</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">OR4F3</span><span class="o">@</span><span class="mi">1</span>       <span class="mf">2.575942360468604e-05</span>   <span class="mf">3.2720758549649544e-05</span>  <span class="mf">1.912685483821856e-05</span>
+<span class="mi">1</span>       <span class="mi">627379</span>  <span class="mi">629009</span>  <span class="n">LOC101928626</span>    <span class="mf">3.943568768003252e-05</span>   <span class="mf">5.009295373297854e-05</span>   <span class="mf">2.9281737249900675e-05</span>
+<span class="mi">1</span>       <span class="mi">632614</span>  <span class="mi">632685</span>  <span class="n">MIR12136</span>        <span class="mf">3.974742311959244e-05</span>   <span class="mf">5.048893386847169e-05</span>   <span class="mf">2.9513206656665908e-05</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Overwriting testdata/test_blueprint_ext.txt
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Or</p>
+
+</div>
+</div>
+</div>
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> testdata/test_blueprint.txt
+<span class="mi">1</span>       <span class="mi">11868</span>   <span class="mi">14362</span>   <span class="n">LOC102725121</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">11873</span>   <span class="mi">14409</span>   <span class="n">DDX11L1</span>
+<span class="mi">1</span>       <span class="mi">14361</span>   <span class="mi">29370</span>   <span class="n">WASH7P</span>
+<span class="mi">1</span>       <span class="mi">17368</span>   <span class="mi">17436</span>   <span class="n">MIR6859</span><span class="o">-</span><span class="mi">1</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">2</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">3</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR6859</span><span class="o">-</span><span class="mi">4</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">30365</span>   <span class="mi">30503</span>   <span class="n">MIR1302</span><span class="o">-</span><span class="mi">10</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">11</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">2</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">MIR1302</span><span class="o">-</span><span class="mi">9</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">34610</span>   <span class="mi">36081</span>   <span class="n">FAM138A</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">FAM138C</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">FAM138F</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">69090</span>   <span class="mi">70008</span>   <span class="n">OR4F5</span>
+<span class="mi">1</span>       <span class="mi">134772</span>  <span class="mi">140566</span>  <span class="n">LOC729737</span>
+<span class="mi">1</span>       <span class="mi">490755</span>  <span class="mi">495445</span>  <span class="n">LOC100132062</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">LOC100132287</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">450739</span>  <span class="mi">451678</span>  <span class="n">OR4F16</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">OR4F29</span><span class="o">@</span><span class="mi">1</span><span class="p">,</span><span class="n">OR4F3</span><span class="o">@</span><span class="mi">1</span>
+<span class="mi">1</span>       <span class="mi">627379</span>  <span class="mi">629009</span>  <span class="n">LOC101928626</span>
+<span class="mi">1</span>       <span class="mi">632614</span>  <span class="mi">632685</span>  <span class="n">MIR12136</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Overwriting testdata/test_blueprint.txt
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    {% endraw %}
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Output-format">Output format<a class="anchor-link" href="#Output-format"> </a></h3>
 </div>
 </div>
 </div>

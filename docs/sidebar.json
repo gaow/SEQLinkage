@@ -3,8 +3,8 @@
     "Overview": "/",
     "Main module": "Main.html",
     "Core module": "Core.html",
-    "Linkage analysis pipeline": "Linkage.html",
-    "utils module": "Utils.html",
+    "Linkage module": "Linkage.html",
+    "Utils module": "Utils.html",
     "Runner module": "Runner.html"
   }
 }

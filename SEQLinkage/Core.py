@@ -118,6 +118,7 @@ class RData(dict):
     def load_fam(self,fam_path):
         fam = pd.read_csv(fam_path,delim_whitespace=True,header=None,names=['fid','iid','fathid','mothid','sex','trait'])
         fam.index = list(fam.iid)
+        fam.fid=fam.fid.astype(str)
         fam.loc[fam.trait==-9,'trait']=0
         fam['vcf']=False
         fam.loc[fam.index.isin(self.samples_vcf),'vcf']=True
@@ -251,8 +252,9 @@ class RegionExtractor:
                 if maf>0.5: #skip variants with af>0.5
                     continue
             except Exception as e:
-                raise ValueError("VCF line {}:{} does not have valid allele frequency field {}!".\
+                env.log("VCF line {}:{} does not have valid allele frequency field {}!".\
                                  format(self.vcf.GetChrom(), self.vcf.GetPosition(), data.af_info))
+                continue
 
             # for each family assign member genotype if the site is non-trivial to the family
             for k in data.families:
@@ -296,7 +298,7 @@ class RegionExtractor:
             try:
                 mafs=varmafs.loc[self.vcf.GetVariantID()][2:]
             except:
-                print(self.vcf.GetVariantID(), 'is not in annotation')
+                #print(self.vcf.GetVariantID(), 'is not in annotation')
                 continue
             if mafs.any()==False:
                 continue
@@ -667,9 +669,12 @@ class LinkageWriter:
         self.prev_chrom = self.chrom
 
     def getRegion(self, region):
-        self.chrom = region[0]
-        self.name, self.distance_avg, self.distance_m, self.distance_f = region[3:]
-        self.distance = ";".join([self.distance_avg, self.distance_m, self.distance_f])
+        self.chrom, self.startpos, self.endpos, self.name = region[:4]
+        if len(region)>4:
+            self.distance_avg, self.distance_m, self.distance_f = region[4:]
+            self.distance = ";".join([self.distance_avg, self.distance_m, self.distance_f])
+        else:
+            self.distance = "."
 
 class EncoderWorker(Process):
     def __init__(self, queue, length, data, extractor, coder, writer):
@@ -732,7 +737,6 @@ class EncoderWorker(Process):
 # Cell
 def run_each_region(regions,data,extractor,maker,writer,runlinkage=True,cutoff=1.0,chp=True,rho=np.arange(0,0.5,0.05),model = "AD",chrom = "AUTOSOMAL",penetrances = [0.01,0.9,0.9],dfreq=0.001):
     '''get the haplotypes and allele frequency of variants in each region and run linkage analysis'''
-    print(runlinkage,chp)
     results = {}
     i=0
     output_chr='chr'+str(data.anno.Chr.unique()[0])+'result' if data.anno is not None and len(data.anno.Chr.unique())==1 else 'chrallresult'
@@ -789,6 +793,6 @@ def run_each_region(regions,data,extractor,maker,writer,runlinkage=True,cutoff=1
         with open(gene_genotype_file, 'wb') as handle:
             pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
         results = {}
-        if runlinkage:#linkage analysis
-            linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
-            summarize_lods(gene_genotype_file[:-8]+'*_linkage.lods',os.path.join(env.outdir,output_chr),regions,phase=chp)
+    if runlinkage:#linkage analysis
+        linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
+        summarize_lods(gene_genotype_file[:-8]+'*_linkage.lods',os.path.join(env.outdir,output_chr),regions,phase=chp)

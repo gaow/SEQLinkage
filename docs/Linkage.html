@@ -1,12 +1,12 @@
 ---
 
-title: Linkage analysis pipeline
+title: Linkage module
 
 keywords: fastai
 sidebar: home_sidebar
 
-
-
+summary: "The core functions for linkage analysis. Paramlink2 is used to do linkage analysis. The R code is bridged to python through rpy2. It run linkage analysis from batch to batch (default is 25 genes per batch). "
+description: "The core functions for linkage analysis. Paramlink2 is used to do linkage analysis. The R code is bridged to python through rpy2. It run linkage analysis from batch to batch (default is 25 genes per batch). "
 nb_path: "nbs/02_Linkage.ipynb"
 ---
 <!--
@@ -28,14 +28,6 @@ nb_path: "nbs/02_Linkage.ipynb"
 </div>
     {% endraw %}
 
-<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>This pipeline is using paramlink2 to do linkage analysis. The R code is bridged to python through rpy2. It run linkage analysis from batch to batch. Its input is the intermediate result of seqlink.
-Next, I will make it to a sos pipeline. Run all the chromosomes in parallel.</p>
-
-</div>
-</div>
-</div>
     {% raw %}
     
 <div class="cell border-box-sizing code_cell rendered">

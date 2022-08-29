@@ -16,10 +16,10 @@ entries:
       title: Core module
       url: Core.html
     - output: web,pdf
-      title: Linkage analysis pipeline
+      title: Linkage module
       url: Linkage.html
     - output: web,pdf
-      title: utils module
+      title: Utils module
       url: Utils.html
     - output: web,pdf
       title: Runner module

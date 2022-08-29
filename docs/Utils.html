@@ -1,7 +1,6 @@
 ---
 
-title: utils module
-
+title: Utils module
 
 keywords: fastai
 sidebar: home_sidebar
@@ -33,6 +32,13 @@ nb_path: "nbs/03_Utils.ipynb"
     
 <div class="cell border-box-sizing code_cell rendered">
 
+</div>
+    {% endraw %}
+
+    {% raw %}
+    
+<div class="cell border-box-sizing code_cell rendered">
+
 <div class="output_wrapper">
 <div class="output">
 
@@ -40,7 +46,7 @@ nb_path: "nbs/03_Utils.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="mkpath" class="doc_header"><code>mkpath</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L26" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>mkpath</code>(<strong><code>directory</code></strong>)</p>
+<h4 id="mkpath" class="doc_header"><code>mkpath</code><a href="__main__.py#L18" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>mkpath</code>(<strong><code>directory</code></strong>)</p>
 </blockquote>
 <p>Have to use system mkdir here because python2.7's mkpath is currently faulty!</p>
 
@@ -65,7 +71,7 @@ nb_path: "nbs/03_Utils.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="Environment" class="doc_header"><code>class</code> <code>Environment</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L33" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>Environment</code>()</p>
+<h2 id="Environment" class="doc_header"><code>class</code> <code>Environment</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>Environment</code>()</p>
 </blockquote>
 
 </div>
@@ -89,7 +95,7 @@ nb_path: "nbs/03_Utils.ipynb"
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="StdoutCapturer" class="doc_header"><code>class</code> <code>StdoutCapturer</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L175" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>StdoutCapturer</code>(<strong><code>iterable</code></strong>=<em><code>()</code></em>) :: <code>list</code></p>
+<h2 id="StdoutCapturer" class="doc_header"><code>class</code> <code>StdoutCapturer</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>StdoutCapturer</code>(<strong><code>iterable</code></strong>=<em><code>()</code></em>) :: <code>list</code></p>
 </blockquote>
 <p>Built-in mutable sequence.</p>
 <p>If no argument is given, the constructor creates a new empty list.
@@ -116,7 +122,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="stdoutRedirect" class="doc_header"><code>stdoutRedirect</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L185" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>stdoutRedirect</code>(<strong><code>to</code></strong>=<em><code>'/dev/null'</code></em>)</p>
+<h4 id="stdoutRedirect" class="doc_header"><code>stdoutRedirect</code><a href="__main__.py#L177" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>stdoutRedirect</code>(<strong><code>to</code></strong>=<em><code>'/dev/null'</code></em>)</p>
 </blockquote>
 <p>import os</p>
 <p>with stdoutRedirect(to=filename):
@@ -144,7 +150,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="cd" class="doc_header"><code>class</code> <code>cd</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L215" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>cd</code>(<strong><code>newPath</code></strong>)</p>
+<h2 id="cd" class="doc_header"><code>class</code> <code>cd</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>cd</code>(<strong><code>newPath</code></strong>)</p>
 </blockquote>
 <p>Context manager for changing the current working directory</p>
 
@@ -169,7 +175,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="runCommand" class="doc_header"><code>runCommand</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L227" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>runCommand</code>(<strong><code>cmd</code></strong>, <strong><code>instream</code></strong>=<em><code>None</code></em>, <strong><code>msg</code></strong>=<em><code>''</code></em>, <strong><code>upon_succ</code></strong>=<em><code>None</code></em>, <strong><code>show_stderr</code></strong>=<em><code>False</code></em>, <strong><code>return_zero</code></strong>=<em><code>True</code></em>)</p>
+<h4 id="runCommand" class="doc_header"><code>runCommand</code><a href="__main__.py#L219" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>runCommand</code>(<strong><code>cmd</code></strong>, <strong><code>instream</code></strong>=<em><code>None</code></em>, <strong><code>msg</code></strong>=<em><code>''</code></em>, <strong><code>upon_succ</code></strong>=<em><code>None</code></em>, <strong><code>show_stderr</code></strong>=<em><code>False</code></em>, <strong><code>return_zero</code></strong>=<em><code>True</code></em>)</p>
 </blockquote>
 
 </div>
@@ -193,7 +199,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="CMDWorker" class="doc_header"><code>class</code> <code>CMDWorker</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L260" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>CMDWorker</code>(<strong><code>queue</code></strong>) :: <code>Process</code></p>
+<h2 id="CMDWorker" class="doc_header"><code>class</code> <code>CMDWorker</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>CMDWorker</code>(<strong><code>queue</code></strong>) :: <code>Process</code></p>
 </blockquote>
 <p>Process objects represent activity that is run in a separate process</p>
 <p>The class is analogous to <code>threading.Thread</code></p>
@@ -219,7 +225,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="runCommands" class="doc_header"><code>runCommands</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L276" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>runCommands</code>(<strong><code>cmds</code></strong>, <strong><code>ncpu</code></strong>)</p>
+<h4 id="runCommands" class="doc_header"><code>runCommands</code><a href="__main__.py#L268" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>runCommands</code>(<strong><code>cmds</code></strong>, <strong><code>ncpu</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -243,7 +249,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="parmap" class="doc_header"><code>parmap</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L294" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>parmap</code>(<strong><code>f</code></strong>, <strong><code>X</code></strong>, <strong><code>nprocs</code></strong>=<em><code>32</code></em>)</p>
+<h4 id="parmap" class="doc_header"><code>parmap</code><a href="__main__.py#L286" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>parmap</code>(<strong><code>f</code></strong>, <strong><code>X</code></strong>, <strong><code>nprocs</code></strong>=<em><code>32</code></em>)</p>
 </blockquote>
 
 </div>
@@ -267,7 +273,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="downloadURL" class="doc_header"><code>downloadURL</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L316" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>downloadURL</code>(<strong><code>URL</code></strong>, <strong><code>dest_dir</code></strong>, <strong><code>quiet</code></strong>=<em><code>True</code></em>, <strong><code>mode</code></strong>=<em><code>None</code></em>, <strong><code>force</code></strong>=<em><code>False</code></em>)</p>
+<h4 id="downloadURL" class="doc_header"><code>downloadURL</code><a href="__main__.py#L308" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>downloadURL</code>(<strong><code>URL</code></strong>, <strong><code>dest_dir</code></strong>, <strong><code>quiet</code></strong>=<em><code>True</code></em>, <strong><code>mode</code></strong>=<em><code>None</code></em>, <strong><code>force</code></strong>=<em><code>False</code></em>)</p>
 </blockquote>
 
 </div>
@@ -291,7 +297,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="calculateFileMD5" class="doc_header"><code>calculateFileMD5</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L345" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>calculateFileMD5</code>(<strong><code>filename</code></strong>)</p>
+<h4 id="calculateFileMD5" class="doc_header"><code>calculateFileMD5</code><a href="__main__.py#L337" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>calculateFileMD5</code>(<strong><code>filename</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -315,7 +321,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="zipdir" class="doc_header"><code>zipdir</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L375" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>zipdir</code>(<strong><code>path</code></strong>, <strong><code>zipfile</code></strong>, <strong><code>arcroot</code></strong>=<em><code>'/'</code></em>)</p>
+<h4 id="zipdir" class="doc_header"><code>zipdir</code><a href="__main__.py#L367" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>zipdir</code>(<strong><code>path</code></strong>, <strong><code>zipfile</code></strong>, <strong><code>arcroot</code></strong>=<em><code>'/'</code></em>)</p>
 </blockquote>
 
 </div>
@@ -339,7 +345,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="removeFiles" class="doc_header"><code>removeFiles</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L382" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>removeFiles</code>(<strong><code>dest</code></strong>, <strong><code>exclude</code></strong>=<em><code>[]</code></em>, <strong><code>hidden</code></strong>=<em><code>False</code></em>)</p>
+<h4 id="removeFiles" class="doc_header"><code>removeFiles</code><a href="__main__.py#L374" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>removeFiles</code>(<strong><code>dest</code></strong>, <strong><code>exclude</code></strong>=<em><code>[]</code></em>, <strong><code>hidden</code></strong>=<em><code>False</code></em>)</p>
 </blockquote>
 
 </div>
@@ -363,7 +369,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="removeEmptyDir" class="doc_header"><code>removeEmptyDir</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L393" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>removeEmptyDir</code>(<strong><code>directory</code></strong>)</p>
+<h4 id="removeEmptyDir" class="doc_header"><code>removeEmptyDir</code><a href="__main__.py#L385" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>removeEmptyDir</code>(<strong><code>directory</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -387,7 +393,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="copyFiles" class="doc_header"><code>copyFiles</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L400" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>copyFiles</code>(<strong><code>pattern</code></strong>, <strong><code>dist</code></strong>, <strong><code>ignore_hidden</code></strong>=<em><code>True</code></em>)</p>
+<h4 id="copyFiles" class="doc_header"><code>copyFiles</code><a href="__main__.py#L392" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>copyFiles</code>(<strong><code>pattern</code></strong>, <strong><code>dist</code></strong>, <strong><code>ignore_hidden</code></strong>=<em><code>True</code></em>)</p>
 </blockquote>
 
 </div>
@@ -411,7 +417,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="downloadResources" class="doc_header"><code>downloadResources</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L406" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>downloadResources</code>(<strong><code>fromto</code></strong>)</p>
+<h4 id="downloadResources" class="doc_header"><code>downloadResources</code><a href="__main__.py#L398" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>downloadResources</code>(<strong><code>fromto</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -435,7 +441,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="getColumn" class="doc_header"><code>getColumn</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L413" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>getColumn</code>(<strong><code>fn</code></strong>, <strong><code>num</code></strong>, <strong><code>delim</code></strong>=<em><code>None</code></em>, <strong><code>exclude</code></strong>=<em><code>None</code></em>)</p>
+<h4 id="getColumn" class="doc_header"><code>getColumn</code><a href="__main__.py#L405" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>getColumn</code>(<strong><code>fn</code></strong>, <strong><code>num</code></strong>, <strong><code>delim</code></strong>=<em><code>None</code></em>, <strong><code>exclude</code></strong>=<em><code>None</code></em>)</p>
 </blockquote>
 
 </div>
@@ -459,7 +465,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="wordCount" class="doc_header"><code>wordCount</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L424" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>wordCount</code>(<strong><code>filename</code></strong>)</p>
+<h4 id="wordCount" class="doc_header"><code>wordCount</code><a href="__main__.py#L416" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>wordCount</code>(<strong><code>filename</code></strong>)</p>
 </blockquote>
 <p>Returns a word/count dict for this filename.</p>
 
@@ -484,7 +490,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="fileLinesCount" class="doc_header"><code>fileLinesCount</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L438" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>fileLinesCount</code>(<strong><code>fname</code></strong>)</p>
+<h4 id="fileLinesCount" class="doc_header"><code>fileLinesCount</code><a href="__main__.py#L430" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>fileLinesCount</code>(<strong><code>fname</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -508,7 +514,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="connected_components" class="doc_header"><code>connected_components</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L444" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>connected_components</code>(<strong><code>lists</code></strong>)</p>
+<h4 id="connected_components" class="doc_header"><code>connected_components</code><a href="__main__.py#L436" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>connected_components</code>(<strong><code>lists</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -532,7 +538,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="listit" class="doc_header"><code>listit</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L462" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>listit</code>(<strong><code>t</code></strong>)</p>
+<h4 id="listit" class="doc_header"><code>listit</code><a href="__main__.py#L454" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>listit</code>(<strong><code>t</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -556,7 +562,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="parseVCFline" class="doc_header"><code>parseVCFline</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L469" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>parseVCFline</code>(<strong><code>line</code></strong>, <strong><code>exclude</code></strong>=<em><code>[]</code></em>)</p>
+<h4 id="parseVCFline" class="doc_header"><code>parseVCFline</code><a href="__main__.py#L461" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>parseVCFline</code>(<strong><code>line</code></strong>, <strong><code>exclude</code></strong>=<em><code>[]</code></em>)</p>
 </blockquote>
 
 </div>
@@ -580,7 +586,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="indexVCF" class="doc_header"><code>indexVCF</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L491" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>indexVCF</code>(<strong><code>vcf</code></strong>, <strong><code>verbose</code></strong>=<em><code>True</code></em>)</p>
+<h4 id="indexVCF" class="doc_header"><code>indexVCF</code><a href="__main__.py#L483" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>indexVCF</code>(<strong><code>vcf</code></strong>, <strong><code>verbose</code></strong>=<em><code>True</code></em>)</p>
 </blockquote>
 
 </div>
@@ -604,7 +610,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="extractSamplenames" class="doc_header"><code>extractSamplenames</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L508" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>extractSamplenames</code>(<strong><code>vcf</code></strong>)</p>
+<h4 id="extractSamplenames" class="doc_header"><code>extractSamplenames</code><a href="__main__.py#L500" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>extractSamplenames</code>(<strong><code>vcf</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -628,7 +634,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="checkVCFBundle" class="doc_header"><code>checkVCFBundle</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L514" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>checkVCFBundle</code>(<strong><code>vcf</code></strong>)</p>
+<h4 id="checkVCFBundle" class="doc_header"><code>checkVCFBundle</code><a href="__main__.py#L506" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>checkVCFBundle</code>(<strong><code>vcf</code></strong>)</p>
 </blockquote>
 <p>VCF bundle should have a .gz file and a tabix file</p>
 
@@ -653,7 +659,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="rewriteFamfile" class="doc_header"><code>rewriteFamfile</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L523" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>rewriteFamfile</code>(<strong><code>tfam</code></strong>, <strong><code>samples</code></strong>, <strong><code>keys</code></strong>)</p>
+<h4 id="rewriteFamfile" class="doc_header"><code>rewriteFamfile</code><a href="__main__.py#L515" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>rewriteFamfile</code>(<strong><code>tfam</code></strong>, <strong><code>samples</code></strong>, <strong><code>keys</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -677,7 +683,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h4 id="checkSamples" class="doc_header"><code>checkSamples</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L528" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>checkSamples</code>(<strong><code>samp1</code></strong>, <strong><code>samp2</code></strong>)</p>
+<h4 id="checkSamples" class="doc_header"><code>checkSamples</code><a href="__main__.py#L520" class="source_link" style="float:right">[source]</a></h4><blockquote><p><code>checkSamples</code>(<strong><code>samp1</code></strong>, <strong><code>samp2</code></strong>)</p>
 </blockquote>
 <p>check if two sample lists agree</p>
 <ol>
@@ -706,7 +712,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="NoCache" class="doc_header"><code>class</code> <code>NoCache</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L540" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>NoCache</code>()</p>
+<h2 id="NoCache" class="doc_header"><code>class</code> <code>NoCache</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>NoCache</code>()</p>
 </blockquote>
 
 </div>
@@ -730,7 +736,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="Cache" class="doc_header"><code>class</code> <code>Cache</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L553" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>Cache</code>(<strong><code>cache_dir</code></strong>, <strong><code>cache_name</code></strong>, <strong><code>params</code></strong>)</p>
+<h2 id="Cache" class="doc_header"><code>class</code> <code>Cache</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>Cache</code>(<strong><code>cache_dir</code></strong>, <strong><code>cache_name</code></strong>, <strong><code>params</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -754,7 +760,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="PseudoAutoRegion" class="doc_header"><code>class</code> <code>PseudoAutoRegion</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L643" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>PseudoAutoRegion</code>(<strong><code>chrom</code></strong>, <strong><code>build</code></strong>)</p>
+<h2 id="PseudoAutoRegion" class="doc_header"><code>class</code> <code>PseudoAutoRegion</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>PseudoAutoRegion</code>(<strong><code>chrom</code></strong>, <strong><code>build</code></strong>)</p>
 </blockquote>
 
 </div>
@@ -778,7 +784,7 @@ The argument must be an iterable if specified.</p>
 
 
 <div class="output_markdown rendered_html output_subarea ">
-<h2 id="TFAMParser" class="doc_header"><code>class</code> <code>TFAMParser</code><a href="https://github.com/changebio/SEQLinkage/tree/master/SEQLinkage/Utils.py#L689" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>TFAMParser</code>(<strong><code>tfam</code></strong>=<em><code>None</code></em>)</p>
+<h2 id="TFAMParser" class="doc_header"><code>class</code> <code>TFAMParser</code><a href="" class="source_link" style="float:right">[source]</a></h2><blockquote><p><code>TFAMParser</code>(<strong><code>tfam</code></strong>=<em><code>None</code></em>)</p>
 </blockquote>
 
 </div>
@@ -818,13 +824,6 @@ The argument must be an iterable if specified.</p>
 
 </div>
 </div>
-
-</div>
-    {% endraw %}
-
-    {% raw %}
-    
-<div class="cell border-box-sizing code_cell rendered">
 
 </div>
     {% endraw %}

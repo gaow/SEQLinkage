@@ -1,0 +1,6 @@
+1033 AF_amr
+1036 AF_amr
+10J_103 AF_afr
+10J_109 AF_nfe
+10J_112 AF_nfe
+10J_119 AF_nfe

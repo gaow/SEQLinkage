@@ -36,7 +36,7 @@ class Args:
 
     def getEncoderArguments(self, parser):
         vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
-        vargs.add_argument('--chp', metavar='BOOL', type=bool ,default=False, help='''Use CHP markers if True else single variants. Default to True.''')
+        vargs.add_argument('--chp', action='store_true', help='''Generate CHP markers.''')
         vargs.add_argument('--fam', metavar='FILE', required=True, dest = "tfam", help='''Input pedigree and phenotype information in FAM format.''')
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
         vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
@@ -55,8 +55,8 @@ class Args:
 
     def getLinkageArguments(self, parser):
         vargs = parser.add_argument_group('LINKAGE options')
-        vargs.add_argument('--run-linkage', metavar='BOOL', type=bool ,default=True, dest = "run_linkage",
-                           help='''Perform Linkage analysis using FASTLINK program. Default to True.''')
+        vargs.add_argument('--run-linkage', action='store_true', dest = "run_linkage",
+                           help='''Perform Linkage analysis.''')
         vargs.add_argument('-K', '--prevalence', metavar='FLOAT', type=float,default = 0.001,
                            help='Disease prevalence. Default to 0.001.')
         vargs.add_argument('--moi', metavar='STRING', dest = "inherit_mode",default = 'AD',
@@ -95,9 +95,8 @@ def checkParams(args):
 def main():
     '''the main encoder function'''
     args = Args().get()
-    print(args)
-    print(args.run_linkage,args.chp,'test')
     checkParams(args)
+    env.log(args)
     # load data
     data = RData(args.vcf, args.tfam,args.anno,args.pop,allele_freq_info=args.freq,included_variant_file=args.included_vars)
     samples_vcf = data.samples_vcf
@@ -127,8 +126,7 @@ def main():
         regions=data.get_regions(step=1000)  #whole-genome linkage analysis
     env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
             format(len(data.families), len(data.samples), len(regions)))
-    env.log('Phasing haplotypes log file: [{}]'.format(env.tmp_log + str(os.getpid()) + '.log'))
-    print(args.run_linkage,args.chp,'test')
+
     run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),MarkerMaker(maf_cutoff = args.maf_cutoff),LinkageWriter(len(samples_not_vcf)),
                     runlinkage=args.run_linkage,cutoff=args.maf_cutoff,chp=args.chp,rho=np.arange(0,args.theta_max,args.theta_inc),
                     model = args.inherit_mode,penetrances = [args.wild_pen,args.muta_pen,args.muta_pen],dfreq=args.prevalence)
