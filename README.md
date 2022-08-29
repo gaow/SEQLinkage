@@ -2,11 +2,18 @@
 > Collapsed Haplotype Pattern Method for Linkage Analysis of Next-Generation Sequencing Data
 
 
+### Features
+- It can do linkage analysis on single variants and CHP markers.
+- It can deal with families from different population.
+- It can handle large-scale whole-genome linkage analysis.
+
 ## Pre-requisites
 
 Make sure you install the pre-requisited before running seqlink:
 
+
 ```
+#install cstatgen
 conda install -c conda-forge xeus-cling
 conda install -c anaconda swig 
 conda install -c conda-forge gsl
@@ -14,6 +21,10 @@ pip install egglib
 git clone https://github.com/statgenetics/cstatgen.git
 cd cstatgen
 python setup.py install
+
+#install paramlink2
+R
+install.packages("paramlink2")
 ```
 
 ## Install
@@ -22,56 +33,215 @@ python setup.py install
 
 ## How to use
 
-### 1. Test on seqlinkage-example
-
-```
-seqlink --fam seqlinkage-example.fam --vcf seqlinkage-example.vcf.gz -f MERLIN --output RMBPt8 --jobs 8
-
-seqlink --fam seqlinkage-example.fam --vcf seqlinkage-example.vcf.gz -f MERLIN --output RMB0 --jobs 8 --bin 0
-
-seqlink --fam seqlinkage-example.fam --vcf seqlinkage-example.vcf.gz -f MERLIN --output RMB1 --jobs 8 --bin 1
-
-seqlink --fam seqlinkage-example.fam --vcf seqlinkage-example.vcf.gz --freq EVSEAAF -o LinkageAnalysis -K 0.001 --moi AR -W 0 -M 1 --theta-max 0.5 --theta-inc 0.05 -j 8 --run-linkage
+```python
+!seqlink --help
 ```
 
-### 2. Test on AD family
+    usage: seqlink [-h] [--chp] --fam FILE --vcf FILE [--anno FILE] [--pop FILE]
+                   [--included-vars FILE] [-b FILE] [-c P] [-o Name]
+                   [--build STRING] [--freq INFO] [--chrom-prefix STRING]
+                   [--run-linkage] [-K FLOAT] [--moi STRING] [-W FLOAT] [-M FLOAT]
+                   [--theta-max FLOAT] [--theta-inc FLOAT]
+    
+    SEQLinkage V2, linkage analysis using sequence data
+    
+    options:
+      -h, --help            show this help message and exit
+    
+    Collapsed haplotype pattern method arguments:
+      --chp                 Generate CHP markers.
+      --fam FILE            Input pedigree and phenotype information in FAM
+                            format.
+      --vcf FILE            Input VCF file, bgzipped.
+      --anno FILE           Input annotation file from annovar.
+      --pop FILE            Input two columns file, first column is family ID,
+                            second column population information.
+      --included-vars FILE  Variants to be included for linkage analysis, if None,
+                            the analysis won't filter any variants. But you can
+                            still set AF cutoff by -c argment.
+      -b FILE, --blueprint FILE
+                            Blueprint file that defines regional marker (format:
+                            "chr startpos endpos name avg.distance male.distance
+                            female.distance").
+      -c P, --maf-cutoff P  MAF cutoff to define variants to be excluded from
+                            analyses. this is useful, if you need to analyse
+                            multiple population together.
+      -o Name, --output Name
+                            Output name prefix.
+      --build STRING        Reference genome version for VCF file.
+      --freq INFO           Info field name for allele frequency in VCF file.
+      --chrom-prefix STRING
+                            Prefix to chromosome name in VCF file if applicable,
+                            e.g. "chr".
+    
+    LINKAGE options:
+      --run-linkage         Perform Linkage analysis.
+      -K FLOAT, --prevalence FLOAT
+                            Disease prevalence. Default to 0.001.
+      --moi STRING          Mode of inheritance, AD/AR: autosomal
+                            dominant/recessive. Default to AD.
+      -W FLOAT, --wt-pen FLOAT
+                            Penetrance for wild type. Default to 0.01.
+      -M FLOAT, --mut-pen FLOAT
+                            Penetrance for mutation. Default to 0.9.
+      --theta-max FLOAT     Theta upper bound. Default to 0.5.
+      --theta-inc FLOAT     Theta increment. Default to 0.05.
 
-```
-seqlink --fam data/mwe_normal_fam.csv --vcf data/first1000snp_full_samples.vcf.gz -f LINKAGE --blueprint data/genemap.hg38.txt --freq AF -K 0.001 --moi AD -W 0 -M 1
 
-seqlink --fam data/mwe_normal_fam.csv --vcf data/first1000snp_full_samples.vcf.gz -f MERLIN --blueprint data/genemap.hg38.txt --freq AF
-```
+### Linkage analysis on specific regions
+> Normally, the regions are gene regions. you can also use self-defined regions, such as promoter regions, enhancer regions.
 
-```
-./seqlink --fam seqlinkage-example/seqlinkage-example.fam --vcf seqlinkage-example/seqlinkage-example.vcf.gz -f MERLIN --blueprint data/genemap.txt --freq EVSEAAF -o seqtest
-./seqlink --fam data/new_trim_ped_famless17.fam --vcf data/first1000snp_full_samples.vcf.gz -f MERLIN --blueprint data/genemap.hg38.txt --freq AF
-```
-
-./seqlink --fam data/new_trim_ped_famless17.fam --vcf data/first1000snp_full_samples.vcf.gz -f MERLIN --blueprint data/genemap.hg38.txt --freq AF -K 0.001 --moi AD -W 0 -M 1 --run-linkage
-
-./seqlink --fam data/Example_data/pedigree.fam --vcf data/Example_data/example.vcf.gz -f MERLIN MEGA2 PLINK LINKAGE --build hg38 --chrom-prefix chr --freq AF -o data/Example_data/output -K 0.001 --moi AD -W 0 -M 1
-
-
-./seqlink --fam data/mwe_normal_fam.csv --vcf data/first1000snp_full_samples.vcf.gz --anno data/first1000_chr1_multianno.csv --pop data/full_sample_fam_pop.txt -f MERLIN MEGA2 PLINK LINKAGE --build hg38 --freq AF -o data/first1000test -K 0.001 --moi AD -W 0 -M 1
-
-./seqlink --fam data/new_trim_ped_famless17_no\:xx.fam --vcf /mnt/mfs/statgen/alzheimers-family/linkage_files/geno/full_sample/vcf/full_sample.vcf.gz --anno MWE/annotation/EFIGA_NIALOAD_chr1.hg38.hg38_multianno.csv --pop data/full_sample_fam_pop.txt -f MERLIN MEGA2 PLINK LINKAGE --build hg38 --freq AF -o data/fullchr1data -K 0.001 --moi AD -W 0 -M 1 -j 4
-
-## Testing output
-
-seqlink --fam seqlinkage-example/seqlinkage-example.fam --vcf seqlinkage-example/seqlinkage-example.vcf.gz -f MERLIN MEGA2 PLINK LINKAGE --blueprint data/genemap.txt --freq EVSEAAF -o data/seqtest_20220221 -K 0.001 --moi AD -W 0 -M 1 -j 4
-
-seqlink --fam data/new_trim_ped_famless17_no:xx.fam --vcf /mnt/mfs/statgen/alzheimers-family/linkage_files/geno/full_sample/vcf/full_sample.vcf.gz --anno MWE/annotation/EFIGA_NIALOAD_chr22.hg38.hg38_multianno.csv --pop data/full_sample_fam_pop.txt -f MERLIN MEGA2 PLINK LINKAGE --build hg38 --freq AF -o data/fullchr22data -K 0.001 --moi AD -W 0 -M 1 -j 8
+#### 1.run seqlink on CHP marker
 
 ```python
-import pandas as pd
+!seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt --blueprint testdata/test_blueprint_ext.txt -c 0.05 -o data/test_chp --chp --run-linkage
+```
+
+    [1;40;32mMESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam][0m
+    [1;40;32mMESSAGE: Namespace(chp=True, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno='testdata/test_chr1_anno.csv', pop='testdata/test_fam_pop.txt', included_vars=None, blueprint='testdata/test_blueprint_ext.txt', maf_cutoff=0.05, output='data/test_chp', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
+    [1;40;32mMESSAGE: 18 samples found in FAM file but not in VCF file:[0m
+    
+    [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
+    [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
+    [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
+    SNVHap MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
+    [1;40;32mMESSAGE: write to pickle: data/test_chp/chr1result/chr1result0.pickle,Gene number:4,Time:0.00012452216405007575[0m
+    create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.input
+    create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+    0.3767304867506027
+    create data/test_chp/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+    [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
+
+
+#### 2.run seqlink on variants
+
+```python
+!seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt --blueprint testdata/test_blueprint_ext.txt -c 0.05 -o data/test_var --run-linkage
+```
+
+    [1;40;32mMESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam][0m
+    [1;40;32mMESSAGE: Namespace(chp=False, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno='testdata/test_chr1_anno.csv', pop='testdata/test_fam_pop.txt', included_vars=None, blueprint='testdata/test_blueprint_ext.txt', maf_cutoff=0.05, output='data/test_var', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
+    [1;40;32mMESSAGE: 18 samples found in FAM file but not in VCF file:[0m
+    
+    [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
+    [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
+    [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
+    [1;40;32mMESSAGE: write to pickle: data/test_var/chr1result/chr1result0.pickle,Gene number:4,Time:3.229235919813315e-05[0m
+    create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.input
+    create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+    0.6164871137589216
+    create data/test_var/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+    [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
+
+
+### No annotation
+> If you don't have the annotation file. there is no need to add `--pop`. And `--freq` should be setted based on the `INFO` column in vcf file.
+
+```python
+!seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --freq='AF' --blueprint testdata/test_blueprint_ext.txt -c 0.05 -o data/test_chp_na --chp --run-linkage
+```
+
+    [1;40;32mMESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam][0m
+    [1;40;32mMESSAGE: Namespace(chp=True, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno=None, pop=None, included_vars=None, blueprint='testdata/test_blueprint_ext.txt', maf_cutoff=0.05, output='data/test_chp_na', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
+    [1;40;32mMESSAGE: 18 samples found in FAM file but not in VCF file:[0m
+    
+    [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
+    [1;40;32mMESSAGE: Loading marker map from [testdata/test_blueprint_ext.txt] ...[0m
+    [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 12 pre-defined units[0m
+    SNVHap MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
+    [1;40;32mMESSAGE: write to pickle: data/test_chp_na/chrallresult/chrallresult0.pickle,Gene number:4,Time:6.505574979301956e-05[0m
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.input
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.lods
+    0.3394373469054699
+    create data/test_chp_na/chrallresult/chrallresult0_AFcutoff0.05_linkage.besthlod
+    [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
+
+
+### Whole-genome linkage analysis
+> if `--blueprint` is not provided, the genomic region will be seperated to pseudogenes with 1000 variants.
+
+```python
+!seqlink --fam testdata/test_ped.fam --vcf testdata/test_snps.vcf.gz --anno testdata/test_chr1_anno.csv --pop testdata/test_fam_pop.txt -c 0.05 -o data/test_chp_wg --chp --run-linkage
+```
+
+    [1;40;32mMESSAGE: Binary trait detected in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam][0m
+    [1;40;32mMESSAGE: Generate regions by annotation[0m
+    [1;40;32mMESSAGE: Namespace(chp=True, tfam='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_ped.fam', vcf='/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz', anno='testdata/test_chr1_anno.csv', pop='testdata/test_fam_pop.txt', included_vars=None, blueprint=None, maf_cutoff=0.05, output='data/test_chp_wg', build='hg38', freq='AF', chr_prefix=None, run_linkage=True, prevalence=0.001, inherit_mode='AD', wild_pen=0.01, muta_pen=0.9, theta_max=0.5, theta_inc=0.05)[0m
+    [1;40;32mMESSAGE: 18 samples found in FAM file but not in VCF file:[0m
+    
+    [1;40;32mMESSAGE: 18 samples found in [/mnt/vast/hpc/csg/yin/Github/linkage/SEQpy3/nbs/testdata/test_snps.vcf.gz][0m
+    [1;40;32mMESSAGE: separate chromosome to regions[0m
+    [1;40;32mMESSAGE: 6 families with a total of 18 samples will be scanned for 1 pre-defined units[0m
+    [1;40;32mMESSAGE: write to pickle: data/test_chp_wg/chr1result/chr1result0.pickle,Gene number:1,Time:0.00011511449753824207[0m
+    create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.input
+    create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.lods
+    0.23506776429712772
+    create data/test_chp_wg/chr1result/chr1result0_AFcutoff0.05_linkage.besthlod
+    [1;40;32mMESSAGE: ============= Finish analysis ==============[0m
+
+
+### Input format
+
+- `--fam`, Fam file (required, format: "fid iid fathid mothid sex trait[1 control, 2 case, -9 or 0 missing]")
+
+```python
+%%writefile testdata/test_ped.fam
+1033    1033_2  0       0       2       -9
+1033    1033_1  0       0       1       -9
+1033    1033_99 1033_1  1033_2  2       1
+1033    1033_9  1033_1  1033_2  2       1
+1033    1033_3  1033_1  1033_2  2       2
+1036    1036_99 1036_1  1036_2  2       2
+1036    1036_6  0       0       1       2
+1036    1036_1  0       0       1       -9
+1036    1036_3  1036_6  1036_99 2       1
+1036    1036_4  1036_6  1036_99 2       1
+1036    1036_2  0       0       2       -9
+1036    1036_5  1036_6  1036_99 1       1
+10J_103 10J_103_10      0       0       1       -9
+10J_103 10J_103_4       0       0       1       -9
+10J_103 10J_103_3       0       0       2       -9
+10J_103 10J_103_2       10J_103_4       10J_103_3       2       2
+10J_103 10J_103_1       10J_103_10      10J_103_3       1       2
+10J_109 10J_109_2       10J_109_6       10J_109_5       1       2
+10J_109 10J_109_3       10J_109_6       10J_109_5       1       2
+10J_109 10J_109_4       10J_109_6       10J_109_5       1       2
+10J_109 10J_109_6       0       0       1       -9
+10J_109 10J_109_1       10J_109_6       10J_109_5       1       2
+10J_109 10J_109_5       0       0       2       2
+10J_109 10J_109_7       10J_109_6       10J_109_5       1       1
+10J_112 10J_112_3       0       0       1       1
+10J_112 10J_112_5       10J_112_3       10J_112_2       1       2
+10J_112 10J_112_1       10J_112_3       10J_112_2       2       1
+10J_112 10J_112_7       10J_112_3       10J_112_2       1       1
+10J_112 10J_112_2       0       0       2       2
+10J_119 10J_119_2       0       0       1       1
+10J_119 10J_119_5       0       0       2       1
+10J_119 10J_119_4       0       0       1       1
+10J_119 10J_119_6       10J_119_4       10J_119_5       1       2
+10J_119 10J_119_7       10J_119_4       10J_119_5       2       2
+10J_119 10J_119_1       10J_119_4       10J_119_5       2       2
+10J_119 10J_119_3       10J_119_2       10J_119_1       1       1
+```
+
+    Overwriting ../testdata/test_ped.fam
+
+
+- `--vcf`, VCF file (required, vcf.gz with vcf.gz.tbi)
+```
+bgzip -c file.vcf > file.vcf.gz
+tabix -p vcf file.vcf.gz
+```
+
+
+- `--anno`, Annotation file from `ANNOVAR`, It must contains the allele frequency for population in the file of family population information. For example in here, The annotation file must have AF_amr, AF_afr, AF_nfe columns.
+
+```python
+anno=pd.read_csv('testdata/test_chr1_anno.csv')
 ```
 
 ```python
-tmp = pd.read_csv('../data/genemap.hg38.txt',sep='\t',header=None)
-```
-
-```python
-tmp
+anno
 ```
 
 
@@ -95,65 +265,149 @@ tmp
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>2</th>
-      <th>3</th>
-      <th>4</th>
-      <th>5</th>
-      <th>6</th>
+      <th>Chr</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Ref</th>
+      <th>Alt</th>
+      <th>Func.refGene</th>
+      <th>Gene.refGene</th>
+      <th>GeneDetail.refGene</th>
+      <th>ExonicFunc.refGene</th>
+      <th>AAChange.refGene</th>
+      <th>...</th>
+      <th>CLNDISDB</th>
+      <th>CLNREVSTAT</th>
+      <th>CLNSIG</th>
+      <th>DN ID</th>
+      <th>Patient ID</th>
+      <th>Phenotype</th>
+      <th>Platform</th>
+      <th>Study</th>
+      <th>Pubmed ID</th>
+      <th>Otherinfo1</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>11868</td>
-      <td>14362</td>
-      <td>LOC102725121@1</td>
-      <td>9.177127e-07</td>
-      <td>0.000001</td>
-      <td>6.814189e-07</td>
+      <td>10140</td>
+      <td>10147</td>
+      <td>ACCCTAAC</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1727</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10140:ACCCTAAC:A</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>11873</td>
-      <td>14409</td>
-      <td>DDX11L1</td>
-      <td>9.195321e-07</td>
-      <td>0.000001</td>
-      <td>6.827698e-07</td>
+      <td>10146</td>
+      <td>10147</td>
+      <td>AC</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1727</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10146:AC:A</td>
     </tr>
     <tr>
       <th>2</th>
       <td>1</td>
-      <td>14361</td>
-      <td>29370</td>
-      <td>WASH7P</td>
-      <td>1.529988e-06</td>
-      <td>0.000002</td>
-      <td>1.136045e-06</td>
+      <td>10146</td>
+      <td>10148</td>
+      <td>ACC</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10146:ACC:*</td>
     </tr>
     <tr>
       <th>3</th>
       <td>1</td>
-      <td>17368</td>
-      <td>17436</td>
-      <td>MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1</td>
-      <td>1.217693e-06</td>
-      <td>0.000002</td>
-      <td>9.041595e-07</td>
+      <td>10150</td>
+      <td>10151</td>
+      <td>CT</td>
+      <td>C</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1723</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10150:CT:C</td>
     </tr>
     <tr>
       <th>4</th>
       <td>1</td>
-      <td>30365</td>
-      <td>30503</td>
-      <td>MIR1302-10@1,MIR1302-11@1,MIR1302-2@1,MIR1302-9@1</td>
-      <td>2.129597e-06</td>
-      <td>0.000003</td>
-      <td>1.581266e-06</td>
+      <td>10172</td>
+      <td>10177</td>
+      <td>CCCTAA</td>
+      <td>C</td>
+      <td>intergenic</td>
+      <td>NONE;DDX11L1</td>
+      <td>dist=NONE;dist=1697</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:10172:CCCTAA:C</td>
     </tr>
     <tr>
       <th>...</th>
@@ -164,110 +418,150 @@ tmp
       <td>...</td>
       <td>...</td>
       <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
     </tr>
     <tr>
-      <th>28320</th>
-      <td>X</td>
-      <td>155612564</td>
-      <td>155782457</td>
-      <td>SPRY3</td>
-      <td>NaN</td>
-      <td>196.056662</td>
-      <td>NaN</td>
+      <th>995</th>
+      <td>1</td>
+      <td>66479</td>
+      <td>66487</td>
+      <td>TATTTATAG</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66479:TATTTATAG:*</td>
     </tr>
     <tr>
-      <th>28321</th>
-      <td>X</td>
-      <td>155881344</td>
-      <td>155943769</td>
-      <td>VAMP7</td>
-      <td>NaN</td>
-      <td>196.190010</td>
-      <td>5.600000e+01</td>
+      <th>996</th>
+      <td>1</td>
+      <td>66480</td>
+      <td>66481</td>
+      <td>AT</td>
+      <td>A</td>
+      <td>intergenic</td>
+      <td>FAM138A;OR4F5</td>
+      <td>dist=30399;dist=2610</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66480:AT:A</td>
     </tr>
     <tr>
-      <th>28322</th>
-      <td>X</td>
-      <td>155997695</td>
-      <td>156010817</td>
-      <td>IL9R</td>
-      <td>NaN</td>
-      <td>196.305985</td>
-      <td>NaN</td>
+      <th>997</th>
+      <td>1</td>
+      <td>66480</td>
+      <td>66483</td>
+      <td>ATTT</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66480:ATTT:*</td>
     </tr>
     <tr>
-      <th>28323</th>
-      <td>X</td>
-      <td>156014563</td>
-      <td>156016830</td>
-      <td>WASIR1</td>
-      <td>NaN</td>
-      <td>196.320452</td>
-      <td>NaN</td>
+      <th>998</th>
+      <td>1</td>
+      <td>66481</td>
+      <td>66488</td>
+      <td>TTTATAGA</td>
+      <td>T</td>
+      <td>intergenic</td>
+      <td>FAM138A;OR4F5</td>
+      <td>dist=30400;dist=2603</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66481:TTTATAGA:T</td>
     </tr>
     <tr>
-      <th>28324</th>
-      <td>X</td>
-      <td>156025657</td>
-      <td>156028183</td>
-      <td>DDX11L16</td>
-      <td>NaN</td>
-      <td>196.334645</td>
-      <td>NaN</td>
+      <th>999</th>
+      <td>1</td>
+      <td>66481</td>
+      <td>66488</td>
+      <td>TTTATAGA</td>
+      <td>*</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>...</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+      <td>chr1:66481:TTTATAGA:*</td>
     </tr>
   </tbody>
 </table>
-<p>28325 rows × 7 columns</p>
+<p>1000 rows × 152 columns</p>
 </div>
 
 
 
 ```python
-tmp[0].value_counts()
-```
-
-
-
-
-    1                      2809
-    2                      1816
-    19                     1779
-    11                     1678
-    17                     1583
-    3                      1560
-    6                      1453
-    12                     1386
-    7                      1359
-    5                      1314
-    X                      1209
-    16                     1177
-    9                      1119
-    10                     1107
-    4                      1091
-    8                      1056
-    15                     1012
-    14                      946
-    20                      774
-    22                      646
-    13                      629
-    18                      436
-    21                      374
-    17_KI270909v1_alt         3
-    22_KI270879v1_alt         3
-    7_KI270803v1_alt          2
-    15_KI270850v1_alt         2
-    4_GL000008v2_random       1
-    1_KI270706v1_random       1
-    Name: 0, dtype: int64
-
-
-
-```python
-tmp1 = tmp[tmp[0]=='22']
-```
-
-```python
-tmp1[tmp1[3]=='LINC01664']
+anno.loc[:,['AF_amr', 'AF_afr', 'AF_nfe']]
 ```
 
 
@@ -291,293 +585,165 @@ tmp1[tmp1[3]=='LINC01664']
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>2</th>
-      <th>3</th>
-      <th>4</th>
-      <th>5</th>
-      <th>6</th>
+      <th>AF_amr</th>
+      <th>AF_afr</th>
+      <th>AF_nfe</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>26484</th>
-      <td>22</td>
-      <td>17121594</td>
-      <td>17132104</td>
-      <td>LINC01664</td>
-      <td>3.496778</td>
-      <td>5.134655</td>
-      <td>1.946244</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-```python
-tmp1[tmp1[3]=='BID']
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
       <th>0</th>
+      <td>0.0006</td>
+      <td>0.0008</td>
+      <td>0.0007</td>
+    </tr>
+    <tr>
       <th>1</th>
+      <td>0.6380</td>
+      <td>0.6300</td>
+      <td>0.6413</td>
+    </tr>
+    <tr>
       <th>2</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
+    </tr>
+    <tr>
       <th>3</th>
+      <td>0.0357</td>
+      <td>0.0426</td>
+      <td>0.0370</td>
+    </tr>
+    <tr>
       <th>4</th>
-      <th>5</th>
-      <th>6</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>26493</th>
-      <td>22</td>
-      <td>17734139</td>
-      <td>17774665</td>
-      <td>BID</td>
-      <td>7.132236</td>
-      <td>10.196359</td>
-      <td>4.192282</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-```python
-tmp1[tmp1[3]=='RTL10']
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>2</th>
-      <th>3</th>
-      <th>4</th>
-      <th>5</th>
-      <th>6</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>26535</th>
-      <td>22</td>
-      <td>19846145</td>
-      <td>19854874</td>
-      <td>RTL10</td>
-      <td>12.136091</td>
-      <td>16.519006</td>
-      <td>8.210012</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-```python
-tmp1
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>2</th>
-      <th>3</th>
-      <th>4</th>
-      <th>5</th>
-      <th>6</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>26467</th>
-      <td>22</td>
-      <td>15784953</td>
-      <td>15827434</td>
-      <td>DUXAP8</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-    </tr>
-    <tr>
-      <th>26468</th>
-      <td>22</td>
-      <td>15805697</td>
-      <td>15820884</td>
-      <td>BMS1P22@3</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-    </tr>
-    <tr>
-      <th>26469</th>
-      <td>22</td>
-      <td>15805697</td>
-      <td>15815897</td>
-      <td>BMS1P17@3,BMS1P18@3</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-    </tr>
-    <tr>
-      <th>26470</th>
-      <td>22</td>
-      <td>15740892</td>
-      <td>15778287</td>
-      <td>PSLNR</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-    </tr>
-    <tr>
-      <th>26471</th>
-      <td>22</td>
-      <td>15690025</td>
-      <td>15721631</td>
-      <td>POTEH</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
+      <td>0.0086</td>
+      <td>0.0097</td>
+      <td>0.0084</td>
     </tr>
     <tr>
       <th>...</th>
       <td>...</td>
       <td>...</td>
       <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
     </tr>
     <tr>
-      <th>27111</th>
-      <td>22</td>
-      <td>50674390</td>
-      <td>50733212</td>
-      <td>SHANK3</td>
-      <td>79.970067</td>
-      <td>90.409669</td>
-      <td>70.999029</td>
+      <th>995</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
     </tr>
     <tr>
-      <th>27112</th>
-      <td>22</td>
-      <td>50735828</td>
-      <td>50738169</td>
-      <td>LOC105373100</td>
-      <td>80.037493</td>
-      <td>90.485907</td>
-      <td>71.073657</td>
+      <th>996</th>
+      <td>0.0039</td>
+      <td>0.0036</td>
+      <td>0.0076</td>
     </tr>
     <tr>
-      <th>27113</th>
-      <td>22</td>
-      <td>50738203</td>
-      <td>50745339</td>
-      <td>ACR</td>
-      <td>80.044958</td>
-      <td>90.494347</td>
-      <td>71.080286</td>
+      <th>997</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
     </tr>
     <tr>
-      <th>27114</th>
-      <td>22</td>
-      <td>50757085</td>
-      <td>50799637</td>
-      <td>RPL23AP82</td>
-      <td>80.102184</td>
-      <td>90.559043</td>
-      <td>71.131103</td>
+      <th>998</th>
+      <td>0.0163</td>
+      <td>0.0410</td>
+      <td>0.0279</td>
     </tr>
     <tr>
-      <th>27115</th>
-      <td>22</td>
-      <td>50767506</td>
-      <td>50783636</td>
-      <td>RABL2B</td>
-      <td>80.097821</td>
-      <td>90.554110</td>
-      <td>71.127228</td>
+      <th>999</th>
+      <td>.</td>
+      <td>.</td>
+      <td>.</td>
     </tr>
   </tbody>
 </table>
-<p>646 rows × 7 columns</p>
+<p>1000 rows × 3 columns</p>
 </div>
 
 
 
+Or, create a self-defined annotation file like this:
+```
+	Chr	Start	AF_amr	AF	AF_nfe	AF_afr
+chr1:10140:ACCCTAAC:A	1	10140	0.0006	0.0007	0.0007	0.0008
+chr1:10146:AC:A	1	10146	0.638	0.6328	0.6413	0.63
+chr1:10150:CT:C	1	10150	0.0357	0.0375	0.037	0.0426
+chr1:10172:CCCTAA:C	1	10172	0.0086	0.0082	0.0084	0.0097
+chr1:10178:CCTAA:C	1	10178	0.5	0.3333	0.2955	0.4375
+chr1:10198:TAACCC:T	1	10198	0.0	0.0	0.0	0.0
+chr1:10231:C:A	1	10231	0.2	0.0366	0.0	0.05
+chr1:10236:AACCCT:A	1	10236	0.0	0.0	0.0	0.0
+chr1:10247:TAAACCCTA:T	1	10247	0.2222	0.2089	0.1429	0.4211
+```
+The index must match with the ID in vcf file.
+
+- `--pop`, The file of family population information
+
 ```python
-535-467
+%%writefile testdata/test_fam_pop.txt
+1033 AF_amr
+1036 AF_amr
+10J_103 AF_afr
+10J_109 AF_nfe
+10J_112 AF_nfe
+10J_119 AF_nfe
 ```
 
+    Writing ../testdata/test_fam_pop.txt
 
 
+- `--included-vars`, The file with one column of variants
+For example:
+```
+chr1:10140:ACCCTAAC:A
+chr1:10172:CCCTAA:C
+chr1:10198:TAACCC:T
+chr1:10236:AACCCT:A
+chr1:10261:T:TA
+chr1:10262:AACCCT:A
+```
+- `--blueprint`, The blueprint file that defines regional marker (format: "chr startpos endpos name avg.distance male.distance female.distance"). The first four columns are required.
 
-    68
+```python
+%%writefile testdata/test_blueprint_ext.txt
+1       11868   14362   LOC102725121@1  9.177127474362311e-07   1.1657192989882668e-06  6.814189157634088e-07
+1       11873   14409   DDX11L1 9.195320788455595e-07   1.1680302941673515e-06  6.82769803434766e-07
+1       14361   29370   WASH7P  1.5299877409602128e-06  1.94345806118021e-06    1.136044574393209e-06
+1       17368   17436   MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1 1.217692507120495e-06   1.5467668502473368e-06  9.041595098829462e-07
+1       30365   30503   MIR1302-10@1,MIR1302-11@1,MIR1302-2@1,MIR1302-9@1       2.1295973889038703e-06  2.705108741548526e-06   1.5812659765416382e-06
+1       34610   36081   FAM138A@1,FAM138C@1,FAM138F@1   2.4732411024120156e-06  3.1416201771056266e-06  1.8364278747737466e-06
+1       69090   70008   OR4F5   4.866641545668504e-06   6.181823219621424e-06   3.6135725636621673e-06
+1       134772  140566  LOC729737       9.633289838108921e-06   1.2236630588823159e-05  7.152898262617822e-06
+1       490755  495445  LOC100132062@1,LOC100132287@1   2.2828130832833112e-05  2.8997300893994373e-05  1.6950315013571593e-05
+1       450739  451678  OR4F16@1,OR4F29@1,OR4F3@1       2.575942360468604e-05   3.2720758549649544e-05  1.912685483821856e-05
+1       627379  629009  LOC101928626    3.943568768003252e-05   5.009295373297854e-05   2.9281737249900675e-05
+1       632614  632685  MIR12136        3.974742311959244e-05   5.048893386847169e-05   2.9513206656665908e-05
+```
+
+    Overwriting testdata/test_blueprint_ext.txt
 
 
+Or
+
+```python
+%%writefile testdata/test_blueprint.txt
+1       11868   14362   LOC102725121@1
+1       11873   14409   DDX11L1
+1       14361   29370   WASH7P
+1       17368   17436   MIR6859-1@1,MIR6859-2@1,MIR6859-3@1,MIR6859-4@1
+1       30365   30503   MIR1302-10@1,MIR1302-11@1,MIR1302-2@1,MIR1302-9@1
+1       34610   36081   FAM138A@1,FAM138C@1,FAM138F@1
+1       69090   70008   OR4F5
+1       134772  140566  LOC729737
+1       490755  495445  LOC100132062@1,LOC100132287@1
+1       450739  451678  OR4F16@1,OR4F29@1,OR4F3@1
+1       627379  629009  LOC101928626
+1       632614  632685  MIR12136
+```
+
+    Overwriting testdata/test_blueprint.txt
+
+
+### Output format
