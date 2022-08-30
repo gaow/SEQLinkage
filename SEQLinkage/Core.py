@@ -91,11 +91,15 @@ class RData(dict):
     def load_anno(self,anno_file,included_variant_file=None):
         if anno_file is None:
             return None
-        anno = pd.read_csv(anno_file)
-        anno.index = list(anno.Otherinfo1)
+        try:
+            anno = pd.read_csv(anno_file)
+            anno.index = list(anno.Otherinfo1)
+        except:
+            anno = pd.read_csv(anno_file,delim_whitespace=True)
         anno = anno[~anno.index.duplicated()]
         if included_variant_file:
-            included_variants= pd.read_csv(included_variant_file)
+            with open(included_variant_file, 'r') as f:
+                included_variants= [x.strip() for x in f.readlines()]
             anno = anno.loc[included_variants,:]
         tmp = anno[list(set(self.fam_pop.values()))]
         tmp = tmp.replace('.',np.nan)
@@ -793,6 +797,6 @@ def run_each_region(regions,data,extractor,maker,writer,runlinkage=True,cutoff=1
         with open(gene_genotype_file, 'wb') as handle:
             pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
         results = {}
-    if runlinkage:#linkage analysis
-        linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
-        summarize_lods(gene_genotype_file[:-8]+'*_linkage.lods',os.path.join(env.outdir,output_chr),regions,phase=chp)
+        if runlinkage:#linkage analysis
+            linkage_analysis(gene_genotype_file,data.fam,data.fam_vcf,cutoff,chp,rho,model,chrom,penetrances,dfreq)
+    summarize_lods(gene_genotype_file[:-8]+'*_linkage.lods',os.path.join(env.outdir,output_chr),regions,phase=chp)

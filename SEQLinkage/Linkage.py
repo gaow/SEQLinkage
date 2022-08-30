@@ -179,7 +179,7 @@ def format_haps_bunch(dhaps,fam,vcfs=None,cutoff=None,haplotype=True):
     for i,j in gene_variants.items():
         j=pd.DataFrame(j)
         if cutoff is not None:
-            frq_idx=np.array(j['freqs'])>cutoff
+            frq_idx=np.array(j['freqs'])<cutoff
             if frq_idx.any()==False:
                 continue
             j=j.loc[frq_idx,:]
@@ -204,6 +204,8 @@ def calculate_ped_lod(ped,afreq=None,rho=0,model = "AD",chrom = "AUTOSOMAL",pene
             res = pd.DataFrame(res)[['MARKER','LOD']]
         except:
             res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
+        if res.MARKER.dtype is not str:
+            res.MARKER=list(ped.columns[6:])[::2]
         return res
     aff=ped.iloc[:,5]
     mped = pedtools.as_ped(ped.drop(ped.columns[5], axis=1),famid_col = 1,id_col = 2,fid_col = 3,mid_col = 4,sex_col = 5)
@@ -251,7 +253,11 @@ def linkage_analysis(gene_genotype_file,fam,fam_vcf,cutoff,chp=True,rho=np.arang
             genes = pickle.load(handle)
         if chp: #making CHP markers from phased haplotypes
             genes=update_haps_ped(genes)
+            cutoff=None
         gene_variants,gene_fam_haps = format_haps_bunch(genes,fam,fam_vcf,cutoff,chp)
+        if len(gene_variants)==0:
+            print(gene_geotype_file,'No variants left after filtering')
+            return
         with open(linkage_input_file,'wb') as handle:
             pickle.dump([gene_variants,gene_fam_haps], handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -396,9 +402,14 @@ def summarize_lods(input_lod,output_prefix,regions,fams=None,phase=False):
         genes.index=list(genes.name)
         genes=genes[genes.index.isin(lods_chr.index)]
     else:
-        genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
-        genes.columns=['chrom','pos','a0','a1']
-        genes.index=list(lods_chr.index)
+        try:
+            genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
+            genes.columns=['chrom','pos','a0','a1']
+            genes.index=list(lods_chr.index)
+        except:
+            print('The variants are not named by chrom:pos:a0:a1')
+            genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
+            genes.index=list(lods_chr.index)
 
     lods_chr=lods_chr.loc[genes.index,:]
     hlod_chr=hlod_chr.loc[genes.index,:]
