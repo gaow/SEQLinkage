@@ -179,7 +179,7 @@ def format_haps_bunch(dhaps,fam,vcfs=None,cutoff=None,haplotype=True):
     for i,j in gene_variants.items():
         j=pd.DataFrame(j)
         if cutoff is not None:
-            frq_idx=np.array(j['freqs'])>cutoff
+            frq_idx=np.array(j['freqs'])<cutoff
             if frq_idx.any()==False:
                 continue
             j=j.loc[frq_idx,:]
@@ -251,7 +251,11 @@ def linkage_analysis(gene_genotype_file,fam,fam_vcf,cutoff,chp=True,rho=np.arang
             genes = pickle.load(handle)
         if chp: #making CHP markers from phased haplotypes
             genes=update_haps_ped(genes)
+            cutoff=None
         gene_variants,gene_fam_haps = format_haps_bunch(genes,fam,fam_vcf,cutoff,chp)
+        if len(gene_variants)==0:
+            print(gene_geotype_file,'No variants left after filtering')
+            return
         with open(linkage_input_file,'wb') as handle:
             pickle.dump([gene_variants,gene_fam_haps], handle, protocol=pickle.HIGHEST_PROTOCOL)
 

@@ -36,7 +36,7 @@ class Args:
 
     def getEncoderArguments(self, parser):
         vargs = parser.add_argument_group('Collapsed haplotype pattern method arguments')
-        vargs.add_argument('--chp', action='store_true', help='''Generate CHP markers.''')
+        vargs.add_argument('--single-marker', action='store_true', dest = "single_marker",help='''Use single variant as the marker. Otherwise, use CHP markers.''')
         vargs.add_argument('--fam', metavar='FILE', required=True, dest = "tfam", help='''Input pedigree and phenotype information in FAM format.''')
         vargs.add_argument('--vcf', metavar='FILE', required=True, help='''Input VCF file, bgzipped.''')
         vargs.add_argument('--anno', metavar='FILE', required=False, help='''Input annotation file from annovar.''')
@@ -44,11 +44,12 @@ class Args:
         vargs.add_argument('--included-vars', metavar='FILE', dest='included_vars', help='''Variants to be included for linkage analysis, if None, the analysis won't filter any variants. But you can still set AF cutoff by -c argment.''')
         vargs.add_argument('-b', '--blueprint', metavar = 'FILE',
                            help='''Blueprint file that defines regional marker (format: "chr startpos endpos name avg.distance male.distance female.distance").''')
-        vargs.add_argument('-c', '--maf-cutoff', metavar='P', default=1.0, type=float, dest = "maf_cutoff",
+        vargs.add_argument('-c', '--maf-cutoff', metavar='P', default=None, type=float, dest = "maf_cutoff",
                            help='''MAF cutoff to define variants to be excluded from analyses. this is useful, if you need to analyse multiple population together.''')
         vargs.add_argument('-o', '--output', metavar='Name', default='data/linkage_analysis/', help='''Output name prefix.''')
 
         vargs.add_argument('--build', metavar='STRING', default='hg38', choices = ["hg19", "hg38"], help='''Reference genome version for VCF file.''')
+        vargs.add_argument('--window', metavar='INT', type=int, default=1000,help='If no blueprint, seprate chromosome to pseudogenes with 1000 (as default) variants.')
         vargs.add_argument('--freq', metavar='INFO', default = 'AF',help='''Info field name for allele frequency in VCF file.''')
         vargs.add_argument('--chrom-prefix', metavar='STRING', dest = 'chr_prefix',
                            help='''Prefix to chromosome name in VCF file if applicable, e.g. "chr".''')
@@ -123,12 +124,12 @@ def main():
             env.error("Cannot load regional marker blueprint [{}]. ".format(args.blueprint), exit = True)
     else:
         env.log('separate chromosome to regions')
-        regions=data.get_regions(step=1000)  #whole-genome linkage analysis
+        regions=data.get_regions(step=args.window)  #whole-genome linkage analysis
     env.log('{:,d} families with a total of {:,d} samples will be scanned for {:,d} pre-defined units'.\
             format(len(data.families), len(data.samples), len(regions)))
 
     run_each_region(regions,data,RegionExtractor(args.vcf, build = args.build, chr_prefix = args.chr_prefix),MarkerMaker(maf_cutoff = args.maf_cutoff),LinkageWriter(len(samples_not_vcf)),
-                    runlinkage=args.run_linkage,cutoff=args.maf_cutoff,chp=args.chp,rho=np.arange(0,args.theta_max,args.theta_inc),
+                    runlinkage=args.run_linkage,cutoff=args.maf_cutoff,chp=args.single_marker==False,rho=np.arange(0,args.theta_max,args.theta_inc),
                     model = args.inherit_mode,penetrances = [args.wild_pen,args.muta_pen,args.muta_pen],dfreq=args.prevalence)
     env.log('============= Finish analysis ==============')
 
