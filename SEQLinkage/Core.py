@@ -94,10 +94,8 @@ class RData(dict):
         try:
             anno = pd.read_csv(anno_file)
             anno.index = list(anno.Otherinfo1)
-        else:
+        except:
             anno = pd.read_csv(anno_file,delim_whitespace=True)
-        except Exception as e:
-            raise TypeError('The annotation file is not prepare properly. Please read our documetation.')
         anno = anno[~anno.index.duplicated()]
         if included_variant_file:
             with open(included_variant_file, 'r') as f:
