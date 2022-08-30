@@ -763,7 +763,7 @@ It is calculated from 0 to 0.5 with step 0.05 per family per gene. you can chang
     - alpha: the alpha of best HLOD score.
     - hlod: the max HLOD of these HLOD between the range of thetas.
 
-#### The summary result of CHP markers
+### The summary result of CHP markers
 
 ```python
 result=pd.read_csv('data/test_chp/chr1result_lod_summary.csv',index_col=0)
@@ -836,7 +836,7 @@ result
 
 
 
-#### The summary result of single variants
+### The summary result of single variants
 
 ```python
 result=pd.read_csv('data/test_var/chr1result_lod_summary.csv',index_col=0)

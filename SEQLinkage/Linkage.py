@@ -204,6 +204,8 @@ def calculate_ped_lod(ped,afreq=None,rho=0,model = "AD",chrom = "AUTOSOMAL",pene
             res = pd.DataFrame(res)[['MARKER','LOD']]
         except:
             res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
+        if res.MARKER.dtype is not str:
+            res.MARKER=list(ped.columns[6:])[::2]
         return res
     aff=ped.iloc[:,5]
     mped = pedtools.as_ped(ped.drop(ped.columns[5], axis=1),famid_col = 1,id_col = 2,fid_col = 3,mid_col = 4,sex_col = 5)
@@ -400,9 +402,14 @@ def summarize_lods(input_lod,output_prefix,regions,fams=None,phase=False):
         genes.index=list(genes.name)
         genes=genes[genes.index.isin(lods_chr.index)]
     else:
-        genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
-        genes.columns=['chrom','pos','a0','a1']
-        genes.index=list(lods_chr.index)
+        try:
+            genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
+            genes.columns=['chrom','pos','a0','a1']
+            genes.index=list(lods_chr.index)
+        except:
+            print('The variants are not named by chrom:pos:a0:a1')
+            genes=pd.DataFrame([i.split(':') for i in lods_chr.index])
+            genes.index=list(lods_chr.index)
 
     lods_chr=lods_chr.loc[genes.index,:]
     hlod_chr=hlod_chr.loc[genes.index,:]
