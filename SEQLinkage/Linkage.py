@@ -205,7 +205,11 @@ def calculate_ped_lod(ped,afreq=None,rho=0,model = "AD",chrom = "AUTOSOMAL",pene
         except:
             res = pd.DataFrame([[ped.columns[6],res[0]]],columns=['MARKER','LOD'])
         if res.MARKER.dtype is not str:
-            res.MARKER=list(ped.columns[6:])[::2]
+            try:
+                res.MARKER=list(ped.columns[6:])[::2]
+            except:
+                print("the number of output markers don't match with the number of input markers")
+                print(res,ped)
         return res
     aff=ped.iloc[:,5]
     mped = pedtools.as_ped(ped.drop(ped.columns[5], axis=1),famid_col = 1,id_col = 2,fid_col = 3,mid_col = 4,sex_col = 5)
